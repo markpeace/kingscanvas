@@ -43,6 +43,8 @@ This app is developed **exclusively for desktop** (web browser) use. Mobile supp
 
 This project is in the **specification and early prototyping** phase.
 
+[View Canvas Layout Preview → docs/STATE/previews/epoch-0001-demo.png]
+
 If you're a developer contributing to the codebase, please begin with the documents in `/docs/SPEC/` to understand the product scope and design philosophy.
 
 ---
