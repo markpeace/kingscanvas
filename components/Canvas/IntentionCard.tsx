@@ -1,7 +1,7 @@
 export function IntentionCard() {
   return (
-    <div className="bg-kings-grey-light border border-kings-grey-dark rounded-lg p-4 shadow-sm">
-      <p className="text-kings-black font-semibold">Intention placeholder</p>
+    <div className="rounded-lg border border-kings-grey-dark bg-kings-grey-light p-4 shadow-sm">
+      <p className="font-semibold text-kings-black text-sm md:text-base">Intention placeholder</p>
     </div>
   )
 }
