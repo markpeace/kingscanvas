@@ -12,7 +12,6 @@ export function Canvas() {
       <div className="flex h-full flex-col overflow-hidden rounded-lg border border-kings-grey-light bg-kings-white">
         <ColumnHeader title="Do Now" />
         <div className="flex-1 space-y-4 p-4">
-          <IntentionCard />
           <StepCard />
           <StepCard />
         </div>
@@ -21,7 +20,6 @@ export function Canvas() {
       <div className="flex h-full flex-col overflow-hidden rounded-lg border border-kings-grey-light bg-kings-white">
         <ColumnHeader title="Do Later" />
         <div className="flex-1 space-y-4 p-4">
-          <IntentionCard />
           <StepCard />
           <StepCard />
         </div>
@@ -31,8 +29,6 @@ export function Canvas() {
         <ColumnHeader title="Before I Graduate" />
         <div className="flex-1 space-y-4 p-4">
           <IntentionCard />
-          <StepCard />
-          <StepCard />
         </div>
       </div>
       {/* Column 4: After I Graduate tasks will appear here once the data layer is wired. */}
@@ -40,8 +36,6 @@ export function Canvas() {
         <ColumnHeader title="After I Graduate" />
         <div className="flex-1 space-y-4 p-4">
           <IntentionCard />
-          <StepCard />
-          <StepCard />
         </div>
       </div>
     </main>
