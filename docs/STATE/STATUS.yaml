@@ -1,2 +1,3 @@
 - PR 0001: Base Canvas structure scaffolded and rendering placeholder text.
 - PR 0002: Four-column grid layout implemented using TailwindCSS.
+- PR 0003: Added ColumnHeader component and integrated it into the Canvas layout.
