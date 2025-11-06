@@ -7,7 +7,23 @@ const config: Config = {
     "./components/**/*.{ts,tsx}"
   ],
   theme: {
-    extend: {}
+    extend: {
+      colors: {
+        kings: {
+          red: "#E2231A",
+          black: "#000000",
+          white: "#FFFFFF",
+          grey: {
+            light: "#CDD7DC",
+            dark: "#575756"
+          }
+        },
+        brand: {
+          primary: "#E2231A",
+          accent: "#575756"
+        }
+      }
+    }
   },
   plugins: []
 }

@@ -4,7 +4,7 @@ export type ColumnHeaderProps = {
 
 export function ColumnHeader({ title }: ColumnHeaderProps) {
   return (
-    <header className="sticky top-0 z-10 bg-gray-200 px-4 py-3 text-center font-semibold text-gray-900">
+    <header className="sticky top-0 z-10 border-b border-kings-grey-dark bg-kings-white px-4 py-3 text-center font-semibold text-kings-red">
       {title}
     </header>
   )
