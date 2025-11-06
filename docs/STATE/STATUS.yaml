@@ -6,6 +6,7 @@
 - PR 0006: Added static placeholders aligning Intentions to the "Before I Graduate" bucket and Steps to the earlier action buckets, leaving the "After I Graduate" column open for future content.
 - PR 0007: Added responsive breakpoints and scaling for desktop resolutions.
 - PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance.
+- PR 0010: Added unit and DOM tests verifying 4-column layout, headers, and placeholder cards.
 
 epoch-0001:
   status: "complete"
