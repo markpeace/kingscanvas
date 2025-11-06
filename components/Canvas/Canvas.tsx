@@ -34,9 +34,7 @@ export function Canvas() {
       {/* Column 4: After I Graduate tasks will appear here once the data layer is wired. */}
       <div className="flex h-full flex-col overflow-hidden rounded-lg border border-kings-grey-light bg-kings-white">
         <ColumnHeader title="After I Graduate" />
-        <div className="flex-1 space-y-4 p-4">
-          <IntentionCard />
-        </div>
+        <div className="flex-1 space-y-4 p-4" />
       </div>
     </main>
   )
