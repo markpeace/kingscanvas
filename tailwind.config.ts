@@ -8,6 +8,10 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["Bureau Grotesk 37", "Inter", "Helvetica Neue", "Arial", "sans-serif"],
+        serif: ["Georgia", "serif"]
+      },
       colors: {
         kings: {
           red: "#E2231A",
