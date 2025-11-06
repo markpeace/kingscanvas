@@ -21,11 +21,14 @@ const config: Config = {
       },
       colors: {
         kings: {
-          red: "#E2231A",
+          red: {
+            DEFAULT: "#E2231A",
+            dark: "#C81E14"
+          },
           black: "#000000",
           white: "#FFFFFF",
           grey: {
-            light: "#CDD7DC",
+            light: "#7F8E96",
             dark: "#575756"
           }
         },

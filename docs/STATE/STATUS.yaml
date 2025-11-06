@@ -5,3 +5,4 @@
 - PR 0005: Added typography system with King’s brand fonts and hierarchy.
 - PR 0006: Added static placeholders aligning Intentions to the "Before I Graduate" bucket and Steps to the earlier action buckets, leaving the "After I Graduate" column open for future content.
 - PR 0007: Added responsive breakpoints and scaling for desktop resolutions.
+- PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance.
