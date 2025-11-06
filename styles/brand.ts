@@ -1,9 +1,10 @@
 export const brandColors = {
   red: "#E2231A",
+  redDark: "#C81E14",
   black: "#000000",
   white: "#FFFFFF",
   grey: {
-    light: "#CDD7DC",
+    light: "#7F8E96",
     dark: "#575756"
   }
 } as const
