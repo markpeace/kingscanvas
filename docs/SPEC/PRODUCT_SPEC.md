@@ -1,130 +1,122 @@
-# PRODUCT_SPEC.md — NextJS PWA Template
-
-## Product Name
-**NextJS PWA Template**
-
-## Vision
-NextJS PWA Template is a **progressive web app boilerplate** built on modern full-stack tooling to help developers rapidly prototype and ship **installable, mobile-first web apps** with optional AI features. It balances “fork-and-go” simplicity with best practices (TDD, linting, auth, deploy setup) so projects can scale from idea → prototype → production.
-
-## Why This Exists
-Many starters are either too minimal (missing auth, tests, deploy glue) or too heavy (opinionated stacks). This template aims to be:
-- **Minimal but complete** — everything needed to start, nothing extraneous.
-- **PWA-first** — installable on iOS/Android/desktop with offline support.
-- **Production-leaning** — tests, linting, formatting, and Vercel-ready.
-- **AI-ready (optional)** — helpers for LangChain/LangGraph + OpenAI.
-
-## Target Audience
-- Indie hackers and teams validating ideas.
-- Internal tools and hackathon projects.
-- Educators/learners exploring Next.js + PWAs + AI.
+# Product Specification — King’s Canvas
 
 ---
 
-## Scope & Core Features
+## 1. Product Summary
 
-### Framework & Architecture
-- **Next.js (App Router, latest stable) + TypeScript**
-- Folder-by-feature conventions and clear separation of server/client components.
+**King’s Canvas** is a digital life-design platform built for students at King’s College London. It empowers students to plan their university journey and beyond by surfacing personal **intentions**, breaking them down into actionable **steps**, and connecting them to real **opportunities** drawn from King’s Edge, student societies, and other university resources.
 
-### PWA
-- Web App Manifest (`/public/manifest.json`) with icons/splash assets.
-- Service Worker for:
-  - App shell caching of critical routes.
-  - Runtime caching for API/static assets.
-- **Install prompt UX**: custom, dismissible in-app prompt.
-- Lighthouse PWA score target **≥ 90** on default routes.
-
-### Authentication
-- **NextAuth** with **Google provider**.
-- Session handling, secure cookies, and protected routes.
-- Example sign-in/sign-out UI and `auth()` helpers.
-
-### Database
-- **MongoDB** via Mongoose or official driver.
-- Connection util with singleton pattern.
-- Example User model (minimal fields).
-
-### AI (Optional)
-- **LangChain & LangGraph** helpers.
-- Thin utilities to call OpenAI models (model ID via env).
-- Example `/api/ai/echo` route.
-- Future: integrate from `docs/llms.txt`.
-
-### Styling & UI
-- **Tailwind CSS** preconfigured.
-- Minimal UI primitives (Button, Card, Input, Form).
-- Mobile-first layouts.
-
-### Utilities
-- **Global Toast** notification system.
-- **Debug Panel** toggled via env var.
-- Lightweight state management with **Zustand**.
-- **React Hook Form** for forms + validation.
-
-### Testing
-- **Jest** + **React Testing Library**.
-- Example tests for auth, PWA, toast/debug.
-- `npm run test` + watch mode.
-
-### Developer Experience
-- **ESLint + Prettier**.
-- VS Code recommended extensions.
-- `.env.example` provided.
-
-### Deployment
-- **Vercel-ready** out of the box.
-- README with deploy steps.
+The tool blends freeform planning with AI-guided suggestions and automated opportunity-matching, all wrapped in a visually intuitive interface.
 
 ---
 
-## Example Routes
-- `/` — Splash/landing page.
-- `/login` — Google login.
-- `/dashboard` — Protected dashboard.
-- `/api/ai/echo` — AI demo route.
+## 2. Problem Statement
+
+Students often struggle to:
+- Articulate long-term goals while navigating short-term university decisions.
+- Find relevant opportunities that align with their interests and availability.
+- Build a sense of momentum or purpose throughout their time at King’s.
+
+Current systems are fragmented and reactive. King’s Canvas provides a proactive, student-centred planning surface that connects goals with action.
 
 ---
 
-## Goals
-- Be **fork-and-go**.
-- Be **test-ready**.
-- Be **extendable**.
-- Be **deployable**.
+## 3. Goals
+
+- Provide a canvas-based planning interface to help students visualise their personal and professional growth across time.
+- Support students in defining long-term **intentions** and breaking them into clear **steps**.
+- Match opportunities (programs, workshops, societies, experiences) to those steps using AI-assisted logic.
+- Enable a flexible blend of manual and AI-generated planning.
+- Track engagement over time and surface insights to staff and mentors (Phase 2+).
 
 ---
 
-## Out of Scope
-- No business logic.
-- No payments.
-- No theming engine.
-- No multi-tenancy.
+## 4. Core Features
+
+### ✳ Intentions
+- Defined by the student or suggested via AI chat.
+- Represent high-level ambitions or outcomes.
+- Must be assigned to a future time bucket:
+  - Do Before I Graduate
+  - Do After I Graduate
+
+### ✳ Steps
+- Practical tasks connected to an Intention.
+- Assigned to a current or near-future bucket:
+  - Do Now
+  - Do Later
+- May include tags (skills, focus areas) to improve recommendation relevance.
+- Can be generated by the user or the system.
+
+### ✳ Canvas Board
+- Kanban-style interface divided into four horizontal buckets:
+  - Do Now → Do Later → Before Graduation → After Graduation
+- Intentions and steps are represented as draggable cards.
+- Each Intention anchors a “swim lane” of steps flowing backwards from its assigned time bucket.
+
+### ✳ Opportunity Matching Engine
+- Runs in the background after plan edits or on a schedule.
+- Matches opportunities (courses, events, activities) to steps using:
+  - Tags
+  - Eligibility (e.g., year of study, faculty, programme)
+  - Availability (e.g., time of year, deadlines)
+- Each Step card shows a numeric badge if matches exist.
+- Students can:
+  - Accept (link to step)
+  - Dismiss (suppress)
+  - Snooze (resurface later)
+
+### ✳ AI Chat Assistant
+- Natural language interface that supports:
+  - Generating or refining Intentions.
+  - Suggesting Steps for a given Intention.
+  - Providing explanation for why an opportunity was matched.
+- Suggestions are never forced — always accept/rejectable.
+- Learns from rejected/snoozed actions.
 
 ---
 
-## Tech Stack
-- **Frontend**: Next.js, Tailwind, Zustand.
-- **Backend**: Next.js API routes, MongoDB.
-- **Auth**: NextAuth (Google).
-- **AI**: LangChain + LangGraph helpers.
-- **Forms**: React Hook Form.
-- **Testing**: Jest, React Testing Library.
-- **Deployment**: Vercel.
+## 5. Non-Goals (For Now)
+
+- Mobile-first or mobile-native support.
+- Academic advising or credit tracking.
+- Real-time collaborative editing (multi-user).
 
 ---
 
-## Developer Onboarding
-1. Clone repo.
-2. Copy `.env.example` → `.env.local`.
-3. Add credentials:
-   - Google OAuth client ID/secret.
-   - MongoDB URI.
-   - OpenAI key (optional).
-4. Run `npm install && npm run dev`.
-5. Open `http://localhost:3000`.
+## 6. User Roles
+
+| Role            | Description                                         |
+|-----------------|-----------------------------------------------------|
+| Student         | Primary user. Builds and manages their own canvas. |
+| AI Assistant    | Optional guide. Suggests content, matches actions. |
+| Staff (future)  | Access usage analytics and anonymised engagement.  |
 
 ---
 
-## Notes
-- Mobile-first design.
-- Single source of truth in this spec.
-- README complements with setup/deploy.
+## 7. Success Metrics
+
+- % of students who add ≥ 1 intention.
+- Average number of steps per student.
+- % of steps with at least one linked opportunity.
+- Feedback rating on AI suggestions (“Helpful?”).
+- Longitudinal retention (revisits per term).
+
+---
+
+## 8. Constraints
+
+- Desktop-only application (Chrome/Edge/Firefox).
+- Must align with King’s brand and accessibility guidelines (WCAG AA+).
+- All data stored securely with student opt-in visibility.
+
+---
+
+## 9. Future Scope (Phase 2+)
+
+- Calendar & reminder integration.
+- Opportunities dashboard for staff and advisors.
+- Opportunity submission for societies and departments.
+- Data visualisation of student life journeys.
+
+---
