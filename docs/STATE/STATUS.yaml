@@ -3,3 +3,4 @@
 - PR 0003: Added ColumnHeader component and integrated it into the Canvas layout.
 - PR 0004: Integrated King’s brand colour palette into Tailwind and applied to Canvas layout and headers.
 - PR 0005: Added typography system with King’s brand fonts and hierarchy.
+- PR 0006: Added static placeholders aligning Intentions to the "Before I Graduate" bucket and Steps to the earlier action buckets, leaving the "After I Graduate" column open for future content.
