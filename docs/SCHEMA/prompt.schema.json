@@ -1,0 +1,95 @@
+{
+  "$id": "https://example.com/schema/prompt.v2.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PromptPackage",
+  "type": "object",
+  "required": [
+    "id",
+    "epoch",
+    "issued_at",
+    "by",
+    "intent",
+    "context",
+    "inputs",
+    "plan",
+    "success_criteria",
+    "links"
+  ],
+  "properties": {
+    "id": { "type": "string", "pattern": "^prompt-\\d{4}$" },
+    "epoch": { "type": "string", "pattern": "^epoch-\\d{4}-[a-z0-9-]+$" },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "by": { "type": "string" },
+    "intent": { "type": "string", "minLength": 1 },
+    "context": { "type": "string", "minLength": 1 },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+          "value": { "type": "string", "minLength": 1 },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "plan": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["step", "owner"],
+        "properties": {
+          "step": { "type": "string", "minLength": 1 },
+          "owner": { "type": "string", "enum": ["frontend", "backend", "shared"] },
+          "notes": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "success_criteria": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "risks": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "follow_ups": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "links": {
+      "type": "object",
+      "required": ["frontend_log"],
+      "properties": {
+        "frontend_log": {
+          "type": "string",
+          "pattern": "^docs/LOGS/FRONTEND/.+\\.md$"
+        },
+        "related_prompts": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^prompt-\\d{4}$" },
+          "default": []
+        },
+        "assets": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "roadmap_items": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

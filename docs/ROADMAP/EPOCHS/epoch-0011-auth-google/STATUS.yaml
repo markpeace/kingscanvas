@@ -1,0 +1,17 @@
+epoch: epoch-0011-auth-google
+title: Authentication (NextAuth + Google)
+state: done
+started_at: "2025-10-11T09:00:00Z"      # backend fills with UTC ISO-8601 on first commit
+updated_at: "2025-10-11T12:00:00Z"      # backend updates on each change
+completed_at: "2025-10-11T12:00:00Z"    # backend fills when done
+prs:
+  - id: 13
+    title: "Add NextAuth Google scaffolding"
+    merged_at: "2025-10-11T11:55:00Z"
+notes:
+  - "2025-10-11: Added NextAuth dependency and scaffolding (prompt-0028)."
+  - "2025-10-11: Integrated sign-in/out UI and login page (prompt-0029)."
+  - "2025-10-11: Fixed login metadata client/server mismatch (prompt-0030)."
+  - "2025-10-11: Locked down dashboard route with server-side requireAuth helper (prompt-0031)."
+  - "2025-10-11: Added server-protected dashboard page with session display and auth ping route (prompt-0032)."
+  - "2025-10-11: Finalized Google OAuth integration, removed debug badge, and verified end-to-end auth flow (prompt-0033)."

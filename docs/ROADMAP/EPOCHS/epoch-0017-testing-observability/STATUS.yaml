@@ -1,0 +1,32 @@
+epoch: epoch-0017-testing-observability
+title: Testing & Observability
+state: done
+started_at: ""
+updated_at: ""
+completed_at: ""
+prs:
+  - id: 1
+    title: "Plan & Status docs"
+    merged_at: ""
+  - id: 2
+    title: "Testing tooling scaffold (Jest + RTL + MSW)"
+    merged_at: ""
+  - id: 3
+    title: "Seed unit tests (UI + Forms)"
+    merged_at: ""
+  - id: 3a
+    title: "Hotfix: Jest config compatibility"
+    merged_at: ""
+  - id: 4
+    title: "Integration tests + coverage wiring"
+    merged_at: ""
+  - id: 5
+    title: "Docs polish + Verify & Close"
+    merged_at: ""
+notes:
+  - "Jest + React Testing Library + MSW scaffolded under test/."
+  - "Seed unit tests validate Button and useZodErrorFor."
+  - "Integration tests verify /api/ai/ping route and Debug sink events."
+  - "Coverage command available via npm run test:ci."
+  - "Docs updated under docs/TESTING/README.md."
+  - "Config converted to CommonJS to avoid ts-node requirement."

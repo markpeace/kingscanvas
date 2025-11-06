@@ -1,0 +1,11 @@
+name: pr-autolog
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, closed]
+jobs:
+  log-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder log
+        run: echo "PR metadata logging will be implemented in scripts/build_frontend_export.sh"

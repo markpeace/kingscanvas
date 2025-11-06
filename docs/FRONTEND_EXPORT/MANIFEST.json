@@ -1,0 +1,10 @@
+{
+  "files": [
+    "AGENTS.md",
+    "docs/CONTRACT.md",
+    "docs/PROTOCOL.md",
+    "docs/REHYDRATE.md",
+    "docs/WORKING_PRACTICES.md",
+    "docs/FRONTEND_EXPORT/INSTRUCTIONS-frontend.md"
+  ]
+}

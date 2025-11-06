@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="squircle">
+      <path d="M64,0 H448 C483,0 512,29 512,64 V448 C512,483 483,512 448,512 H64 C29,512 0,483 0,448 V64 C0,29 29,0 64,0 Z"/>
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" fill="#0ea5e9" clip-path="url(#squircle)"/>
+  <text x="50%" y="54%" text-anchor="middle" font-size="240" font-family="system-ui, -apple-system, Segoe UI, Roboto" fill="white">N</text>
+</svg>

@@ -1,0 +1,12 @@
+{
+  "$id": "https://example.com/schema/response.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ExecutionResponse",
+  "type": "object",
+  "properties": {
+    "status": { "type": "string", "enum": ["ok", "warning", "error"] },
+    "message": { "type": "string" }
+  },
+  "required": ["status"],
+  "additionalProperties": true
+}

@@ -1,0 +1,1 @@
+Placeholder assets folder. PWA icons and manifest will be added in a later epoch.

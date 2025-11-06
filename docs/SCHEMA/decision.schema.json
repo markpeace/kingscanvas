@@ -1,0 +1,13 @@
+{
+  "$id": "https://example.com/schema/decision.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DecisionRecord",
+  "type": "object",
+  "required": ["id", "title", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "status": { "type": "string" }
+  },
+  "additionalProperties": true
+}

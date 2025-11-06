@@ -1,0 +1,12 @@
+epoch: epoch-0003-project-scaffold
+title: Project Scaffolding & Core Setup
+state: in-progress
+started_at: "2025-10-05T15:35:57Z"
+updated_at: "2025-10-05T15:35:57Z"
+completed_at: ""
+prs:
+  - id: pr-0002
+    title: "epoch-0003: Tailwind, ESLint, and Prettier tooling"
+    merged_at: ""
+notes:
+  - "Tailwind CSS, PostCSS, ESLint, and Prettier scaffolding added to Next.js project."

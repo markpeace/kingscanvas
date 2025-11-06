@@ -1,0 +1,10 @@
+# Auto detect text files and normalize line endings
+* text=auto
+
+# Markdown diffs
+*.md diff=markdown
+
+# YAML and JSON diff hints
+*.yaml diff
+*.yml diff
+*.json diff

@@ -1,0 +1,6 @@
+# Default owner
+*       @YOUR_HANDLE
+
+# Critical docs and state
+/docs/**            @YOUR_HANDLE
+AGENTS.md           @YOUR_HANDLE

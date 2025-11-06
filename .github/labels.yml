@@ -1,0 +1,13 @@
+# Canonical labels
+- name: epoch/bootstrap
+  color: 0366d6
+  description: Bootstrap work
+- name: docs
+  color: 0e8a16
+  description: Documentation changes
+- name: ci-bypass/allow-missing-history
+  color: d93f0b
+  description: Merge with advisory issues noted
+- name: risk
+  color: c2e0c6
+  description: Risk-related items

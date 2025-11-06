@@ -1,0 +1,13 @@
+{
+  "$id": "https://example.com/schema/epoch.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EpochStatus",
+  "type": "object",
+  "required": ["epoch", "phase", "percent_complete"],
+  "properties": {
+    "epoch": { "type": "string" },
+    "phase": { "type": "string", "enum": ["planned", "in-progress", "done"] },
+    "percent_complete": { "type": "number" }
+  },
+  "additionalProperties": true
+}

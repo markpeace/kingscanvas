@@ -1,0 +1,24 @@
+epoch: epoch-0005-pages-routes
+title: Basic App Pages & Routes
+state: done
+started_at: ""        # backend fills with actual UTC ISO-8601 start
+updated_at: ""        # backend updates to now
+completed_at: ""      # backend fills with actual UTC ISO-8601 completion
+prs:
+  - id: 1
+    title: "epoch-0005: plan and status docs"
+    merged_at: ""
+  - id: 2
+    title: "epoch-0005: pages & nav scaffold"
+    merged_at: ""
+  - id: 3
+    title: "epoch-0005: mobile UX polish"
+    merged_at: ""
+  - id: 4
+    title: "epoch-0005: verification and close"
+    merged_at: ""
+notes:
+  - "Navigation renders correctly on desktop and mobile."
+  - "Responsive layout verified; InstallHint placeholder displays only on mobile."
+  - "Custom 404 page and soft auth guard on /dashboard confirmed."
+  - "Dark mode, debug panel, and routing all working as expected."

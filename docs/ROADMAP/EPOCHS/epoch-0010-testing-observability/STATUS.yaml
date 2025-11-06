@@ -1,0 +1,12 @@
+epoch: epoch-0010-testing-observability
+title: Testing & Observability
+state: superseded
+started_at: 2025-10-10T12:00:00Z
+updated_at: 2025-10-18T16:15:00Z
+completed_at: ""
+superseded_by: epoch-0017-testing-observability
+prs: []
+notes:
+  - "2025-10-10T12:00:00Z — Initialized Jest + Testing Library with sample component and nav smoke tests."
+  - "2025-10-10T13:00:00Z — Added Playwright configuration, smoke spec, and npm scripts for E2E coverage."
+  - "2025-10-18T16:15:00Z — Epoch retired in favour of epoch-0017-testing-observability (completed)."

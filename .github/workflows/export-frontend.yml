@@ -1,0 +1,15 @@
+name: export-frontend
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - "docs/FRONTEND_EXPORT/MANIFEST.json"
+      - "docs/STATE/**"
+      - "AGENTS.md"
+jobs:
+  build-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Placeholder export
+        run: echo "Export build will be implemented in scripts/build_frontend_export.sh"

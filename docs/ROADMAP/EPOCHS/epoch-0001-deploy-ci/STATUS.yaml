@@ -1,0 +1,15 @@
+epoch: epoch-0001-deploy-ci
+title: Deployment & CI (Vercel First)
+state: done
+started_at: "2025-10-04T00:00:00Z"      # replace with actual UTC start
+completed_at: "2025-10-04T00:00:00Z"    # replace with actual UTC completion
+prs:
+  - id: 1
+    title: "epoch-0001: add PLAN/STATUS and contributor preview guidance"
+    merged_at: ""
+  - id: 2
+    title: "epoch-0001: add Vercel preview badge and PR checklist"
+    merged_at: ""
+notes:
+  - "Verified clean Vercel build and automatic preview URLs for new PRs."
+  - "README includes Deploying with Vercel and PR Preview Checklist sections."

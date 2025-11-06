@@ -1,0 +1,14 @@
+{
+  "$id": "https://example.com/schema/pr-log.v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PRLog",
+  "type": "object",
+  "required": ["id", "number", "title", "status"],
+  "properties": {
+    "id": { "type": "string" },
+    "number": { "type": "integer" },
+    "title": { "type": "string" },
+    "status": { "type": "string" }
+  },
+  "additionalProperties": true
+}
