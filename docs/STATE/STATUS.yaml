@@ -6,3 +6,11 @@
 - PR 0006: Added static placeholders aligning Intentions to the "Before I Graduate" bucket and Steps to the earlier action buckets, leaving the "After I Graduate" column open for future content.
 - PR 0007: Added responsive breakpoints and scaling for desktop resolutions.
 - PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance.
+
+epoch-0001:
+  status: "complete"
+  summary: |
+    Base Canvas layout implemented.
+    Includes four responsive columns with headers, placeholder cards, King’s brand colours, and full accessibility pass.
+    Static preview build available for internal review.
+  preview: "./previews/epoch-0001-demo.png"
