@@ -1,29 +1,52 @@
-import { useId } from 'react'
+'use client';
 
-import type { Intention } from '@/types/canvas'
+import { useEditableText } from '@/hooks/useEditableText';
+import type { Intention } from '@/types/canvas';
 
-export type IntentionCardProps = {
-  intention: Intention
-}
-
-export function IntentionCard({ intention }: IntentionCardProps) {
-  const headingId = useId()
+export function IntentionCard({ intention }: { intention: Intention }) {
+  const titleEdit = useEditableText(intention.title);
+  const descEdit = useEditableText(intention.description || '');
 
   return (
-    <article
-      aria-labelledby={headingId}
-      className="rounded-lg border border-kings-grey-dark bg-kings-grey-light p-4 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-kings-red focus-visible:outline-offset-2"
-      role="listitem"
-      tabIndex={0}
-    >
-      <h3 className="font-semibold text-kings-black text-sm md:text-base" id={headingId}>
-        {intention.title}
-      </h3>
-      {intention.description ? (
-        <p className="mt-2 text-xs text-kings-grey-dark md:text-sm">{intention.description}</p>
-      ) : null}
-    </article>
-  )
+    <div className="bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm">
+      {titleEdit.editing ? (
+        <input
+          className="w-full border border-kings-grey-light rounded-md p-2 text-sm mb-2"
+          value={titleEdit.value}
+          onChange={(e) => titleEdit.setValue(e.target.value)}
+          onBlur={() => titleEdit.commit()}
+          onKeyDown={(e) => e.key === 'Enter' && titleEdit.commit()}
+          autoFocus
+        />
+      ) : (
+        <h3
+          className="font-semibold text-kings-black cursor-pointer hover:text-kings-red"
+          onClick={titleEdit.startEditing}
+        >
+          {titleEdit.value || 'Untitled Intention'}
+        </h3>
+      )}
+
+      {descEdit.editing ? (
+        <textarea
+          className="w-full border border-kings-grey-light rounded-md p-2 text-sm mt-2"
+          value={descEdit.value}
+          onChange={(e) => descEdit.setValue(e.target.value)}
+          onBlur={() => descEdit.commit()}
+          onKeyDown={(e) => e.key === 'Enter' && descEdit.commit()}
+          rows={2}
+          autoFocus
+        />
+      ) : (
+        <p
+          className="text-sm text-kings-grey-dark cursor-pointer mt-1 hover:text-kings-red/80"
+          onClick={descEdit.startEditing}
+        >
+          {descEdit.value || 'Add a description'}
+        </p>
+      )}
+    </div>
+  );
 }
 
-export default IntentionCard
+export default IntentionCard;

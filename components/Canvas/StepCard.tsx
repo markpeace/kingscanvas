@@ -1,22 +1,20 @@
-'use client'
+'use client';
 
-import { useDraggable } from '@dnd-kit/core'
+import { useDraggable } from '@dnd-kit/core';
 
-import type { Step } from '@/types/canvas'
+import { useEditableText } from '@/hooks/useEditableText';
+import type { Step } from '@/types/canvas';
 
-export type StepCardProps = {
-  step: Step
-}
-
-export function StepCard({ step }: StepCardProps) {
+export function StepCard({ step }: { step: Step }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.id,
-    data: { step }
-  })
+    data: { step },
+  });
+  const titleEdit = useEditableText(step.title);
 
   const style = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined
+    : undefined;
 
   return (
     <div
@@ -26,9 +24,25 @@ export function StepCard({ step }: StepCardProps) {
       {...attributes}
       className="bg-white border border-kings-grey-light rounded-md p-3 shadow-sm text-sm cursor-grab hover:shadow-md active:cursor-grabbing"
     >
-      {step.title}
+      {titleEdit.editing ? (
+        <input
+          value={titleEdit.value}
+          onChange={(e) => titleEdit.setValue(e.target.value)}
+          onBlur={() => titleEdit.commit()}
+          onKeyDown={(e) => e.key === 'Enter' && titleEdit.commit()}
+          className="w-full border border-kings-grey-light rounded-md p-1 text-sm"
+          autoFocus
+        />
+      ) : (
+        <span
+          onDoubleClick={titleEdit.startEditing}
+          className="cursor-text hover:text-kings-red"
+        >
+          {titleEdit.value || 'New Step'}
+        </span>
+      )}
     </div>
-  )
+  );
 }
 
-export default StepCard
+export default StepCard;
