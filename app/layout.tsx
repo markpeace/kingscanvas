@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#0ea5e9" />
       </head>
-      <body className="min-h-screen bg-white text-gray-900 dark:bg-zinc-900 dark:text-gray-100">
+      <body className="min-h-screen bg-kings-white font-sans text-kings-black">
         <AuthProvider>
           <ToastProvider>
             <InstallBanner />
