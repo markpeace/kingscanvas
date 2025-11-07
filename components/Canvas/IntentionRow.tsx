@@ -1,16 +1,46 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal'
 import { IntentionCard } from '@/components/Canvas/IntentionCard'
 import { StepCard } from '@/components/Canvas/StepCard'
 import { BUCKETS, isBefore } from '@/lib/buckets'
-import { Intention, Step } from '@/types/canvas'
+import type { BucketId, Intention, Step } from '@/types/canvas'
+
+type BucketCellProps = {
+  bucketId: BucketId
+  isLater: boolean
+  children: ReactNode
+}
+
+function BucketCell({ bucketId, isLater, children }: BucketCellProps) {
+  const { setNodeRef } = useDroppable({ id: `drop-${bucketId}` })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={[
+        'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start',
+        isLater
+          ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
+          : 'bg-white border-kings-grey-light'
+      ].join(' ')}
+    >
+      {children}
+    </div>
+  )
+}
 
 export function IntentionRow({ intention }: { intention: Intention }) {
   const [steps, setSteps] = useState<Step[]>(intention.steps || [])
   const [modalBucket, setModalBucket] = useState<string | null>(null)
+
+  useEffect(() => {
+    setSteps(intention.steps || [])
+  }, [intention.steps])
 
   const handleAddStep = (bucket: string, title: string) => {
     const newStep: Step = {
@@ -38,15 +68,7 @@ export function IntentionRow({ intention }: { intention: Intention }) {
           const stepsForBucket = steps.filter((s) => s.bucket === colBucket)
 
           return (
-            <div
-              key={colBucket}
-              className={[
-                'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start',
-                isLater
-                  ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
-                  : 'bg-white border-kings-grey-light'
-              ].join(' ')}
-            >
+            <BucketCell key={colBucket} bucketId={colBucket} isLater={isLater}>
               {isIntentionBucket && <IntentionCard intention={intention} />}
 
               {isEarlier && (
@@ -65,7 +87,7 @@ export function IntentionRow({ intention }: { intention: Intention }) {
                   </button>
                 </>
               )}
-            </div>
+            </BucketCell>
           )
         })}
       </div>

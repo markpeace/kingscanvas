@@ -1,0 +1,15 @@
+{
+  "epoch": "0002",
+  "pr": "0004",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0004-drag-and-drop",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/IntentionRow.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Implemented drag-and-drop functionality for Steps between buckets using @dnd-kit/core."
+}

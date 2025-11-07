@@ -1,20 +1,48 @@
+'use client'
+
+import { useState } from 'react'
+import { DndContext, type DragEndEvent } from '@dnd-kit/core'
+
+import { IntentionRow } from '@/components/Canvas/IntentionRow'
 import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS } from '@/lib/buckets'
-import { IntentionRow } from '@/components/Canvas/IntentionRow'
+import type { BucketId } from '@/types/canvas'
 
-export function Canvas() {
+export default function Canvas() {
+  const [intentions, setIntentions] = useState(mockIntentions)
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const [intentionId, stepId] = String(active.id).split(':')
+    const newBucket = String(over.id).replace('drop-', '') as BucketId
+
+    setIntentions((prev) =>
+      prev.map((intention) => {
+        if (intention.id !== intentionId) return intention
+
+        const updatedSteps = intention.steps.map((step) =>
+          step.id === stepId ? { ...step, bucket: newBucket } : step
+        )
+
+        return { ...intention, steps: updatedSteps }
+      })
+    )
+  }
+
   return (
-    <main className="px-8 py-10 w-full overflow-x-hidden">
-      <div className="grid grid-cols-4 gap-6 mb-6 text-kings-red font-semibold text-xl">
-        {BUCKETS.map((bucket) => (
-          <h2 key={bucket.id}>{bucket.title}</h2>
+    <DndContext onDragEnd={handleDragEnd}>
+      <main className="px-8 py-10 w-full overflow-x-hidden">
+        <div className="grid grid-cols-4 gap-6 mb-6 text-kings-red font-semibold text-xl">
+          {BUCKETS.map((bucket) => (
+            <h2 key={bucket.id}>{bucket.title}</h2>
+          ))}
+        </div>
+        {intentions.map((intention) => (
+          <IntentionRow key={intention.id} intention={intention} />
         ))}
-      </div>
-      {mockIntentions.map((intention) => (
-        <IntentionRow key={intention.id} intention={intention} />
-      ))}
-    </main>
+      </main>
+    </DndContext>
   )
 }
-
-export default Canvas
