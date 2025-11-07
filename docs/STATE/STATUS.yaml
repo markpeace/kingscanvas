@@ -15,6 +15,8 @@ prs_log:
   - "PR 0002 (final): Corrected swim lane logic — each intention now sits in its goal bucket, steps appear only before it, multiple steps supported per bucket."
   - "PR 0003 (reissue): Rebuilt Step creation logic with stable grid layout (4 even columns, flex stacking, inline form)."
   - "PR 0003-UX: Replaced inline Add Step Form with modal-based flow for cleaner UX."
+  - "PR 0004 (reissue): Rebuilt drag-and-drop using @dnd-kit data payloads for reliable drops."
+  - "PR 0004-restrict: Prevented dropping Steps into or after an Intention’s bucket."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

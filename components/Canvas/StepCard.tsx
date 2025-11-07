@@ -1,4 +1,6 @@
-import { useId } from 'react'
+'use client'
+
+import { useDraggable } from '@dnd-kit/core'
 
 import type { Step } from '@/types/canvas'
 
@@ -7,19 +9,25 @@ export type StepCardProps = {
 }
 
 export function StepCard({ step }: StepCardProps) {
-  const headingId = useId()
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: step.id,
+    data: { step }
+  })
+
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined
 
   return (
-    <article
-      aria-labelledby={headingId}
-      className="rounded-lg border border-kings-grey-light bg-white p-3 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-kings-red focus-visible:outline-offset-2"
-      role="listitem"
-      tabIndex={0}
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className="bg-white border border-kings-grey-light rounded-md p-3 shadow-sm text-sm cursor-grab hover:shadow-md active:cursor-grabbing"
     >
-      <h3 className="font-semibold text-kings-grey-dark text-sm md:text-base" id={headingId}>
-        {step.title}
-      </h3>
-    </article>
+      {step.title}
+    </div>
   )
 }
 
