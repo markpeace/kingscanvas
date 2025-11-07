@@ -7,6 +7,7 @@
 - PR 0007: Added responsive breakpoints and scaling for desktop resolutions.
 - PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance.
 - PR 0010: Added unit and DOM tests verifying 4-column layout, headers, and placeholder cards.
+- PR 0011: Added screenshot reference metadata file for Canvas layout (binary excluded).
 
 epoch-0001:
   status: "complete"
