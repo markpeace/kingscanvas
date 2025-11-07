@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useDroppable } from '@dnd-kit/core'
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal'
 import { IntentionCard } from '@/components/Canvas/IntentionCard'
@@ -8,20 +9,73 @@ import { StepCard } from '@/components/Canvas/StepCard'
 import { BUCKETS, isBefore } from '@/lib/buckets'
 import { Intention, Step } from '@/types/canvas'
 
-export function IntentionRow({ intention }: { intention: Intention }) {
-  const [steps, setSteps] = useState<Step[]>(intention.steps || [])
-  const [modalBucket, setModalBucket] = useState<string | null>(null)
+type IntentionRowProps = {
+  intention: Intention
+  onAddStep: (bucket: Step['bucket'], title: string) => void
+}
 
-  const handleAddStep = (bucket: string, title: string) => {
-    const newStep: Step = {
-      id: `step-${Date.now()}`,
-      intentionId: intention.id,
-      title,
-      bucket: bucket as Step['bucket'],
-      order: steps.filter((s) => s.bucket === bucket).length + 1
-    }
-    setSteps([...steps, newStep])
-  }
+type BucketColumnProps = {
+  intention: Intention
+  bucketId: Step['bucket']
+  steps: Step[]
+  isIntentionBucket: boolean
+  isEarlier: boolean
+  isLater: boolean
+  onAddStepClick: () => void
+}
+
+function BucketColumn({
+  intention,
+  bucketId,
+  steps,
+  isIntentionBucket,
+  isEarlier,
+  isLater,
+  onAddStepClick
+}: BucketColumnProps) {
+  const dropId = `${intention.id}:${bucketId}`
+  const { setNodeRef, isOver } = useDroppable({
+    id: dropId,
+    data: { intentionId: intention.id, bucket: bucketId }
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={[
+        'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start transition-colors',
+        isOver
+          ? 'bg-kings-grey-light/40'
+          : isLater
+            ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
+            : 'bg-white border-kings-grey-light'
+      ].join(' ')}
+    >
+      {isIntentionBucket && <IntentionCard intention={intention} />}
+
+      {steps.length > 0 && (
+        <div className={`flex flex-col gap-2 mb-3 ${isIntentionBucket ? 'mt-3' : ''}`}>
+          {steps.map((step) => (
+            <StepCard key={step.id} step={step} />
+          ))}
+        </div>
+      )}
+
+      {isEarlier && (
+        <button
+          type="button"
+          onClick={onAddStepClick}
+          className="text-kings-grey-dark text-sm hover:text-kings-red mt-auto self-start"
+        >
+          ＋ Add Step
+        </button>
+      )}
+    </div>
+  )
+}
+
+export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
+  const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null)
 
   return (
     <>
@@ -35,37 +89,19 @@ export function IntentionRow({ intention }: { intention: Intention }) {
           const isEarlier = isBefore(colBucket, intention.bucket)
           const isLater = !isEarlier && !isIntentionBucket
 
-          const stepsForBucket = steps.filter((s) => s.bucket === colBucket)
+          const stepsForBucket = intention.steps.filter((step) => step.bucket === colBucket)
 
           return (
-            <div
-              key={colBucket}
-              className={[
-                'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start',
-                isLater
-                  ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
-                  : 'bg-white border-kings-grey-light'
-              ].join(' ')}
-            >
-              {isIntentionBucket && <IntentionCard intention={intention} />}
-
-              {isEarlier && (
-                <>
-                  <div className="flex flex-col gap-2 mb-3">
-                    {stepsForBucket.map((s) => (
-                      <StepCard key={s.id} step={s} />
-                    ))}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setModalBucket(colBucket)}
-                    className="text-kings-grey-dark text-sm hover:text-kings-red mt-auto self-start"
-                  >
-                    ＋ Add Step
-                  </button>
-                </>
-              )}
-            </div>
+            <BucketColumn
+              key={`${intention.id}:${colBucket}`}
+              intention={intention}
+              bucketId={colBucket}
+              steps={stepsForBucket}
+              isIntentionBucket={isIntentionBucket}
+              isEarlier={isEarlier}
+              isLater={isLater}
+              onAddStepClick={() => setModalBucket(colBucket)}
+            />
           )
         })}
       </div>
@@ -74,9 +110,11 @@ export function IntentionRow({ intention }: { intention: Intention }) {
         isOpen={!!modalBucket}
         onClose={() => setModalBucket(null)}
         onAdd={(title) => {
-          if (modalBucket) handleAddStep(modalBucket, title)
+          if (modalBucket) onAddStep(modalBucket, title)
         }}
       />
     </>
   )
 }
+
+export default IntentionRow

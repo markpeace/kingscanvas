@@ -1,0 +1,15 @@
+{
+  "epoch": "0002",
+  "pr": "0004",
+  "action": "reissued",
+  "branch": "feat/epoch-0002/pr-0004-stable-dnd",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/StepCard.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Reissued PR0004 with @dnd-kit data attributes for reliable drag-and-drop; Steps now drop correctly into target buckets."
+}
