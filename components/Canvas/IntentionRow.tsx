@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import { useState } from 'react'
 
-import { Intention } from '@/types/canvas'
+import type { BucketId, Intention, Step } from '@/types/canvas'
 
+import { AddStepForm } from './AddStepForm'
 import { BUCKETS, isBefore } from './constants'
 import { IntentionCard } from './IntentionCard'
 import { StepCard } from './StepCard'
@@ -11,30 +12,31 @@ export type IntentionRowProps = {
 }
 
 export function IntentionRow({ intention }: IntentionRowProps) {
+  const [steps, setSteps] = useState<Step[]>(intention.steps ?? [])
+
+  const handleAddStep = (bucket: BucketId, title: string) => {
+    setSteps((prevSteps) => {
+      const newStep: Step = {
+        id: `step-${Date.now()}`,
+        intentionId: intention.id,
+        title,
+        bucket,
+        order: prevSteps.filter((step) => step.bucket === bucket).length + 1
+      }
+
+      return [...prevSteps, newStep]
+    })
+  }
+
   return (
-    <>
+    <section
+      aria-label={`Intention row: ${intention.title}`}
+      className="grid grid-cols-4 gap-6 mb-10"
+    >
       {BUCKETS.map(({ id: colBucket }) => {
         const isIntentionBucket = colBucket === intention.bucket
         const isEarlier = isBefore(colBucket, intention.bucket)
         const isLater = !isEarlier && !isIntentionBucket
-
-        let content: ReactNode = null
-
-        if (isIntentionBucket) {
-          content = <IntentionCard intention={intention} />
-        } else if (isEarlier) {
-          const steps = [...(intention.steps || [])]
-            .filter((step) => step.bucket === colBucket)
-            .sort((a, b) => a.order - b.order)
-
-          content = (
-            <div className="space-y-3">
-              {steps.map((step) => (
-                <StepCard key={step.id} step={step} />
-              ))}
-            </div>
-          )
-        }
 
         return (
           <div
@@ -47,10 +49,24 @@ export function IntentionRow({ intention }: IntentionRowProps) {
             ].join(' ')}
             aria-disabled={isLater}
           >
-            {content}
+            {isIntentionBucket && <IntentionCard intention={intention} />}
+
+            {isEarlier && (
+              <>
+                <div className="space-y-3 mb-2">
+                  {steps
+                    .filter((step) => step.bucket === colBucket)
+                    .sort((a, b) => a.order - b.order)
+                    .map((step) => (
+                      <StepCard key={step.id} step={step} />
+                    ))}
+                </div>
+                <AddStepForm onAdd={(title) => handleAddStep(colBucket, title)} />
+              </>
+            )}
           </div>
         )
       })}
-    </>
+    </section>
   )
 }
