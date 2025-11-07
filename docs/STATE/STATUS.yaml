@@ -12,6 +12,7 @@ prs_log:
   - "PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance."
   - "PR 0010: Added unit and DOM tests verifying 4-column layout, headers, and placeholder cards."
   - "PR 0001: Defined Intention and Step interfaces, created mock data, and integrated placeholder render in Canvas."
+  - "PR 0002 (final): Corrected swim lane logic — each intention now sits in its goal bucket, steps appear only before it, multiple steps supported per bucket."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

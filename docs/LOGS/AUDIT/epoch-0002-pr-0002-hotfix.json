@@ -1,0 +1,8 @@
+{
+  "epoch": "0002",
+  "pr": "0002-hotfix",
+  "action": "restored",
+  "status": "success",
+  "files_changed": ["data/mockIntentions.ts"],
+  "summary": "Restored sample mock data for three Intentions after accidental overwrite."
+}

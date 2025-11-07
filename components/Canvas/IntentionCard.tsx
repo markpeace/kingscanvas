@@ -1,6 +1,12 @@
-import { useId } from "react"
+import { useId } from 'react'
 
-export function IntentionCard() {
+import type { Intention } from '@/types/canvas'
+
+export type IntentionCardProps = {
+  intention: Intention
+}
+
+export function IntentionCard({ intention }: IntentionCardProps) {
   const headingId = useId()
 
   return (
@@ -11,8 +17,11 @@ export function IntentionCard() {
       tabIndex={0}
     >
       <h3 className="font-semibold text-kings-black text-sm md:text-base" id={headingId}>
-        Intention placeholder
+        {intention.title}
       </h3>
+      {intention.description ? (
+        <p className="mt-2 text-xs text-kings-grey-dark md:text-sm">{intention.description}</p>
+      ) : null}
     </article>
   )
 }
