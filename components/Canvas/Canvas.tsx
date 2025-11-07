@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 
 import { mockIntentions } from '@/data/mockIntentions'
-import { BUCKETS } from '@/lib/buckets'
+import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
 import type { Step } from '@/types/canvas'
 
@@ -27,6 +27,20 @@ export function Canvas() {
     setIntentions((prev) =>
       prev.map((intention) => {
         if (intention.id !== intentionId) return intention
+
+        const intentionBucket = intention.bucket
+        const newBucketOrder = bucketOrder[newBucket]
+        const intentionOrder = bucketOrder[intentionBucket]
+
+        if (newBucketOrder === undefined || intentionOrder === undefined) {
+          console.warn('Blocked drop: unknown bucket ordering')
+          return intention
+        }
+
+        if (newBucketOrder >= intentionOrder) {
+          console.warn('Blocked drop: cannot move step after intention bucket')
+          return intention
+        }
 
         const stepsInTarget = intention.steps.filter(
           (step) => step.bucket === newBucket && step.id !== draggedStep.id

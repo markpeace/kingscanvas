@@ -12,15 +12,29 @@ export const BUCKETS: Bucket[] = [
   { id: 'after-graduation', title: 'After I Graduate' }
 ]
 
-const BUCKET_ORDER = BUCKETS.map((bucket) => bucket.id)
+export const bucketOrder = BUCKETS.reduce<Record<BucketId, number>>((orderMap, bucket, index) => {
+  orderMap[bucket.id] = index
+  return orderMap
+}, {} as Record<BucketId, number>)
 
 export function isBefore(a: BucketId, b: BucketId) {
-  const indexOfA = BUCKET_ORDER.indexOf(a)
-  const indexOfB = BUCKET_ORDER.indexOf(b)
+  const indexOfA = bucketOrder[a]
+  const indexOfB = bucketOrder[b]
 
-  if (indexOfA === -1 || indexOfB === -1) {
+  if (indexOfA === undefined || indexOfB === undefined) {
     return false
   }
 
   return indexOfA < indexOfB
+}
+
+export function isSameOrBefore(a: BucketId, b: BucketId) {
+  const indexOfA = bucketOrder[a]
+  const indexOfB = bucketOrder[b]
+
+  if (indexOfA === undefined || indexOfB === undefined) {
+    return false
+  }
+
+  return indexOfA <= indexOfB
 }
