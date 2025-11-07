@@ -1,0 +1,20 @@
+{
+  "epoch": "0002",
+  "pr": "0002",
+  "action": "reissued",
+  "branch": "feat/epoch-0002/pr-0002-final-swimlane-logic",
+  "status": "success",
+  "files_changed": [
+    "data/mockIntentions.ts",
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/constants.ts",
+    "types/canvas.ts",
+    "docs/STATE/STATUS.yaml"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Each intention sits in its target bucket with earlier steps rendered before it and multiple steps supported per bucket."
+}
