@@ -1,3 +1,5 @@
+'use client'
+
 import { type FormEvent, useState } from 'react'
 
 type AddStepFormProps = {
