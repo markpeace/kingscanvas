@@ -11,7 +11,7 @@ export function IntentionCard({ intention }: { intention: Intention }) {
     <div className="bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm">
       {titleEdit.editing ? (
         <input
-          className="w-full border border-kings-grey-light rounded-md px-3 py-2 text-base font-semibold mb-2 leading-6 focus:outline-none focus:ring-2 focus:ring-kings-red/40"
+          className="w-full border border-kings-grey-light rounded-md px-3 py-2 text-base font-semibold mb-2 leading-6 text-kings-black placeholder:text-kings-grey focus:outline-none focus:ring-2 focus:ring-kings-red/40"
           value={titleEdit.value}
           onChange={(e) => titleEdit.setValue(e.target.value)}
           onBlur={() => titleEdit.commit()}
@@ -31,7 +31,7 @@ export function IntentionCard({ intention }: { intention: Intention }) {
 
       {descEdit.editing ? (
         <textarea
-          className="w-full border border-kings-grey-light rounded-md px-3 py-2 text-sm leading-5 mt-2 focus:outline-none focus:ring-2 focus:ring-kings-red/30"
+          className="w-full border border-kings-grey-light rounded-md px-3 py-2 text-sm leading-5 mt-2 text-kings-black placeholder:text-kings-grey-dark focus:outline-none focus:ring-2 focus:ring-kings-red/30"
           value={descEdit.value}
           onChange={(e) => descEdit.setValue(e.target.value)}
           onBlur={() => descEdit.commit()}
