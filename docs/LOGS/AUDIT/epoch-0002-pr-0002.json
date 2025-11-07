@@ -1,0 +1,17 @@
+{
+  "epoch": "0002",
+  "pr": "0002",
+  "action": "reissued",
+  "branch": "feat/epoch-0002/pr-0002-intentions-in-buckets",
+  "status": "success",
+  "files_changed": [
+    "types/canvas.ts",
+    "data/mockIntentions.ts",
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/StepCard.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Rendered Intentions as cards inside bucket columns with multiple samples."
+}

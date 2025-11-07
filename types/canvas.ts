@@ -10,6 +10,7 @@ export interface Intention {
   id: string;
   title: string;
   description?: string;
+  bucket: 'do-now' | 'do-later' | 'before-graduation' | 'after-graduation';
   steps: Step[];
   createdAt: string;
   updatedAt: string;
