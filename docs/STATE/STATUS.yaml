@@ -1,17 +1,25 @@
-- PR 0001: Base Canvas structure scaffolded and rendering placeholder text.
-- PR 0002: Four-column grid layout implemented using TailwindCSS.
-- PR 0003: Added ColumnHeader component and integrated it into the Canvas layout.
-- PR 0004: Integrated King’s brand colour palette into Tailwind and applied to Canvas layout and headers.
-- PR 0005: Added typography system with King’s brand fonts and hierarchy.
-- PR 0006: Added static placeholders aligning Intentions to the "Before I Graduate" bucket and Steps to the earlier action buckets, leaving the "After I Graduate" column open for future content.
-- PR 0007: Added responsive breakpoints and scaling for desktop resolutions.
-- PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance.
-- PR 0010: Added unit and DOM tests verifying 4-column layout, headers, and placeholder cards.
+last_updated: "2025-11-07T08:15:00Z"
+active_epoch: "epoch-0002"
+
+prs_log:
+  - "PR 0001: Base Canvas structure scaffolded and rendering placeholder text."
+  - "PR 0002: Four-column grid layout implemented using TailwindCSS."
+  - "PR 0003: Added ColumnHeader component and integrated it into the Canvas layout."
+  - "PR 0004: Integrated King’s brand colour palette into Tailwind and applied to Canvas layout and headers."
+  - "PR 0005: Added typography system with King’s brand fonts and hierarchy."
+  - "PR 0006: Added static placeholders aligning Intentions to the \"Before I Graduate\" bucket and Steps to the earlier action buckets, leaving the \"After I Graduate\" column open for future content."
+  - "PR 0007: Added responsive breakpoints and scaling for desktop resolutions."
+  - "PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance."
+  - "PR 0010: Added unit and DOM tests verifying 4-column layout, headers, and placeholder cards."
 
 epoch-0001:
+  title: "Canvas Columns & Layout"
   status: "complete"
+  completed_at: "2025-11-07T08:15:00Z"
   summary: |
-    Base Canvas layout implemented.
-    Includes four responsive columns with headers, placeholder cards, King’s brand colours, and full accessibility pass.
-    Static preview build available for internal review.
-  preview: "./previews/epoch-0001-demo.png"
+    Implemented the foundational four-column Canvas layout for King’s Canvas.
+    Includes responsive grid, branded styling, placeholder cards, typography, and full accessibility review.
+    Layout verified via internal preview and automated DOM tests.
+  prs:
+    - 0001–0010
+  next_epoch: "epoch-0002"
