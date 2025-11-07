@@ -1,9 +1,15 @@
-# Baseline empty state for new workstreams.
-epoch_current: null
-prompt_active: null
-prs_open: []
-next_actions: []
-health:
-  invariants_ok: null
-  last_validated: null
-timezone_display: Europe/London
+epoch_id: "epoch-0002"
+title: "Intentions, Steps & Swim Lanes"
+status: "active"
+started_at: "2025-11-07T08:15:00Z"
+parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
+summary: |
+  Introduce Intentions as rows (swim lanes) that span the Canvas horizontally.
+  Add CRUD logic for Intentions and Steps, enabling creation, editing, deletion, and drag-and-drop between columns.
+  Prepare groundwork for persistence in Epoch 0003.
+expected_prs:
+  - 0001: Create Intention model & placeholder data
+  - 0002: Render Intention rows (swim lanes)
+  - 0003: Add Step creation & association logic
+  - 0004: Implement drag-and-drop between columns
+  - 0005: Local storage persistence & autosave
