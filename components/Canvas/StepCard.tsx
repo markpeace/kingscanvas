@@ -30,13 +30,15 @@ export function StepCard({ step }: { step: Step }) {
           onChange={(e) => titleEdit.setValue(e.target.value)}
           onBlur={() => titleEdit.commit()}
           onKeyDown={(e) => e.key === 'Enter' && titleEdit.commit()}
-          className="w-full border border-kings-grey-light rounded-md p-1 text-sm"
+          className="w-full border border-kings-grey-light rounded-md px-3 py-1.5 text-sm leading-5 focus:outline-none focus:ring-2 focus:ring-kings-red/30"
           autoFocus
         />
       ) : (
         <span
           onDoubleClick={titleEdit.startEditing}
-          className="cursor-text hover:text-kings-red"
+          className="cursor-text text-kings-black hover:text-kings-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/30 rounded"
+          tabIndex={0}
+          onKeyDown={(event) => (event.key === 'Enter' || event.key === ' ') && titleEdit.startEditing()}
         >
           {titleEdit.value || 'New Step'}
         </span>
