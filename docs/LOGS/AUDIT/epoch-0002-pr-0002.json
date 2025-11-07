@@ -1,0 +1,20 @@
+{
+  "epoch": "0002",
+  "pr": "0002",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0002-swimlane-correct-layout",
+  "status": "success",
+  "files_changed": [
+    "lib/buckets.ts",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "types/canvas.ts",
+    "data/mockIntentions.ts",
+    "docs/STATE/STATUS.yaml"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Each intention renders as a four-column row; intention sits in its bucket; steps render only in earlier buckets; later buckets disabled."
+}
