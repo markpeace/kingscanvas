@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 
 import type { BucketId, Intention, Step } from '@/types/canvas'
