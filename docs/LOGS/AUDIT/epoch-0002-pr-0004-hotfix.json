@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0004-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0004-hotfix-dnd-dropzones",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/Canvas.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Fixed droppable zone IDs and handleDragEnd logic so StepCards drop correctly within their Intention rows."
+}

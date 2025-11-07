@@ -11,22 +11,26 @@ import { BUCKETS, isBefore } from '@/lib/buckets'
 import type { BucketId, Intention, Step } from '@/types/canvas'
 
 type BucketCellProps = {
+  intentionId: string
   bucketId: BucketId
   isLater: boolean
   children: ReactNode
 }
 
-function BucketCell({ bucketId, isLater, children }: BucketCellProps) {
-  const { setNodeRef } = useDroppable({ id: `drop-${bucketId}` })
+function BucketCell({ intentionId, bucketId, isLater, children }: BucketCellProps) {
+  const dropId = `drop-${intentionId}-${bucketId}`
+  const { setNodeRef, isOver } = useDroppable({ id: dropId })
 
   return (
     <div
       ref={setNodeRef}
       className={[
-        'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start',
-        isLater
-          ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
-          : 'bg-white border-kings-grey-light'
+        'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start transition-colors',
+        isOver
+          ? 'bg-kings-grey-light/40'
+          : isLater
+              ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
+              : 'bg-white border-kings-grey-light'
       ].join(' ')}
     >
       {children}
@@ -68,7 +72,12 @@ export function IntentionRow({ intention }: { intention: Intention }) {
           const stepsForBucket = steps.filter((s) => s.bucket === colBucket)
 
           return (
-            <BucketCell key={colBucket} bucketId={colBucket} isLater={isLater}>
+            <BucketCell
+              key={`drop-${intention.id}-${colBucket}`}
+              intentionId={intention.id}
+              bucketId={colBucket}
+              isLater={isLater}
+            >
               {isIntentionBucket && <IntentionCard intention={intention} />}
 
               {isEarlier && (

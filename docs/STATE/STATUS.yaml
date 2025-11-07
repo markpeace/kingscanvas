@@ -16,6 +16,7 @@ prs_log:
   - "PR 0003 (reissue): Rebuilt Step creation logic with stable grid layout (4 even columns, flex stacking, inline form)."
   - "PR 0003-UX: Replaced inline Add Step Form with modal-based flow for cleaner UX."
   - "PR 0004: Enabled drag-and-drop movement of Steps between columns within each Intention row."
+  - "PR 0004-hotfix: Fixed drop zone IDs and handler logic to enable successful Step drops."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

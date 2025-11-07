@@ -15,15 +15,21 @@ export default function Canvas() {
     const { active, over } = event
     if (!over) return
 
-    const [intentionId, stepId] = String(active.id).split(':')
-    const newBucket = String(over.id).replace('drop-', '') as BucketId
+    const [activeIntentionId, stepId] = String(active.id).split(':')
+    const [, overIntentionId, overBucket] = String(over.id).split('-') as [
+      string,
+      string,
+      BucketId
+    ]
+
+    if (activeIntentionId !== overIntentionId) return
 
     setIntentions((prev) =>
       prev.map((intention) => {
-        if (intention.id !== intentionId) return intention
+        if (intention.id !== activeIntentionId) return intention
 
         const updatedSteps = intention.steps.map((step) =>
-          step.id === stepId ? { ...step, bucket: newBucket } : step
+          step.id === stepId ? { ...step, bucket: overBucket } : step
         )
 
         return { ...intention, steps: updatedSteps }
