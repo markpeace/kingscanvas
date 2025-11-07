@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0003-ux",
+  "action": "reissued",
+  "branch": "feat/epoch-0002/pr-0003-ux-modal-step-creation",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/AddStepModal.tsx",
+    "components/Canvas/IntentionRow.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Replaced inline AddStepForm with modal-based Step creation for cleaner UX."
+}
