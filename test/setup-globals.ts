@@ -2,7 +2,7 @@ import { TransformStream } from "stream/web"
 import { TextDecoder, TextEncoder } from "util"
 
 if (!globalThis.TextEncoder) {
-  globalThis.TextEncoder = TextEncoder
+  globalThis.TextEncoder = TextEncoder as unknown as typeof globalThis.TextEncoder
 }
 
 if (!globalThis.TextDecoder) {
