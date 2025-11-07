@@ -7,7 +7,11 @@ import { IntentionRow } from './IntentionRow'
 export function Canvas() {
   return (
     <div className="max-w-[1920px] mx-auto px-4 py-8 lg:px-8 2xl:px-12">
-      <main aria-labelledby="canvas-title" className="bg-kings-white" role="main">
+      <main
+        aria-labelledby="canvas-title"
+        className="px-8 py-10 overflow-x-hidden w-full bg-kings-white"
+        role="main"
+      >
         <h1 className="sr-only" id="canvas-title">
           King&apos;s Canvas
         </h1>

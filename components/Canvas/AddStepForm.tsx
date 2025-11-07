@@ -22,13 +22,13 @@ export function AddStepForm({ onAdd }: AddStepFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-2 flex gap-2">
+    <form onSubmit={handleSubmit} className="mt-2 flex items-center gap-2">
       <input
         type="text"
         value={title}
         onChange={(event) => setTitle(event.target.value)}
         placeholder="Add new step..."
-        className="flex-grow border border-kings-grey-light rounded-md p-2 text-sm focus:outline focus:outline-2 focus:outline-kings-red"
+        className="border border-kings-grey-light rounded-md p-2 text-sm flex-shrink w-full"
       />
       <button
         type="submit"

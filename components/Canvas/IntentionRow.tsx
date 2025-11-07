@@ -33,7 +33,7 @@ export function IntentionRow({ intention }: IntentionRowProps) {
   return (
     <section
       aria-label={`Intention row: ${intention.title}`}
-      className="grid grid-cols-4 gap-6 mb-10"
+      className="grid grid-cols-4 gap-6 mb-10 w-full min-w-0 items-start"
     >
       {BUCKETS.map(({ id: colBucket }) => {
         const isIntentionBucket = colBucket === intention.bucket
@@ -44,7 +44,7 @@ export function IntentionRow({ intention }: IntentionRowProps) {
           <div
             key={colBucket}
             className={[
-              'rounded-lg border p-3 min-h-[140px] transition-colors',
+              'rounded-lg border p-3 min-h-[120px] w-full min-w-0',
               isLater
                 ? 'border-kings-grey-light/60 bg-kings-grey-light/20'
                 : 'border-kings-grey-light bg-white'
