@@ -1,6 +1,11 @@
+import { Step } from "@/types/canvas"
 import { useId } from "react"
 
-export function StepCard() {
+type StepCardProps = {
+  step: Step
+}
+
+export function StepCard({ step }: StepCardProps) {
   const headingId = useId()
 
   return (
@@ -11,7 +16,7 @@ export function StepCard() {
       tabIndex={0}
     >
       <h3 className="font-semibold text-kings-grey-dark text-sm md:text-base" id={headingId}>
-        Step placeholder
+        {step.title}
       </h3>
     </article>
   )
