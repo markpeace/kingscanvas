@@ -1,3 +1,4 @@
+import { mockIntentions } from "@/data/mockIntentions"
 import { ColumnHeader } from "./ColumnHeader"
 import { IntentionCard } from "./IntentionCard"
 import { StepCard } from "./StepCard"
@@ -13,6 +14,9 @@ export function Canvas() {
         <h1 className="sr-only" id="canvas-title">
           King&apos;s Canvas
         </h1>
+        <p className="text-sm text-kings-grey-dark">
+          Loaded {mockIntentions.length} intention(s)
+        </p>
         {/* Column 1: Do Now header and tasks will be mounted here in a follow-up PR. */}
         <section
           aria-labelledby="do-now-column-title"

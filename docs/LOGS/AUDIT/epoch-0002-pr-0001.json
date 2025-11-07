@@ -1,0 +1,17 @@
+[
+  {
+    "epoch": "0002",
+    "pr": "0001",
+    "action": "created",
+    "branch": "feat/epoch-0002/pr-0001-intention-model",
+    "status": "success",
+    "files_changed": [
+      "types/canvas.ts",
+      "data/mockIntentions.ts",
+      "components/Canvas/Canvas.tsx"
+    ],
+    "tests_passed": true,
+    "build_status": "clean",
+    "summary": "Created base data model for Intentions and Steps with placeholder mock data."
+  }
+]
