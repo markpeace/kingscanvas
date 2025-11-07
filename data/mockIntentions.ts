@@ -1,4 +1,4 @@
-import { Intention } from '@/types/canvas'
+import { Intention } from '@/types/canvas';
 
 export const mockIntentions: Intention[] = [
   {
@@ -40,4 +40,4 @@ export const mockIntentions: Intention[] = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString()
   }
-]
+];
