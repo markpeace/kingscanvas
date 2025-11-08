@@ -1,14 +1,11 @@
 {
   "epoch": "0002",
-  "pr": "0009",
-  "action": "created",
-  "branch": "feat/epoch-0002/pr-0009-typography-sans-serif",
+  "pr": "0009-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0009-hotfix-column-header-balance",
   "status": "success",
-  "files_changed": [
-    "tailwind.config.ts",
-    "app/globals.css"
-  ],
+  "files_changed": ["components/Canvas/Canvas.tsx"],
   "tests_passed": true,
   "build_status": "clean",
-  "summary": "Replaced serif font with Inter/system sans-serif stack for a modern visual baseline."
+  "summary": "Reduced column header size and weight, adjusted spacing to improve Canvas visual balance."
 }

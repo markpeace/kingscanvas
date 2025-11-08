@@ -26,6 +26,7 @@ prs_log:
   - "PR 0007: Added deletion for Steps and Intentions with confirmation modals."
   - "PR 0007-hotfix: Replaced delete buttons with drag-to-delete trash zone at row edge."
   - "PR 0009: Replaced global serif typeface with neutral sans-serif (Inter/system stack) for cleaner aesthetic."
+  - "PR 0009-hotfix: Reduced column header size and weight for improved grid balance."
 
 epoch-0001:
   title: "Canvas Columns & Layout"
