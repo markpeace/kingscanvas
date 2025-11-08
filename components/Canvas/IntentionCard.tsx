@@ -1,29 +1,51 @@
-import { useId } from 'react'
+'use client';
 
-import type { Intention } from '@/types/canvas'
+import { useState } from 'react';
 
-export type IntentionCardProps = {
-  intention: Intention
-}
+import { EditModal } from '@/components/Canvas/EditModal';
+import type { Intention } from '@/types/canvas';
 
-export function IntentionCard({ intention }: IntentionCardProps) {
-  const headingId = useId()
+export function IntentionCard({ intention }: { intention: Intention }) {
+  const [data, setData] = useState(intention);
+  const [open, setOpen] = useState(false);
+
+  const handleSave = (title: string, description?: string) => {
+    setData((prev) => ({
+      ...prev,
+      title,
+      description,
+    }));
+  };
 
   return (
-    <article
-      aria-labelledby={headingId}
-      className="rounded-lg border border-kings-grey-dark bg-kings-grey-light p-4 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-kings-red focus-visible:outline-offset-2"
-      role="listitem"
-      tabIndex={0}
-    >
-      <h3 className="font-semibold text-kings-black text-sm md:text-base" id={headingId}>
-        {intention.title}
-      </h3>
-      {intention.description ? (
-        <p className="mt-2 text-xs text-kings-grey-dark md:text-sm">{intention.description}</p>
-      ) : null}
-    </article>
-  )
+    <>
+      <div
+        className="bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-pointer hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
+        onClick={() => setOpen(true)}
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+      >
+        <h3 className="font-semibold text-kings-black">{data.title || 'Untitled Intention'}</h3>
+        {data.description && (
+          <p className="text-sm text-kings-grey-dark mt-1">{data.description}</p>
+        )}
+      </div>
+
+      <EditModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title="Edit Intention"
+        initialTitle={data.title}
+        initialDescription={data.description}
+        onSave={handleSave}
+      />
+    </>
+  );
 }
 
-export default IntentionCard
+export default IntentionCard;
