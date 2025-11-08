@@ -6,6 +6,8 @@ import { createPortal } from 'react-dom'
 import { BUCKETS } from '@/lib/buckets'
 import type { BucketId } from '@/types/canvas'
 
+const VALID_BUCKETS = BUCKETS.filter((bucket) => bucket.id !== 'do-now')
+
 export function AddIntentionModal({
   isOpen,
   onClose,
@@ -17,16 +19,20 @@ export function AddIntentionModal({
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [bucket, setBucket] = useState<BucketId>(BUCKETS[0].id)
+  const [bucket, setBucket] = useState<BucketId>(VALID_BUCKETS[0].id)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     if (!title.trim()) return
+    if (bucket === 'do-now') {
+      alert('Intentions cannot be added to the "Do Now" bucket.')
+      return
+    }
 
     onAdd(title.trim(), description.trim(), bucket)
     setTitle('')
     setDescription('')
-    setBucket(BUCKETS[0].id)
+    setBucket(VALID_BUCKETS[0].id)
     onClose()
   }
 
@@ -56,7 +62,7 @@ export function AddIntentionModal({
             onChange={(event) => setBucket(event.target.value as BucketId)}
             className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black bg-white"
           >
-            {BUCKETS.map((option) => (
+            {VALID_BUCKETS.map((option) => (
               <option key={option.id} value={option.id}>
                 {option.title}
               </option>

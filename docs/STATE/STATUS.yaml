@@ -22,6 +22,7 @@ prs_log:
   - "PR 0005-hotfix: Replaced inline editing with modal editing consistent with Add Step modal."
   - "PR 0005-hotfix-2: Matched Edit Modal visual styling to Add Step modal (white card, red border, black text)."
   - "PR 0006: Added Intention creation modal with title, description, and bucket selection."
+  - "PR 0006-hotfix: Restricted Intention creation to Do Later, Before I Graduate, and After I Graduate buckets."
 
 epoch-0001:
   title: "Canvas Columns & Layout"
