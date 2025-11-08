@@ -128,7 +128,7 @@ export function Canvas() {
       <main className="px-8 py-10 w-full overflow-x-hidden">
         <div className="flex items-center mb-6">
           <div className="flex-1" aria-hidden="true" />
-          <h1 className="flex-1 text-lg font-semibold text-kings-red mb-1 text-center">
+          <h1 className="flex-1 text-lg font-semibold text-kings-red mb-0.5 text-center">
             Your Intentions
           </h1>
           <div className="flex-1 flex justify-end">
@@ -140,12 +140,12 @@ export function Canvas() {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-6 mb-2">
+        <div className="grid grid-cols-4 gap-6 mb-1">
           {BUCKETS.map((bucket) => (
             <div key={bucket.id} className="flex items-center justify-center text-center">
-              <h5 className="text-kings-red/90 text-sm font-medium tracking-wider uppercase text-center w-fit mx-auto">
+              <h6 className="text-kings-red/80 text-xs font-medium tracking-widest uppercase text-center max-w-[80%] leading-tight">
                 {bucket.title}
-              </h5>
+              </h6>
             </div>
           ))}
         </div>
