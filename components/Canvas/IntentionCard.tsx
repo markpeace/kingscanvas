@@ -33,7 +33,7 @@ export function IntentionCard({ intention }: { intention: Intention }) {
         style={style}
         {...listeners}
         {...attributes}
-        className="relative border-2 border-kings-red/60 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
+        className="relative border-2 border-kings-red/70 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
         onClick={() => setOpen(true)}
         tabIndex={0}
         onKeyDown={(event) => {

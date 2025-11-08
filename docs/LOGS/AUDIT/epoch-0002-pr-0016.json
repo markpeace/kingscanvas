@@ -1,0 +1,15 @@
+{
+  "epoch": "0002",
+  "pr": "0016",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0016-card-consistency-empty-states",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/IntentionRow.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Unified Intention and Step card styling, added dashed empty-state placeholders with contextual copy."
+}
