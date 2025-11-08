@@ -1,32 +1,29 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { useDroppable } from '@dnd-kit/core'
+import { useDndContext, useDroppable } from '@dnd-kit/core';
+import { useState } from 'react';
 
-import { AddStepModal } from '@/components/Canvas/AddStepModal'
-import { IntentionCard } from '@/components/Canvas/IntentionCard'
-import { StepCard } from '@/components/Canvas/StepCard'
-import { BUCKETS, isBefore } from '@/lib/buckets'
-import { Intention, Step } from '@/types/canvas'
+import { AddStepModal } from '@/components/Canvas/AddStepModal';
+import { IntentionCard } from '@/components/Canvas/IntentionCard';
+import { StepCard } from '@/components/Canvas/StepCard';
+import { TrashZone } from '@/components/Canvas/TrashZone';
+import { BUCKETS, isBefore } from '@/lib/buckets';
+import { Intention, Step } from '@/types/canvas';
 
 type IntentionRowProps = {
-  intention: Intention
-  onAddStep: (bucket: Step['bucket'], title: string) => void
-  onDeleteIntention: (id: string) => void
-  onDeleteStep: (intentionId: string, stepId: string) => void
-}
+  intention: Intention;
+  onAddStep: (bucket: Step['bucket'], title: string) => void;
+};
 
 type BucketColumnProps = {
-  intention: Intention
-  bucketId: Step['bucket']
-  steps: Step[]
-  isIntentionBucket: boolean
-  isEarlier: boolean
-  isLater: boolean
-  onAddStepClick: () => void
-  onDeleteIntention: (id: string) => void
-  onDeleteStep: (stepId: string) => void
-}
+  intention: Intention;
+  bucketId: Step['bucket'];
+  steps: Step[];
+  isIntentionBucket: boolean;
+  isEarlier: boolean;
+  isLater: boolean;
+  onAddStepClick: () => void;
+};
 
 function BucketColumn({
   intention,
@@ -36,14 +33,12 @@ function BucketColumn({
   isEarlier,
   isLater,
   onAddStepClick,
-  onDeleteIntention,
-  onDeleteStep
 }: BucketColumnProps) {
-  const dropId = `${intention.id}:${bucketId}`
+  const dropId = `${intention.id}:${bucketId}`;
   const { setNodeRef, isOver } = useDroppable({
     id: dropId,
-    data: { intentionId: intention.id, bucket: bucketId }
-  })
+    data: { intentionId: intention.id, bucket: bucketId },
+  });
 
   return (
     <div
@@ -54,17 +49,15 @@ function BucketColumn({
           ? 'bg-kings-grey-light/40'
           : isLater
             ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
-            : 'bg-white border-kings-grey-light'
+            : 'bg-white border-kings-grey-light',
       ].join(' ')}
     >
-      {isIntentionBucket && (
-        <IntentionCard intention={intention} onDelete={onDeleteIntention} />
-      )}
+      {isIntentionBucket && <IntentionCard intention={intention} />}
 
       {steps.length > 0 && (
         <div className={`flex flex-col gap-2 mb-3 ${isIntentionBucket ? 'mt-3' : ''}`}>
           {steps.map((step) => (
-            <StepCard key={step.id} step={step} onDelete={onDeleteStep} />
+            <StepCard key={step.id} step={step} />
           ))}
         </div>
       )}
@@ -79,57 +72,62 @@ function BucketColumn({
         </button>
       )}
     </div>
-  )
+  );
 }
 
-export function IntentionRow({
-  intention,
-  onAddStep,
-  onDeleteIntention,
-  onDeleteStep
-}: IntentionRowProps) {
-  const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null)
+export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
+  const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
+  const { active } = useDndContext();
+  const isDragging = Boolean(active);
 
   return (
     <>
-      <div
-        aria-label={`Intention: ${intention.title}`}
-        className="w-full grid grid-cols-4 gap-6 mb-10"
-        style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
-      >
-        {BUCKETS.map(({ id: colBucket }) => {
-          const isIntentionBucket = colBucket === intention.bucket
-          const isEarlier = isBefore(colBucket, intention.bucket)
-          const isLater = !isEarlier && !isIntentionBucket
+      <div className="relative mb-10">
+        <div
+          aria-label={`Intention: ${intention.title}`}
+          className="grid grid-cols-4 gap-6 w-[calc(100%-100px)] inline-grid align-top"
+          style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
+        >
+          {BUCKETS.map(({ id: colBucket }) => {
+            const isIntentionBucket = colBucket === intention.bucket;
+            const isEarlier = isBefore(colBucket, intention.bucket);
+            const isLater = !isEarlier && !isIntentionBucket;
 
-          const stepsForBucket = intention.steps.filter((step) => step.bucket === colBucket)
+            const stepsForBucket = intention.steps.filter((step) => step.bucket === colBucket);
 
-          return (
-            <BucketColumn
-              key={`${intention.id}:${colBucket}`}
-              intention={intention}
-              bucketId={colBucket}
-              steps={stepsForBucket}
-              isIntentionBucket={isIntentionBucket}
-              isEarlier={isEarlier}
-              isLater={isLater}
-              onAddStepClick={() => setModalBucket(colBucket)}
-              onDeleteIntention={onDeleteIntention}
-              onDeleteStep={(stepId) => onDeleteStep(intention.id, stepId)}
-            />
-          )
-        })}
+            return (
+              <BucketColumn
+                key={`${intention.id}:${colBucket}`}
+                intention={intention}
+                bucketId={colBucket}
+                steps={stepsForBucket}
+                isIntentionBucket={isIntentionBucket}
+                isEarlier={isEarlier}
+                isLater={isLater}
+                onAddStepClick={() => setModalBucket(colBucket)}
+              />
+            );
+          })}
+        </div>
+
+        <div
+          className={`absolute top-0 right-0 h-full flex items-center transition-opacity duration-200 ${
+            isDragging ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          }`}
+        >
+          <TrashZone intentionId={intention.id} />
+        </div>
       </div>
 
       <AddStepModal
         isOpen={!!modalBucket}
         onClose={() => setModalBucket(null)}
         onAdd={(title) => {
-          if (modalBucket) onAddStep(modalBucket, title)
+          if (modalBucket) onAddStep(modalBucket, title);
         }}
       />
     </>
-  )
+  );
 }
 
-export default IntentionRow
+export default IntentionRow;

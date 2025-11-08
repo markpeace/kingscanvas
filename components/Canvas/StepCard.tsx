@@ -2,26 +2,17 @@
 
 import { useDraggable } from '@dnd-kit/core';
 import { useState } from 'react';
-import { TrashIcon } from '@heroicons/react/24/outline';
 
-import { DeleteModal } from '@/components/Canvas/DeleteModal';
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Step } from '@/types/canvas';
 
-export function StepCard({
-  step,
-  onDelete
-}: {
-  step: Step;
-  onDelete: (id: string) => void;
-}) {
+export function StepCard({ step }: { step: Step }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.id,
     data: { step },
   });
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -41,7 +32,7 @@ export function StepCard({
         style={style}
         {...listeners}
         {...attributes}
-        className="relative bg-white border border-kings-grey-light rounded-md p-3 shadow-sm text-sm cursor-grab hover:shadow-md active:cursor-grabbing hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 group"
+        className="relative bg-white border border-kings-grey-light rounded-md p-3 shadow-sm text-sm cursor-grab hover:shadow-md active:cursor-grabbing hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
         onDoubleClick={() => setOpen(true)}
         tabIndex={0}
         onKeyDown={(event) => {
@@ -52,25 +43,7 @@ export function StepCard({
         }}
       >
         {data.title || 'New Step'}
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            setConfirmOpen(true);
-          }}
-          className="absolute top-2 right-2 text-kings-grey-dark opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Delete Step"
-        >
-          <TrashIcon className="w-3.5 h-3.5" />
-        </button>
       </div>
-
-      <DeleteModal
-        isOpen={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={() => onDelete(step.id)}
-        targetLabel={`the step "${data.title || 'New Step'}"`}
-      />
 
       <EditModal
         isOpen={open}

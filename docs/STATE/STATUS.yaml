@@ -24,6 +24,7 @@ prs_log:
   - "PR 0006: Added Intention creation modal with title, description, and bucket selection."
   - "PR 0006-hotfix: Restricted Intention creation to Do Later, Before I Graduate, and After I Graduate buckets."
   - "PR 0007: Added deletion for Steps and Intentions with confirmation modals."
+  - "PR 0007-hotfix: Replaced delete buttons with drag-to-delete trash zone at row edge."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

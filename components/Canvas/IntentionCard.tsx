@@ -1,22 +1,18 @@
 'use client';
 
+import { useDraggable } from '@dnd-kit/core';
 import { useState } from 'react';
-import { TrashIcon } from '@heroicons/react/24/outline';
 
-import { DeleteModal } from '@/components/Canvas/DeleteModal';
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Intention } from '@/types/canvas';
 
-export function IntentionCard({
-  intention,
-  onDelete
-}: {
-  intention: Intention;
-  onDelete: (id: string) => void;
-}) {
+export function IntentionCard({ intention }: { intention: Intention }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `intention-${intention.id}`,
+    data: { intention },
+  });
   const [data, setData] = useState(intention);
   const [open, setOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const handleSave = (title: string, description?: string) => {
     setData((prev) => ({
@@ -26,10 +22,18 @@ export function IntentionCard({
     }));
   };
 
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+
   return (
     <>
       <div
-        className="relative bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-pointer hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 group"
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        className="relative bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-grab hover:shadow-md active:cursor-grabbing hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 group"
         onClick={() => setOpen(true)}
         tabIndex={0}
         onKeyDown={(event) => {
@@ -39,29 +43,11 @@ export function IntentionCard({
           }
         }}
       >
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            setConfirmOpen(true);
-          }}
-          className="absolute top-2 right-2 text-kings-grey-dark opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label="Delete Intention"
-        >
-          <TrashIcon className="w-4 h-4" />
-        </button>
         <h3 className="font-semibold text-kings-black">{data.title || 'Untitled Intention'}</h3>
         {data.description && (
           <p className="text-sm text-kings-grey-dark mt-1">{data.description}</p>
         )}
       </div>
-
-      <DeleteModal
-        isOpen={confirmOpen}
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={() => onDelete(intention.id)}
-        targetLabel={`the intention "${data.title || 'Untitled Intention'}"`}
-      />
 
       <EditModal
         isOpen={open}
