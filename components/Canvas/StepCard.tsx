@@ -32,7 +32,7 @@ export function StepCard({ step }: { step: Step }) {
         style={style}
         {...listeners}
         {...attributes}
-        className="bg-white border border-kings-grey-light rounded-md p-3 shadow-sm text-sm cursor-pointer hover:border-kings-grey transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
+        className="bg-white border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug cursor-pointer hover:border-kings-grey transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
         onDoubleClick={() => setOpen(true)}
         tabIndex={0}
         onKeyDown={(event) => {

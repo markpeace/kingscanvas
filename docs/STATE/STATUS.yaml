@@ -39,6 +39,7 @@ prs_log:
   - "PR 0013-hotfix: Aligned trash zone height and centring; added compact width and fade-in animation on drag."
   - "PR 0014: Enabled Intention movement between buckets (excluding Do Now) and implemented concertina rule for dependent steps."
   - "PR 0015: Locked Canvas header group spacing and alignment across breakpoints."
+  - "PR 0016: Unified card visuals and added dashed empty-state placeholders with contextual prompts."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

@@ -10,6 +10,13 @@ import { TrashZone } from '@/components/Canvas/TrashZone';
 import { BUCKETS, isBefore } from '@/lib/buckets';
 import { Intention, Step } from '@/types/canvas';
 
+const emptyText: Record<Step['bucket'], string> = {
+  'do-now': 'Start with a small action',
+  'do-later': 'Line up the next steps',
+  'before-graduation': 'Bigger work before finals',
+  'after-graduation': 'Targets for post-grad',
+};
+
 type IntentionRowProps = {
   intention: Intention;
   onAddStep: (bucket: Step['bucket'], title: string) => void;
@@ -44,7 +51,7 @@ function BucketColumn({
     <div
       ref={setNodeRef}
       className={[
-        'border border-kings-grey-light rounded-md p-4 min-h-[140px] flex flex-col gap-3 transition-colors bg-white',
+        'border border-kings-grey-light rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors bg-white',
         isOver ? 'shadow-sm border-kings-red/40' : '',
         isLater ? 'opacity-70' : '',
       ].join(' ')}
@@ -59,8 +66,9 @@ function BucketColumn({
         </div>
       ) : (
         isEarlier && (
-          <div className="flex items-center justify-center border border-kings-grey-light border-dashed rounded-md h-[120px] text-kings-grey-dark/70 text-sm italic">
-            Empty — Add Step
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-kings-grey-light rounded-lg h-[120px] text-kings-grey-dark/70 text-xs italic gap-1 bg-white/60">
+            <span className="text-base text-kings-grey-dark/60">＋</span>
+            <p>{emptyText[bucketId] || 'Add Step'}</p>
           </div>
         )
       )}
