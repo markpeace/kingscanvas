@@ -36,8 +36,8 @@ const config: Config = {
           black: "#000000",
           white: "#FFFFFF",
           grey: {
-            light: "#7F8E96",
-            dark: "#575756"
+            light: "#D1D5DB",
+            dark: "#4B5563"
           }
         },
         brand: {

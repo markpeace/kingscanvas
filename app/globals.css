@@ -24,6 +24,12 @@ a { color: inherit; text-decoration: none; }
     -moz-osx-font-smoothing: grayscale;
   }
 
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.35), 0 0 0 4px rgba(204, 0, 0, 0.15);
+    border-radius: 4px;
+  }
+
   ::selection {
     @apply bg-kings-red text-kings-white;
   }

@@ -48,19 +48,19 @@ export function AddIntentionModal({
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Intention title"
-            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white"
+            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:border-kings-red"
           />
           <textarea
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Description (optional)"
-            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white"
+            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:border-kings-red"
             rows={3}
           />
           <select
             value={bucket}
             onChange={(event) => setBucket(event.target.value as BucketId)}
-            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black bg-white"
+            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:border-kings-red"
           >
             {VALID_BUCKETS.map((option) => (
               <option key={option.id} value={option.id}>
@@ -72,13 +72,13 @@ export function AddIntentionModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-kings-grey-dark px-3 py-2 text-sm"
+              className="text-kings-grey-dark px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
+              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             >
               Add Intention
             </button>

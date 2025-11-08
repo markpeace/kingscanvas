@@ -56,20 +56,20 @@ export function AddStepModal({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="What step would you like to add?"
-            className="w-full rounded-lg border border-kings-grey-light/80 bg-kings-white p-3 text-base font-medium text-kings-black placeholder:text-kings-grey-light/90 focus:outline-none focus:ring-2 focus:ring-kings-red/40 focus:border-kings-red/60 transition"
+            className="w-full rounded-lg border border-kings-grey-light/80 bg-kings-white p-3 text-base font-medium text-kings-black placeholder:text-kings-grey-light/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white focus-visible:border-kings-red/60 transition"
             autoFocus
           />
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="text-kings-grey-dark px-3 py-2 text-sm hover:text-kings-red transition"
+              className="text-kings-grey-dark px-3 py-2 text-sm hover:text-kings-red transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="bg-kings-red text-white px-4 py-2 text-sm rounded-md shadow-sm hover:bg-kings-red/90 focus:outline-none focus:ring-2 focus:ring-kings-red/40 focus:ring-offset-1 focus:ring-offset-kings-white"
+              className="bg-kings-red text-white px-4 py-2 text-sm rounded-md shadow-sm hover:bg-kings-red/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
             >
               Add Step
             </button>

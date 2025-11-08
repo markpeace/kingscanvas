@@ -22,6 +22,8 @@ type IntentionRowProps = {
   onAddStep: (bucket: Step['bucket'], title: string) => void;
   onDeleteStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
+  onMoveStep: (intention: Intention, step: Step, direction: 'forward' | 'backward') => void;
+  onMoveIntention: (intention: Intention, direction: 'forward' | 'backward') => void;
   highlightBucket: Step['bucket'] | null;
   trashSuccessId?: string | null;
 };
@@ -37,6 +39,9 @@ type BucketColumnProps = {
   onDeleteStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
   onAddStepClick: () => void;
+  onMoveStep: (step: Step, direction: 'forward' | 'backward') => void;
+  onMoveIntention: (direction: 'forward' | 'backward') => void;
+  bucketTitle: string;
 };
 
 function BucketColumn({
@@ -50,6 +55,9 @@ function BucketColumn({
   onDeleteStep,
   onDeleteIntention,
   onAddStepClick,
+  onMoveStep,
+  onMoveIntention,
+  bucketTitle,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -60,6 +68,9 @@ function BucketColumn({
   return (
     <div
       ref={setNodeRef}
+      role="region"
+      aria-label={`${bucketTitle} bucket`}
+      aria-dropeffect="move"
       className={[
         'border rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors duration-150',
         highlightBucket === bucketId ? 'ring-2 ring-kings-red/50' : '',
@@ -73,13 +84,21 @@ function BucketColumn({
         <IntentionCard
           intention={intention}
           onDelete={() => onDeleteIntention(intention.id)}
+          onMoveForward={() => onMoveIntention('forward')}
+          onMoveBackward={() => onMoveIntention('backward')}
         />
       )}
 
       {steps.length > 0 ? (
         <div className="flex flex-col gap-3">
           {steps.map((step) => (
-            <StepCard key={step.id} step={step} onDelete={() => onDeleteStep(step)} />
+            <StepCard
+              key={step.id}
+              step={step}
+              onDelete={() => onDeleteStep(step)}
+              onMoveForward={() => onMoveStep(step, 'forward')}
+              onMoveBackward={() => onMoveStep(step, 'backward')}
+            />
           ))}
         </div>
       ) : (
@@ -95,7 +114,7 @@ function BucketColumn({
         <button
           type="button"
           onClick={onAddStepClick}
-          className="text-kings-grey-dark text-sm hover:text-kings-red mt-auto self-start"
+          className="text-kings-grey-dark text-sm hover:text-kings-red mt-auto self-start focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
         >
           ＋ Add Step
         </button>
@@ -109,6 +128,8 @@ export function IntentionRow({
   onAddStep,
   onDeleteStep,
   onDeleteIntention,
+  onMoveStep,
+  onMoveIntention,
   highlightBucket,
   trashSuccessId,
 }: IntentionRowProps) {
@@ -144,6 +165,9 @@ export function IntentionRow({
                 onDeleteStep={onDeleteStep}
                 onDeleteIntention={onDeleteIntention}
                 onAddStepClick={() => setModalBucket(colBucket)}
+                onMoveStep={(step, direction) => onMoveStep(intention, step, direction)}
+                onMoveIntention={(direction) => onMoveIntention(intention, direction)}
+                bucketTitle={BUCKETS.find((bucket) => bucket.id === colBucket)?.title ?? colBucket}
               />
             );
           })}
