@@ -2,7 +2,10 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import { CheckIcon, TrashIcon } from '@heroicons/react/24/solid';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
+
+const MemoTrashIcon = memo(TrashIcon);
+const MemoCheckIcon = memo(CheckIcon);
 
 type TrashZoneProps = {
   intentionId: string;
@@ -50,9 +53,9 @@ export function TrashZone({ intentionId, didDrop = false }: TrashZoneProps) {
         ].join(' ')}
       >
         {dropped ? (
-          <CheckIcon className="w-6 h-6 text-kings-red" />
+          <MemoCheckIcon className="w-6 h-6 text-kings-red" />
         ) : (
-          <TrashIcon
+          <MemoTrashIcon
             className={`w-6 h-6 ${
               isOver ? 'text-kings-red' : 'text-kings-red/70'
             }`}

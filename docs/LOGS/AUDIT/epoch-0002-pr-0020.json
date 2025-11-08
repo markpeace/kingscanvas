@@ -1,0 +1,16 @@
+{
+  "epoch": "0002",
+  "pr": "0020",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0020-performance-responsive-polish",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/TrashZone.tsx",
+    "app/globals.css"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Improved Canvas spacing and responsive rhythm; added scroll margins and memoised DnD rendering for smoother performance."
+}
