@@ -16,6 +16,7 @@ export function Canvas() {
   const [modalOpen, setModalOpen] = useState(false)
   const [highlightBucket, setHighlightBucket] = useState<BucketId | null>(null)
   const [trashSuccessId, setTrashSuccessId] = useState<string | null>(null)
+  const [trashSuccessType, setTrashSuccessType] = useState<'step' | 'intention' | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
@@ -28,7 +29,11 @@ export function Canvas() {
 
       if (trashTimeoutRef.current) {
         window.clearTimeout(trashTimeoutRef.current)
+        trashTimeoutRef.current = null
       }
+
+      setTrashSuccessId(null)
+      setTrashSuccessType(null)
 
       if (announcementTimeoutRef.current) {
         window.clearTimeout(announcementTimeoutRef.current)
@@ -54,17 +59,20 @@ export function Canvas() {
     }, 300)
   }, [])
 
-  const triggerTrashSuccess = useCallback((intentionId: string) => {
+  const triggerTrashSuccess = useCallback((intentionId: string, type: 'step' | 'intention') => {
     if (trashTimeoutRef.current) {
       window.clearTimeout(trashTimeoutRef.current)
       trashTimeoutRef.current = null
     }
 
     setTrashSuccessId(intentionId)
+    setTrashSuccessType(type)
+    const duration = type === 'intention' ? 600 : 500
     trashTimeoutRef.current = window.setTimeout(() => {
       setTrashSuccessId(null)
+      setTrashSuccessType(null)
       trashTimeoutRef.current = null
-    }, 500)
+    }, duration)
   }, [])
 
   const handleDragStart = useCallback((_event: DragStartEvent) => {
@@ -101,9 +109,8 @@ export function Canvas() {
 
       const overId = String(over.id)
 
-      if (overId.startsWith('trash-')) {
-        const trashIntentionId = overId.replace('trash-', '')
-        triggerTrashSuccess(trashIntentionId)
+      if (overId.startsWith('trash')) {
+        const trashIntentionId = overId.replace(/^trash-?/, '')
 
         if (activeData.type === 'step') {
           const draggedStep = activeData.step as Step | undefined
@@ -128,7 +135,8 @@ export function Canvas() {
           )
 
           if (stepDeleted) {
-            toast.success('Deleted')
+            triggerTrashSuccess(trashIntentionId || draggedStep.intentionId, 'step')
+            toast.success('Step deleted')
             announce(`Deleted step "${draggedStep.title}".`)
           }
         } else if (activeData.type === 'intention') {
@@ -139,7 +147,8 @@ export function Canvas() {
           }
 
           setIntentions((prev) => prev.filter((intention) => intention.id !== draggedIntention.id))
-          toast.success('Deleted')
+          triggerTrashSuccess(trashIntentionId || draggedIntention.id, 'intention')
+          toast.success('Intention deleted')
           announce(`Deleted intention "${draggedIntention.title}".`)
         }
 
@@ -463,7 +472,7 @@ export function Canvas() {
       )
 
       if (deleted) {
-        toast.success('Deleted')
+        toast.success('Step deleted')
         announce(`Deleted step "${step.title}".`)
       }
     },
@@ -485,7 +494,7 @@ export function Canvas() {
       )
 
       if (deletedTitle) {
-        toast.success('Deleted')
+        toast.success('Intention deleted')
         announce(`Deleted intention "${deletedTitle}".`)
       }
     },
@@ -505,6 +514,7 @@ export function Canvas() {
           onMoveIntention={moveIntentionWithKeyboard}
           highlightBucket={highlightBucket}
           trashSuccessId={trashSuccessId}
+          trashSuccessType={trashSuccessType}
         />
       )),
     [
@@ -515,7 +525,8 @@ export function Canvas() {
       intentions,
       moveIntentionWithKeyboard,
       moveStepWithKeyboard,
-      trashSuccessId
+      trashSuccessId,
+      trashSuccessType
     ]
   )
 

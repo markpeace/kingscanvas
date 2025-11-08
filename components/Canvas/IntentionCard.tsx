@@ -16,7 +16,7 @@ type IntentionCardProps = {
 
 export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackward }: IntentionCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: `intention-${intention.id}`,
+    id: intention.id,
     data: { type: 'intention', intention },
   });
   const { active } = useDndContext();
@@ -32,9 +32,12 @@ export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackwa
     toast('Changes saved', { icon: '💾' });
   };
 
-  const style = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined;
+  const style =
+    transform != null
+      ? {
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+        }
+      : undefined;
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -61,7 +64,7 @@ export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackwa
     }
   };
 
-  const isDragging = active?.id === `intention-${intention.id}`;
+  const isDragging = active?.id === intention.id;
 
   return (
     <>
