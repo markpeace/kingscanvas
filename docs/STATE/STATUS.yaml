@@ -20,6 +20,7 @@ prs_log:
   - "PR 0005: Added inline editing for Intention titles, descriptions, and Step titles."
   - "PR 0005-hotfix: Adjusted inline editing colour scheme to red text on black background."
   - "PR 0005-hotfix: Replaced inline editing with modal editing consistent with Add Step modal."
+  - "PR 0005-hotfix-2: Matched Edit Modal visual styling to Add Step modal (white card, red border, black text)."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

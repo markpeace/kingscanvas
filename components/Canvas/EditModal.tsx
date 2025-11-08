@@ -55,21 +55,21 @@ export function EditModal({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-[400px]">
+      <div className="bg-white border-2 border-kings-red rounded-lg shadow-xl p-6 w-[400px] text-kings-black">
         <h2 className="text-lg font-semibold text-kings-red mb-4">{title}</h2>
         <form onSubmit={submit} className="space-y-4">
           <input
             value={newTitle}
             onChange={(event) => setNewTitle(event.target.value)}
             placeholder="Title"
-            className="w-full border border-kings-grey-light rounded-md p-2 text-sm"
+            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white"
           />
           {typeof initialDescription === 'string' && (
             <textarea
               value={newDesc}
               onChange={(event) => setNewDesc(event.target.value)}
               placeholder="Description"
-              className="w-full border border-kings-grey-light rounded-md p-2 text-sm"
+              className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white"
               rows={3}
             />
           )}
@@ -83,7 +83,7 @@ export function EditModal({
             </button>
             <button
               type="submit"
-              className="bg-kings-red text-white px-4 py-2 text-sm rounded-md hover:bg-kings-red/90"
+              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
             >
               Save
             </button>
