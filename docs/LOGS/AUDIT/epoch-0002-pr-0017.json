@@ -1,0 +1,17 @@
+{
+  "epoch": "0002",
+  "pr": "0017",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0017-trash-target-redesign",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/TrashZone.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/IntentionCard.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Replaced tall red bar with compact circular trash target, added success tick and drop highlight, retained keyboard deletion."
+}

@@ -6,7 +6,12 @@ import { useState } from 'react';
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Intention } from '@/types/canvas';
 
-export function IntentionCard({ intention }: { intention: Intention }) {
+type IntentionCardProps = {
+  intention: Intention;
+  onDelete: () => void;
+};
+
+export function IntentionCard({ intention, onDelete }: IntentionCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `intention-${intention.id}`,
     data: { type: 'intention', intention },
@@ -36,10 +41,14 @@ export function IntentionCard({ intention }: { intention: Intention }) {
         className="relative border-2 border-kings-red/70 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
         onClick={() => setOpen(true)}
         tabIndex={0}
+        aria-label={`Intention: ${data.title || 'Untitled Intention'}. Press Enter to edit or Delete to remove.`}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             setOpen(true);
+          } else if (event.key === 'Delete') {
+            event.preventDefault();
+            onDelete();
           }
         }}
       >

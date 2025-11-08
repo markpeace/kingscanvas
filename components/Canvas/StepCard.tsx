@@ -6,7 +6,12 @@ import { useState } from 'react';
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Step } from '@/types/canvas';
 
-export function StepCard({ step }: { step: Step }) {
+type StepCardProps = {
+  step: Step;
+  onDelete: () => void;
+};
+
+export function StepCard({ step, onDelete }: StepCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.id,
     data: { type: 'step', step },
@@ -35,10 +40,14 @@ export function StepCard({ step }: { step: Step }) {
         className="bg-white border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug cursor-pointer hover:border-kings-grey transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
         onDoubleClick={() => setOpen(true)}
         tabIndex={0}
+        aria-label={`Step: ${data.title || 'New Step'}. Press Enter to edit or Delete to remove.`}
         onKeyDown={(event) => {
           if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault();
             setOpen(true);
+          } else if (event.key === 'Delete') {
+            event.preventDefault();
+            onDelete();
           }
         }}
       >
