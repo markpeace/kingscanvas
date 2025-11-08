@@ -1,0 +1,19 @@
+{
+  "epoch": "0002",
+  "pr": "0014",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0014-intention-move-logic",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/toast/ToastProvider.tsx",
+    "components/toast/useToast.ts",
+    "lib/steps.ts",
+    "docs/STATE/STATUS.yaml"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Enabled intention movement between buckets (excluding Do Now) and added concertina rule for folding later steps back."
+}

@@ -3,6 +3,6 @@
 import { useToastContext } from "./ToastProvider"
 
 export function useToast() {
-  const { toast, success, error, info } = useToastContext()
-  return { toast, success, error, info }
+  const { toast, success, error, info, warning } = useToastContext()
+  return { toast, success, error, info, warning }
 }
