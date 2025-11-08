@@ -1,11 +1,16 @@
 'use client';
 
+import { useDraggable } from '@dnd-kit/core';
 import { useState } from 'react';
 
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Intention } from '@/types/canvas';
 
 export function IntentionCard({ intention }: { intention: Intention }) {
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: `intention-${intention.id}`,
+    data: { intention },
+  });
   const [data, setData] = useState(intention);
   const [open, setOpen] = useState(false);
 
@@ -17,10 +22,18 @@ export function IntentionCard({ intention }: { intention: Intention }) {
     }));
   };
 
+  const style = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
+
   return (
     <>
       <div
-        className="bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-pointer hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        className="relative bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-grab hover:shadow-md active:cursor-grabbing hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 group"
         onClick={() => setOpen(true)}
         tabIndex={0}
         onKeyDown={(event) => {

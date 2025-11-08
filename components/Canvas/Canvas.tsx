@@ -7,7 +7,7 @@ import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
 import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
-import type { BucketId, Step } from '@/types/canvas'
+import type { BucketId, Intention, Step } from '@/types/canvas'
 
 export function Canvas() {
   const [intentions, setIntentions] = useState(mockIntentions)
@@ -15,10 +15,38 @@ export function Canvas() {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
-    const draggedStep = active?.data?.current?.step as Step | undefined
-    const dropData = over?.data?.current as { intentionId: string; bucket: Step['bucket'] } | undefined
 
-    if (!draggedStep || !dropData) return
+    if (!active?.data?.current || !over) return
+
+    const draggedStep = active.data.current.step as Step | undefined
+    const draggedIntention = active.data.current.intention as Intention | undefined
+    const overId = String(over.id)
+
+    if (overId.startsWith('trash-')) {
+      setIntentions((prev) =>
+        prev
+          .map((intention) => {
+            if (!draggedStep) return intention
+
+            const remainingSteps = intention.steps.filter((step) => step.id !== draggedStep.id)
+            if (remainingSteps.length === intention.steps.length) {
+              return intention
+            }
+
+            return { ...intention, steps: remainingSteps }
+          })
+          .filter((intention) => (draggedIntention ? intention.id !== draggedIntention.id : true))
+      )
+      return
+    }
+
+    if (!draggedStep) return
+
+    const dropData = over.data?.current as
+      | { intentionId: string; bucket: Step['bucket'] }
+      | undefined
+
+    if (!dropData) return
 
     const { intentionId, bucket: newBucket } = dropData
 
