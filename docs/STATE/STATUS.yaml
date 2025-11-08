@@ -30,6 +30,7 @@ prs_log:
   - "PR 0009-hotfix-2: Further reduced column header size and weight for improved visual balance."
   - "PR 0009-hotfix-3: Centered and reduced Canvas column headers for balanced grid alignment."
   - "PR 0009-hotfix-4: Final header alignment and optical size adjustment for improved grid cohesion."
+  - "PR 0009-hotfix-6: Corrected column header centring by sizing label to content and centring the element."
 
 epoch-0001:
   title: "Canvas Columns & Layout"
