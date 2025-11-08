@@ -3,13 +3,15 @@
 import { useState } from 'react'
 import { DndContext, type DragEndEvent } from '@dnd-kit/core'
 
+import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
 import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
-import type { Step } from '@/types/canvas'
+import type { BucketId, Step } from '@/types/canvas'
 
 export function Canvas() {
   const [intentions, setIntentions] = useState(mockIntentions)
+  const [modalOpen, setModalOpen] = useState(false)
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -77,9 +79,34 @@ export function Canvas() {
     )
   }
 
+  const handleAddIntention = (title: string, description: string, bucket: BucketId) => {
+    const timestamp = new Date().toISOString()
+    setIntentions((prev) => [
+      ...prev,
+      {
+        id: `int-${Date.now()}`,
+        title,
+        description,
+        bucket,
+        steps: [],
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }
+    ])
+  }
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <main className="px-8 py-10 w-full overflow-x-hidden">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-kings-red">Your Intentions</h1>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
+          >
+            ＋ Add Intention
+          </button>
+        </div>
         <div className="grid grid-cols-4 gap-6 mb-6 text-kings-red font-semibold text-xl">
           {BUCKETS.map((bucket) => (
             <h2 key={bucket.id}>{bucket.title}</h2>
@@ -92,6 +119,12 @@ export function Canvas() {
             onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
           />
         ))}
+
+        <AddIntentionModal
+          isOpen={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onAdd={handleAddIntention}
+        />
       </main>
     </DndContext>
   )

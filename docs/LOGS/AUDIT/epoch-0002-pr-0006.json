@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0006",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0006-add-intention-modal",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/AddIntentionModal.tsx",
+    "components/Canvas/Canvas.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Added modal-based Intention creation flow with title, description, and bucket selection."
+}

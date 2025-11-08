@@ -1,0 +1,13 @@
+{
+  "epoch": "0002",
+  "pr": "0006-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0006-hotfix-restrict-intention-buckets",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/AddIntentionModal.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Restricted Intention creation to Do Later, Before I Graduate, and After I Graduate buckets."
+}
