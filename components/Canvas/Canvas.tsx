@@ -137,10 +137,9 @@ export function Canvas() {
         </div>
         <div className="grid grid-cols-4 gap-6 mb-3">
           {BUCKETS.map((bucket) => (
-            <div key={bucket.id} className="flex justify-center">
+            <div key={bucket.id} className="relative h-5">
               <span
-                className="inline-block text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-tight text-center px-1"
-                style={{ transform: 'translateX(2px)' }}
+                className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none px-1 text-center select-none"
               >
                 {bucket.title}
               </span>
