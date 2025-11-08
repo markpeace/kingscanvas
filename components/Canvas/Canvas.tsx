@@ -140,15 +140,14 @@ export function Canvas() {
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-6 mt-1 mb-3">
+        <div className="grid grid-cols-4 gap-6 mt-1 mb-3 place-items-center">
           {BUCKETS.map((bucket) => (
-            <div key={bucket.id} className="grid place-items-center">
-              <span
-                className="inline-flex items-center justify-center text-center text-kings-red/90 text-xs font-medium tracking-widest uppercase leading-tight px-1"
-              >
-                {bucket.title}
-              </span>
-            </div>
+            <span
+              key={bucket.id}
+              className="text-kings-red/90 text-xs font-medium tracking-widest uppercase leading-tight text-center px-1"
+            >
+              {bucket.title}
+            </span>
           ))}
         </div>
         {intentions.map((intention) => (
