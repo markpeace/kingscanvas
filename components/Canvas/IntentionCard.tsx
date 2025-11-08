@@ -1,55 +1,50 @@
 'use client';
 
-import { useEditableText } from '@/hooks/useEditableText';
+import { useState } from 'react';
+
+import { EditModal } from '@/components/Canvas/EditModal';
 import type { Intention } from '@/types/canvas';
 
 export function IntentionCard({ intention }: { intention: Intention }) {
-  const titleEdit = useEditableText(intention.title);
-  const descEdit = useEditableText(intention.description || '');
+  const [data, setData] = useState(intention);
+  const [open, setOpen] = useState(false);
+
+  const handleSave = (title: string, description?: string) => {
+    setData((prev) => ({
+      ...prev,
+      title,
+      description,
+    }));
+  };
 
   return (
-    <div className="bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm">
-      {titleEdit.editing ? (
-        <input
-          className="w-full border border-kings-grey-light rounded-md px-3 py-2 text-base font-semibold mb-2 leading-6 bg-black text-kings-red placeholder-kings-grey-dark focus:outline-none focus:ring-2 focus:ring-kings-red/40"
-          value={titleEdit.value}
-          onChange={(e) => titleEdit.setValue(e.target.value)}
-          onBlur={() => titleEdit.commit()}
-          onKeyDown={(e) => e.key === 'Enter' && titleEdit.commit()}
-          autoFocus
-        />
-      ) : (
-        <h3
-          className="font-semibold text-lg text-kings-black cursor-pointer hover:text-kings-red focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
-          tabIndex={0}
-          onClick={titleEdit.startEditing}
-          onKeyDown={(event) => (event.key === 'Enter' || event.key === ' ') && titleEdit.startEditing()}
-        >
-          {titleEdit.value || 'Untitled Intention'}
-        </h3>
-      )}
+    <>
+      <div
+        className="bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-pointer hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
+        onClick={() => setOpen(true)}
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+      >
+        <h3 className="font-semibold text-kings-black">{data.title || 'Untitled Intention'}</h3>
+        {data.description && (
+          <p className="text-sm text-kings-grey-dark mt-1">{data.description}</p>
+        )}
+      </div>
 
-      {descEdit.editing ? (
-        <textarea
-          className="w-full border border-kings-grey-light rounded-md px-3 py-2 text-sm leading-5 mt-2 bg-black text-kings-red placeholder-kings-grey-dark focus:outline-none focus:ring-2 focus:ring-kings-red/30"
-          value={descEdit.value}
-          onChange={(e) => descEdit.setValue(e.target.value)}
-          onBlur={() => descEdit.commit()}
-          onKeyDown={(e) => e.key === 'Enter' && descEdit.commit()}
-          rows={2}
-          autoFocus
-        />
-      ) : (
-        <p
-          className="text-sm text-kings-grey-dark cursor-pointer mt-1 leading-5 hover:text-kings-red/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/30"
-          tabIndex={0}
-          onClick={descEdit.startEditing}
-          onKeyDown={(event) => (event.key === 'Enter' || event.key === ' ') && descEdit.startEditing()}
-        >
-          {descEdit.value || 'Add a description'}
-        </p>
-      )}
-    </div>
+      <EditModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        title="Edit Intention"
+        initialTitle={data.title}
+        initialDescription={data.description}
+        onSave={handleSave}
+      />
+    </>
   );
 }
 
