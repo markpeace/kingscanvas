@@ -126,28 +126,25 @@ export function Canvas() {
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <main className="px-8 py-10 w-full overflow-x-hidden">
-        <div className="flex items-center mb-6">
-          <div className="flex-1" aria-hidden="true" />
-          <h1 className="flex-1 text-lg font-semibold text-kings-red mb-0.5 text-center">
-            Your Intentions
-          </h1>
-          <div className="flex-1 flex justify-end">
-            <button
-              onClick={() => setModalOpen(true)}
-              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
-            >
-              ＋ Add Intention
-            </button>
-          </div>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-lg font-semibold text-kings-red">Your Intentions</h1>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors"
+          >
+            ＋ Add Intention
+          </button>
         </div>
-        <div className="grid grid-cols-4 gap-6 mt-1 mb-3 place-items-center">
+        <div className="grid grid-cols-4 gap-6 mb-3">
           {BUCKETS.map((bucket) => (
-            <span
-              key={bucket.id}
-              className="text-kings-red/90 text-xs font-medium tracking-widest uppercase leading-tight text-center px-1"
-            >
-              {bucket.title}
-            </span>
+            <div key={bucket.id} className="flex justify-center">
+              <span
+                className="inline-block text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-tight text-center px-1"
+                style={{ transform: 'translateX(2px)' }}
+              >
+                {bucket.title}
+              </span>
+            </div>
           ))}
         </div>
         {intentions.map((intention) => (
