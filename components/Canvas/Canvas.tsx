@@ -125,26 +125,29 @@ export function Canvas() {
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <main className="px-8 py-10 w-full overflow-x-hidden">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-lg font-semibold text-kings-red">Your Intentions</h1>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors"
-          >
-            ＋ Add Intention
-          </button>
-        </div>
-        <div className="grid grid-cols-4 gap-6 mb-3">
-          {BUCKETS.map((bucket) => (
-            <div key={bucket.id} className="relative h-5">
-              <span
-                className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none px-1 text-center select-none"
-              >
-                {bucket.title}
-              </span>
-            </div>
-          ))}
+      <main className="max-w-6xl mx-auto px-6 py-10 text-kings-black bg-white">
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-lg font-semibold text-kings-red">Your Intentions</h1>
+            <button
+              onClick={() => setModalOpen(true)}
+              className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors"
+            >
+              ＋ Add Intention
+            </button>
+          </div>
+
+          <div className="grid grid-cols-4 gap-6 mb-3">
+            {BUCKETS.map((bucket) => (
+              <div key={bucket.id} className="relative h-5">
+                <span
+                  className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none px-1 text-center select-none"
+                >
+                  {bucket.title}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
         {intentions.map((intention) => (
           <IntentionRow
