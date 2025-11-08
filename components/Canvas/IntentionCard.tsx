@@ -9,7 +9,7 @@ import type { Intention } from '@/types/canvas';
 export function IntentionCard({ intention }: { intention: Intention }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `intention-${intention.id}`,
-    data: { intention },
+    data: { type: 'intention', intention },
   });
   const [data, setData] = useState(intention);
   const [open, setOpen] = useState(false);

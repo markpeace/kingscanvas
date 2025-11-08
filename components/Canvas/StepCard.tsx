@@ -9,7 +9,7 @@ import type { Step } from '@/types/canvas';
 export function StepCard({ step }: { step: Step }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.id,
-    data: { step },
+    data: { type: 'step', step },
   });
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);

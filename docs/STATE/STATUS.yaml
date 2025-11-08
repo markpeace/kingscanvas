@@ -37,6 +37,7 @@ prs_log:
   - "PR 0011: Removed stock template header bar for clean full-width Canvas layout."
   - "PR 0012: Final Canvas layout and visual cohesion adjustments — unified spacing, centring, and placeholders."
   - "PR 0013-hotfix: Aligned trash zone height and centring; added compact width and fade-in animation on drag."
+  - "PR 0014: Enabled Intention movement between buckets (excluding Do Now) and implemented concertina rule for dependent steps."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

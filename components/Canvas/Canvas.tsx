@@ -8,10 +8,13 @@ import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
 import type { BucketId, Intention, Step } from '@/types/canvas'
+import { useToast } from '@/lib/toast'
+import { concertinaSteps } from '@/lib/steps'
 
 export function Canvas() {
   const [intentions, setIntentions] = useState(mockIntentions)
   const [modalOpen, setModalOpen] = useState(false)
+  const toast = useToast()
 
   const handleDragStart = (_event: DragStartEvent) => {
     document.body.classList.add('dragging')
@@ -25,17 +28,25 @@ export function Canvas() {
     document.body.classList.remove('dragging')
     const { active, over } = event
 
-    if (!active?.data?.current || !over) return
+    if (!active || !over) return
 
-    const draggedStep = active.data.current.step as Step | undefined
-    const draggedIntention = active.data.current.intention as Intention | undefined
+    const activeData = active.data?.current
+
+    if (!activeData) return
+
     const overId = String(over.id)
 
     if (overId.startsWith('trash-')) {
-      setIntentions((prev) =>
-        prev
-          .map((intention) => {
-            if (!draggedStep) return intention
+      if (activeData.type === 'step') {
+        const draggedStep = activeData.step as Step | undefined
+
+        if (!draggedStep) {
+          return
+        }
+
+        setIntentions((prev) =>
+          prev.map((intention) => {
+            if (intention.id !== draggedStep.intentionId) return intention
 
             const remainingSteps = intention.steps.filter((step) => step.id !== draggedStep.id)
             if (remainingSteps.length === intention.steps.length) {
@@ -44,56 +55,134 @@ export function Canvas() {
 
             return { ...intention, steps: remainingSteps }
           })
-          .filter((intention) => (draggedIntention ? intention.id !== draggedIntention.id : true))
+        )
+      } else if (activeData.type === 'intention') {
+        const draggedIntention = activeData.intention as Intention | undefined
+
+        if (!draggedIntention) {
+          return
+        }
+
+        setIntentions((prev) => prev.filter((intention) => intention.id !== draggedIntention.id))
+      }
+
+      return
+    }
+
+    if (activeData.type === 'step') {
+      const draggedStep = activeData.step as Step | undefined
+
+      if (!draggedStep) return
+
+      const dropData = over.data?.current as
+        | { intentionId: string; bucket: Step['bucket'] }
+        | undefined
+
+      if (!dropData) return
+
+      const { intentionId, bucket: newBucket } = dropData
+
+      if (draggedStep.bucket === newBucket || draggedStep.intentionId !== intentionId) {
+        return
+      }
+
+      setIntentions((prev) =>
+        prev.map((intention) => {
+          if (intention.id !== intentionId) return intention
+
+          const intentionBucket = intention.bucket
+          const newBucketOrder = bucketOrder[newBucket]
+          const intentionOrder = bucketOrder[intentionBucket]
+
+          if (newBucketOrder === undefined || intentionOrder === undefined) {
+            console.warn('Blocked drop: unknown bucket ordering')
+            return intention
+          }
+
+          if (newBucketOrder >= intentionOrder) {
+            console.warn('Blocked drop: cannot move step after intention bucket')
+            return intention
+          }
+
+          const stepsInTarget = intention.steps.filter(
+            (step) => step.bucket === newBucket && step.id !== draggedStep.id
+          )
+
+          const updatedSteps = intention.steps.map((step) =>
+            step.id === draggedStep.id
+              ? { ...step, bucket: newBucket, order: stepsInTarget.length + 1 }
+              : step
+          )
+
+          return { ...intention, steps: updatedSteps }
+        })
       )
+
       return
     }
 
-    if (!draggedStep) return
+    if (activeData.type === 'intention') {
+      const draggedIntention = activeData.intention as Intention | undefined
 
-    const dropData = over.data?.current as
-      | { intentionId: string; bucket: Step['bucket'] }
-      | undefined
+      if (!draggedIntention) return
 
-    if (!dropData) return
+      const dropData = over.data?.current as { bucket?: BucketId } | undefined
+      const rawTarget = dropData?.bucket ?? (overId.includes(':') ? overId.split(':').pop() : overId)
+      const targetBucket = rawTarget as BucketId | undefined
+      const validBuckets = BUCKETS.map((bucket) => bucket.id)
 
-    const { intentionId, bucket: newBucket } = dropData
+      if (!targetBucket || !validBuckets.includes(targetBucket)) {
+        return
+      }
 
-    if (draggedStep.bucket === newBucket || draggedStep.intentionId !== intentionId) {
-      return
-    }
+      if (targetBucket === 'do-now') {
+        toast.warning("Intentions can’t be placed in Do Now.")
+        return
+      }
 
-    setIntentions((prev) =>
-      prev.map((intention) => {
-        if (intention.id !== intentionId) return intention
+      if (targetBucket === draggedIntention.bucket) {
+        return
+      }
 
-        const intentionBucket = intention.bucket
-        const newBucketOrder = bucketOrder[newBucket]
-        const intentionOrder = bucketOrder[intentionBucket]
+      const targetIndex = bucketOrder[targetBucket]
+      const currentIndex = bucketOrder[draggedIntention.bucket]
 
-        if (newBucketOrder === undefined || intentionOrder === undefined) {
-          console.warn('Blocked drop: unknown bucket ordering')
-          return intention
-        }
+      if (targetIndex === undefined || currentIndex === undefined) {
+        console.warn('Blocked drop: unknown bucket ordering')
+        return
+      }
 
-        if (newBucketOrder >= intentionOrder) {
-          console.warn('Blocked drop: cannot move step after intention bucket')
-          return intention
-        }
+      let intentionMoved = false
+      const bucketTitle = BUCKETS.find((bucket) => bucket.id === targetBucket)?.title ?? targetBucket
 
-        const stepsInTarget = intention.steps.filter(
-          (step) => step.bucket === newBucket && step.id !== draggedStep.id
-        )
+      setIntentions((prev) => {
+        const updatedIntentions = prev.map((intention) => {
+          if (intention.id !== draggedIntention.id) return intention
 
-        const updatedSteps = intention.steps.map((step) =>
-          step.id === draggedStep.id
-            ? { ...step, bucket: newBucket, order: stepsInTarget.length + 1 }
-            : step
-        )
+          intentionMoved = true
 
-        return { ...intention, steps: updatedSteps }
+          const baseIntention: Intention = {
+            ...intention,
+            bucket: targetBucket,
+            updatedAt: new Date().toISOString()
+          }
+
+          if (targetIndex < currentIndex) {
+            return {
+              ...baseIntention,
+              steps: concertinaSteps(prev, targetBucket, intention.id)
+            }
+          }
+
+          return baseIntention
+        })
+        return updatedIntentions
       })
-    )
+
+      if (intentionMoved) {
+        toast.success(`Moved “${draggedIntention.title}” to ${bucketTitle}.`)
+      }
+    }
   }
 
   const handleAddStep = (intentionId: string, bucket: Step['bucket'], title: string) => {

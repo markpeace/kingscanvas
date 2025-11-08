@@ -2,10 +2,10 @@
 
 import * as React from "react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
-import { CheckCircle2, Info, TriangleAlert, X } from "lucide-react"
+import { AlertTriangle, CheckCircle2, Info, TriangleAlert, X } from "lucide-react"
 import { cn } from "@/lib/ui/cn"
 
-type Variant = "success" | "error" | "info"
+type Variant = "success" | "error" | "info" | "warning"
 
 export type ToastOptions = {
   title?: string
@@ -28,6 +28,7 @@ type ToastContextValue = {
   success: (title: string, description?: string) => string
   error: (title: string, description?: string) => string
   info: (title: string, description?: string) => string
+  warning: (title: string, description?: string) => string
 }
 
 const ToastContext = React.createContext<ToastContextValue | null>(null)
@@ -49,12 +50,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     return id
   }, [])
 
-  const ctx = React.useMemo<ToastContextValue>(() => ({
-    toast: push,
-    success: (title: string, description?: string) => push({ title, description, variant: "success" }),
-    error: (title: string, description?: string) => push({ title, description, variant: "error" }),
-    info: (title: string, description?: string) => push({ title, description, variant: "info" })
-  }), [push])
+  const ctx = React.useMemo<ToastContextValue>(
+    () => ({
+      toast: push,
+      success: (title: string, description?: string) => push({ title, description, variant: "success" }),
+      error: (title: string, description?: string) => push({ title, description, variant: "error" }),
+      info: (title: string, description?: string) => push({ title, description, variant: "info" }),
+      warning: (title: string, description?: string) => push({ title, description, variant: "warning" })
+    }),
+    [push]
+  )
 
   function onOpenChange(id: string, open: boolean) {
     if (!open) {
@@ -80,12 +85,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               "data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:slide-out-to-top",
               t.variant === "success" && "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-100",
               t.variant === "error" && "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-700 dark:bg-rose-900/20 dark:text-rose-100",
+              t.variant === "warning" && "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-100",
               t.variant === "info" && "border-zinc-300 bg-white text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
             )}
           >
             <div className="pt-0.5">
               {t.variant === "success" && <CheckCircle2 className="h-5 w-5" aria-hidden="true" />}
               {t.variant === "error" && <TriangleAlert className="h-5 w-5" aria-hidden="true" />}
+              {t.variant === "warning" && <AlertTriangle className="h-5 w-5" aria-hidden="true" />}
               {t.variant === "info" && <Info className="h-5 w-5" aria-hidden="true" />}
             </div>
             <div className="grid gap-1">
