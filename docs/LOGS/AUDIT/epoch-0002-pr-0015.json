@@ -1,0 +1,11 @@
+{
+  "epoch": "0002",
+  "pr": "0015",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0015-header-spacing-scale",
+  "status": "success",
+  "files_changed": ["components/Canvas/Canvas.tsx"],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Locked Canvas header group spacing and alignment; responsive title/button stack and consistent column header rhythm."
+}

@@ -224,29 +224,32 @@ export function Canvas() {
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="max-w-6xl mx-auto px-6 py-10 text-kings-black bg-white">
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-semibold text-kings-red">Your Intentions</h1>
+        {/* HEADER GROUP */}
+        <header className="mb-8">
+          {/* Title + Button Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
+            <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
             <button
               onClick={() => setModalOpen(true)}
-              className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors"
+              className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto"
             >
               ＋ Add Intention
             </button>
           </div>
 
-          <div className="grid grid-cols-4 gap-6 mb-3">
-            {BUCKETS.map((bucket) => (
-              <div key={bucket.id} className="relative h-5">
+          {/* Column Headers */}
+          <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
+            {BUCKETS.map((b) => (
+              <div key={b.id} className="relative h-5 flex justify-center">
                 <span
-                  className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none px-1 text-center select-none"
+                  className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
                 >
-                  {bucket.title}
+                  {b.title}
                 </span>
               </div>
             ))}
           </div>
-        </div>
+        </header>
         {intentions.map((intention) => (
           <IntentionRow
             key={intention.id}
