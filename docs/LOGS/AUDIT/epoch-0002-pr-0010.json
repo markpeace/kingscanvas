@@ -1,0 +1,15 @@
+{
+  "epoch": "0002",
+  "pr": "0010",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0010-distinct-intention-styling",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/IntentionRow.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Introduced tinted red background and thicker border for Intention cards, preserving minimalist hierarchy with lighter Step cards."
+}

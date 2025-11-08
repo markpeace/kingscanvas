@@ -33,7 +33,7 @@ export function IntentionCard({ intention }: { intention: Intention }) {
         style={style}
         {...listeners}
         {...attributes}
-        className="relative bg-white border border-kings-grey-light rounded-lg p-4 shadow-sm cursor-grab hover:shadow-md active:cursor-grabbing hover:border-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 group"
+        className="relative border-2 border-kings-red/60 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
         onClick={() => setOpen(true)}
         tabIndex={0}
         onKeyDown={(event) => {
@@ -43,9 +43,11 @@ export function IntentionCard({ intention }: { intention: Intention }) {
           }
         }}
       >
-        <h3 className="font-semibold text-kings-black">{data.title || 'Untitled Intention'}</h3>
+        <h3 className="font-semibold text-kings-red text-base leading-snug">
+          {data.title || 'Untitled Intention'}
+        </h3>
         {data.description && (
-          <p className="text-sm text-kings-grey-dark mt-1">{data.description}</p>
+          <p className="text-sm text-kings-grey-dark leading-snug">{data.description}</p>
         )}
       </div>
 
