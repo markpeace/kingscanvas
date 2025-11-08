@@ -15,7 +15,7 @@ type IntentionCardProps = {
 };
 
 export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackward }: IntentionCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useDraggable({
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: intention.id,
     data: { type: 'intention', intention },
   });
@@ -33,10 +33,9 @@ export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackwa
   };
 
   const style =
-    transform || transition
+    transform != null
       ? {
-          transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-          transition: transition ?? undefined,
+          transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
         }
       : undefined;
 
