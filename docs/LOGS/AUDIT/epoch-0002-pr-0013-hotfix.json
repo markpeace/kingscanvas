@@ -1,0 +1,16 @@
+{
+  "epoch": "0002",
+  "pr": "0013-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0013-hotfix-trash-zone-alignment",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/TrashZone.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/Canvas.tsx",
+    "app/globals.css"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Fixed trash zone stretching; centred it within row; limited width to 64px and enabled fade-in only on drag."
+}

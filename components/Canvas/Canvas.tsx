@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DndContext, type DragEndEvent } from '@dnd-kit/core'
+import { DndContext, type DragEndEvent, type DragStartEvent, type DragCancelEvent } from '@dnd-kit/core'
 
 import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
 import { mockIntentions } from '@/data/mockIntentions'
@@ -13,7 +13,16 @@ export function Canvas() {
   const [intentions, setIntentions] = useState(mockIntentions)
   const [modalOpen, setModalOpen] = useState(false)
 
+  const handleDragStart = (_event: DragStartEvent) => {
+    document.body.classList.add('dragging')
+  }
+
+  const handleDragCancel = (_event: DragCancelEvent) => {
+    document.body.classList.remove('dragging')
+  }
+
   const handleDragEnd = (event: DragEndEvent) => {
+    document.body.classList.remove('dragging')
     const { active, over } = event
 
     if (!active?.data?.current || !over) return
@@ -124,7 +133,7 @@ export function Canvas() {
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="max-w-6xl mx-auto px-6 py-10 text-kings-black bg-white">
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">

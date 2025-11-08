@@ -28,3 +28,12 @@ a { color: inherit; text-decoration: none; }
     @apply bg-kings-red text-kings-white;
   }
 }
+
+.TrashZone {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.dragging .TrashZone {
+  opacity: 1;
+}
