@@ -82,10 +82,10 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
 
   return (
     <>
-      <div className="relative mb-10">
-        <div
+      <div className="relative">
+        <section
           aria-label={`Intention: ${intention.title}`}
-          className="grid grid-cols-4 gap-6 w-[calc(100%-100px)] inline-grid align-top"
+          className="grid grid-cols-4 gap-6 mb-12 w-[calc(100%-100px)] inline-grid align-top"
           style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
         >
           {BUCKETS.map(({ id: colBucket }) => {
@@ -108,7 +108,7 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
               />
             );
           })}
-        </div>
+        </section>
 
         <div
           className={`absolute top-0 right-0 h-full flex items-center transition-opacity duration-200 ${
