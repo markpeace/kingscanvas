@@ -7,7 +7,7 @@ import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
 import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
-import type { Step } from '@/types/canvas'
+import type { BucketId, Step } from '@/types/canvas'
 
 export function Canvas() {
   const [intentions, setIntentions] = useState(mockIntentions)
@@ -79,7 +79,7 @@ export function Canvas() {
     )
   }
 
-  const handleAddIntention = (title: string, description: string, bucket: string) => {
+  const handleAddIntention = (title: string, description: string, bucket: BucketId) => {
     const timestamp = new Date().toISOString()
     setIntentions((prev) => [
       ...prev,

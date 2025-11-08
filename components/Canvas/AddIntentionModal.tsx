@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import { BUCKETS } from '@/lib/buckets'
+import type { BucketId } from '@/types/canvas'
 
 export function AddIntentionModal({
   isOpen,
@@ -12,11 +13,11 @@ export function AddIntentionModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  onAdd: (title: string, description: string, bucket: string) => void
+  onAdd: (title: string, description: string, bucket: BucketId) => void
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [bucket, setBucket] = useState(BUCKETS[0].id)
+  const [bucket, setBucket] = useState<BucketId>(BUCKETS[0].id)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
@@ -52,7 +53,7 @@ export function AddIntentionModal({
           />
           <select
             value={bucket}
-            onChange={(event) => setBucket(event.target.value)}
+            onChange={(event) => setBucket(event.target.value as BucketId)}
             className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black bg-white"
           >
             {BUCKETS.map((option) => (
