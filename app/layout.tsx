@@ -1,6 +1,5 @@
 import "./globals.css"
 import dynamicImport from "next/dynamic"
-import Nav from "../components/Nav"
 import { ToastProvider } from "../components/toast/ToastProvider"
 import AuthProvider from "../components/auth/AuthProvider"
 import InstallBanner from "../components/pwa/InstallBanner"
@@ -38,17 +37,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="theme-color" content="#0ea5e9" />
       </head>
-      <body className="min-h-screen bg-kings-white font-sans text-kings-black">
+      <body className="min-h-screen bg-white font-sans text-kings-black">
         <AuthProvider>
           <ToastProvider>
             <InstallBanner />
-            <header className="px-4 py-3 sm:px-6 sm:py-4 border-b border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center justify-between gap-3">
-                <Nav />
-              </div>
-            </header>
 
-            <main className="max-w-[960px] mx-auto px-4 sm:px-6 py-4 sm:py-6">
+            <main className="w-full px-8 py-10 overflow-x-hidden bg-white text-kings-black">
               {children}
             </main>
 
