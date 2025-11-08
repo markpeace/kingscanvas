@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import toast from 'react-hot-toast'
 
 export function AddStepModal({
   isOpen,
@@ -43,6 +44,7 @@ export function AddStepModal({
     e.preventDefault()
     if (!title.trim()) return
     onAdd(title.trim())
+    toast.success('Step added')
     setTitle('')
     onClose()
   }

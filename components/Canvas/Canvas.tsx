@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { DndContext, type DragEndEvent, type DragStartEvent, type DragCancelEvent } from '@dnd-kit/core'
+import toast from 'react-hot-toast'
 
 import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
 import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
 import type { BucketId, Intention, Step } from '@/types/canvas'
-import { useToast } from '@/lib/toast'
 import { concertinaSteps } from '@/lib/steps'
 
 export function Canvas() {
@@ -20,8 +20,6 @@ export function Canvas() {
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
-  const toast = useToast()
-
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) {
@@ -129,6 +127,7 @@ export function Canvas() {
         )
 
         if (stepDeleted) {
+          toast.success('Deleted')
           announce(`Deleted step "${draggedStep.title}".`)
         }
       } else if (activeData.type === 'intention') {
@@ -139,6 +138,7 @@ export function Canvas() {
         }
 
         setIntentions((prev) => prev.filter((intention) => intention.id !== draggedIntention.id))
+        toast.success('Deleted')
         announce(`Deleted intention "${draggedIntention.title}".`)
       }
 
@@ -201,6 +201,7 @@ export function Canvas() {
 
       if (stepMoved) {
         triggerHighlight(newBucket)
+        toast.success(`Moved to ${bucketTitle}`)
         announce(`Moved "${draggedStep.title}" to ${bucketTitle}.`)
       }
 
@@ -222,7 +223,7 @@ export function Canvas() {
       }
 
       if (targetBucket === 'do-now') {
-        toast.warning("Intentions can’t be placed in Do Now.")
+        toast.error('Intentions can’t be placed in Do Now')
         return
       }
 
@@ -267,7 +268,7 @@ export function Canvas() {
 
       if (intentionMoved) {
         triggerHighlight(targetBucket)
-        toast.success(`Moved “${draggedIntention.title}” to ${bucketTitle}.`)
+        toast.success(`Moved to ${bucketTitle}`)
         announce(`Moved "${draggedIntention.title}" to ${bucketTitle}.`)
       }
     }
@@ -329,6 +330,7 @@ export function Canvas() {
 
     if (stepMoved) {
       triggerHighlight(targetBucket)
+      toast.success(`Moved to ${bucketTitle}`)
       announce(`Moved "${step.title}" to ${bucketTitle}.`)
     }
   }
@@ -348,7 +350,7 @@ export function Canvas() {
     }
 
     if (targetBucket === 'do-now') {
-      toast.warning("Intentions can’t be placed in Do Now.")
+      toast.error('Intentions can’t be placed in Do Now')
       announce('Intentions can’t be placed in Do Now.')
       return
     }
@@ -393,7 +395,7 @@ export function Canvas() {
 
     if (intentionMoved) {
       triggerHighlight(targetBucket)
-      toast.success(`Moved “${intention.title}” to ${bucketTitle}.`)
+      toast.success(`Moved to ${bucketTitle}`)
       announce(`Moved "${intention.title}" to ${bucketTitle}.`)
     }
   }
@@ -451,6 +453,7 @@ export function Canvas() {
     )
 
     if (deleted) {
+      toast.success('Deleted')
       announce(`Deleted step "${step.title}".`)
     }
   }
@@ -460,6 +463,7 @@ export function Canvas() {
     setIntentions((prev) => prev.filter((intentionItem) => intentionItem.id !== intentionId))
 
     if (intention) {
+      toast.success('Deleted')
       announce(`Deleted intention "${intention.title}".`)
     }
   }

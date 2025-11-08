@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core';
 import { useState, type KeyboardEvent } from 'react';
+import toast from 'react-hot-toast';
 
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Intention } from '@/types/canvas';
@@ -28,6 +29,7 @@ export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackwa
       title,
       description,
     }));
+    toast('Changes saved', { icon: '💾' });
   };
 
   const style = transform

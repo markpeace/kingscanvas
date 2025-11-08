@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createPortal } from 'react-dom'
+import toast from 'react-hot-toast'
 
 import { BUCKETS } from '@/lib/buckets'
 import type { BucketId } from '@/types/canvas'
@@ -25,11 +26,11 @@ export function AddIntentionModal({
     event.preventDefault()
     if (!title.trim()) return
     if (bucket === 'do-now') {
-      alert('Intentions cannot be added to the "Do Now" bucket.')
+      toast.error('Intentions can’t be placed in Do Now')
       return
     }
-
     onAdd(title.trim(), description.trim(), bucket)
+    toast.success('Intention created')
     setTitle('')
     setDescription('')
     setBucket(VALID_BUCKETS[0].id)
