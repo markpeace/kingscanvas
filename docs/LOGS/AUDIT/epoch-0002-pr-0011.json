@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0011",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0011-remove-header-bar",
+  "status": "success",
+  "files_changed": [
+    "pages/_app.tsx",
+    "components/Layout/Header.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Removed the template header bar (Home/Dashboard/Login) for a minimal Canvas layout."
+}
