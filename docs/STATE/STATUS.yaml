@@ -40,6 +40,7 @@ prs_log:
   - "PR 0014: Enabled Intention movement between buckets (excluding Do Now) and implemented concertina rule for dependent steps."
   - "PR 0015: Locked Canvas header group spacing and alignment across breakpoints."
   - "PR 0016: Unified card visuals and added dashed empty-state placeholders with contextual prompts."
+  - "PR 0017: Redesigned drag-to-delete with compact circular trash target and drop feedback."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

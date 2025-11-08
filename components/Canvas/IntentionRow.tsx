@@ -20,6 +20,10 @@ const emptyText: Record<Step['bucket'], string> = {
 type IntentionRowProps = {
   intention: Intention;
   onAddStep: (bucket: Step['bucket'], title: string) => void;
+  onDeleteStep: (step: Step) => void;
+  onDeleteIntention: (intentionId: string) => void;
+  highlightBucket: Step['bucket'] | null;
+  trashSuccessId?: string | null;
 };
 
 type BucketColumnProps = {
@@ -29,6 +33,9 @@ type BucketColumnProps = {
   isIntentionBucket: boolean;
   isEarlier: boolean;
   isLater: boolean;
+  highlightBucket: Step['bucket'] | null;
+  onDeleteStep: (step: Step) => void;
+  onDeleteIntention: (intentionId: string) => void;
   onAddStepClick: () => void;
 };
 
@@ -39,6 +46,9 @@ function BucketColumn({
   isIntentionBucket,
   isEarlier,
   isLater,
+  highlightBucket,
+  onDeleteStep,
+  onDeleteIntention,
   onAddStepClick,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
@@ -51,17 +61,25 @@ function BucketColumn({
     <div
       ref={setNodeRef}
       className={[
-        'border border-kings-grey-light rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors bg-white',
+        'border rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors duration-150',
+        highlightBucket === bucketId ? 'ring-2 ring-kings-red/50' : '',
         isOver ? 'shadow-sm border-kings-red/40' : '',
-        isLater ? 'opacity-70' : '',
+        isLater
+          ? 'bg-kings-grey-light/20 border-kings-grey-light/60 opacity-70'
+          : 'bg-white border-kings-grey-light'
       ].join(' ')}
     >
-      {isIntentionBucket && <IntentionCard intention={intention} />}
+      {isIntentionBucket && (
+        <IntentionCard
+          intention={intention}
+          onDelete={() => onDeleteIntention(intention.id)}
+        />
+      )}
 
       {steps.length > 0 ? (
         <div className="flex flex-col gap-3">
           {steps.map((step) => (
-            <StepCard key={step.id} step={step} />
+            <StepCard key={step.id} step={step} onDelete={() => onDeleteStep(step)} />
           ))}
         </div>
       ) : (
@@ -86,7 +104,14 @@ function BucketColumn({
   );
 }
 
-export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
+export function IntentionRow({
+  intention,
+  onAddStep,
+  onDeleteStep,
+  onDeleteIntention,
+  highlightBucket,
+  trashSuccessId,
+}: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
   const isDragging = Boolean(active);
@@ -115,14 +140,20 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
                 isIntentionBucket={isIntentionBucket}
                 isEarlier={isEarlier}
                 isLater={isLater}
+                highlightBucket={highlightBucket}
+                onDeleteStep={onDeleteStep}
+                onDeleteIntention={onDeleteIntention}
                 onAddStepClick={() => setModalBucket(colBucket)}
               />
             );
           })}
         </section>
 
-        <div className="absolute top-0 right-0 flex items-center justify-center h-full pointer-events-none group-[.dragging]:pointer-events-auto">
-          <TrashZone intentionId={intention.id} />
+        <div className="absolute top-1/2 -translate-y-1/2 right-4">
+          <TrashZone
+            intentionId={intention.id}
+            didDrop={trashSuccessId === intention.id}
+          />
         </div>
       </div>
 

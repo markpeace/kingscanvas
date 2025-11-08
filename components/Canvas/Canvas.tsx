@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DndContext, type DragEndEvent, type DragStartEvent, type DragCancelEvent } from '@dnd-kit/core'
 
 import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
@@ -14,7 +14,54 @@ import { concertinaSteps } from '@/lib/steps'
 export function Canvas() {
   const [intentions, setIntentions] = useState(mockIntentions)
   const [modalOpen, setModalOpen] = useState(false)
+  const [highlightBucket, setHighlightBucket] = useState<BucketId | null>(null)
+  const [trashSuccessId, setTrashSuccessId] = useState<string | null>(null)
+  const highlightTimeoutRef = useRef<number | null>(null)
+  const trashTimeoutRef = useRef<number | null>(null)
   const toast = useToast()
+
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        window.clearTimeout(highlightTimeoutRef.current)
+      }
+
+      if (trashTimeoutRef.current) {
+        window.clearTimeout(trashTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  const triggerHighlight = (bucket: BucketId | null) => {
+    if (highlightTimeoutRef.current) {
+      window.clearTimeout(highlightTimeoutRef.current)
+      highlightTimeoutRef.current = null
+    }
+
+    if (!bucket) {
+      setHighlightBucket(null)
+      return
+    }
+
+    setHighlightBucket(bucket)
+    highlightTimeoutRef.current = window.setTimeout(() => {
+      setHighlightBucket(null)
+      highlightTimeoutRef.current = null
+    }, 300)
+  }
+
+  const triggerTrashSuccess = (intentionId: string) => {
+    if (trashTimeoutRef.current) {
+      window.clearTimeout(trashTimeoutRef.current)
+      trashTimeoutRef.current = null
+    }
+
+    setTrashSuccessId(intentionId)
+    trashTimeoutRef.current = window.setTimeout(() => {
+      setTrashSuccessId(null)
+      trashTimeoutRef.current = null
+    }, 500)
+  }
 
   const handleDragStart = (_event: DragStartEvent) => {
     document.body.classList.add('dragging')
@@ -37,6 +84,9 @@ export function Canvas() {
     const overId = String(over.id)
 
     if (overId.startsWith('trash-')) {
+      const trashIntentionId = overId.replace('trash-', '')
+      triggerTrashSuccess(trashIntentionId)
+
       if (activeData.type === 'step') {
         const draggedStep = activeData.step as Step | undefined
 
@@ -86,6 +136,8 @@ export function Canvas() {
         return
       }
 
+      let stepMoved = false
+
       setIntentions((prev) =>
         prev.map((intention) => {
           if (intention.id !== intentionId) return intention
@@ -108,6 +160,8 @@ export function Canvas() {
             (step) => step.bucket === newBucket && step.id !== draggedStep.id
           )
 
+          stepMoved = true
+
           const updatedSteps = intention.steps.map((step) =>
             step.id === draggedStep.id
               ? { ...step, bucket: newBucket, order: stepsInTarget.length + 1 }
@@ -117,6 +171,10 @@ export function Canvas() {
           return { ...intention, steps: updatedSteps }
         })
       )
+
+      if (stepMoved) {
+        triggerHighlight(newBucket)
+      }
 
       return
     }
@@ -180,6 +238,7 @@ export function Canvas() {
       })
 
       if (intentionMoved) {
+        triggerHighlight(targetBucket)
         toast.success(`Moved “${draggedIntention.title}” to ${bucketTitle}.`)
       }
     }
@@ -221,6 +280,25 @@ export function Canvas() {
     ])
   }
 
+  const handleDeleteStep = (step: Step) => {
+    setIntentions((prev) =>
+      prev.map((intention) => {
+        if (intention.id !== step.intentionId) return intention
+
+        const remainingSteps = intention.steps.filter((existingStep) => existingStep.id !== step.id)
+        if (remainingSteps.length === intention.steps.length) {
+          return intention
+        }
+
+        return { ...intention, steps: remainingSteps }
+      })
+    )
+  }
+
+  const handleDeleteIntention = (intentionId: string) => {
+    setIntentions((prev) => prev.filter((intention) => intention.id !== intentionId))
+  }
+
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
       <main className="max-w-6xl mx-auto px-6 py-10 text-kings-black bg-white">
@@ -255,6 +333,10 @@ export function Canvas() {
             key={intention.id}
             intention={intention}
             onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
+            onDeleteStep={handleDeleteStep}
+            onDeleteIntention={handleDeleteIntention}
+            highlightBucket={highlightBucket}
+            trashSuccessId={trashSuccessId}
           />
         ))}
 
