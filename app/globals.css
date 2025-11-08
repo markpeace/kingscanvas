@@ -43,3 +43,19 @@ a { color: inherit; text-decoration: none; }
 .dragging .TrashZone {
   opacity: 1;
 }
+
+[data-sonner-toast],
+[data-hot-toast] {
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,6 +1,6 @@
 import "./globals.css"
 import dynamicImport from "next/dynamic"
-import { ToastProvider } from "../components/toast/ToastProvider"
+import { Toaster } from "react-hot-toast"
 import AuthProvider from "../components/auth/AuthProvider"
 import InstallBanner from "../components/pwa/InstallBanner"
 
@@ -39,16 +39,32 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-white font-sans text-kings-black">
         <AuthProvider>
-          <ToastProvider>
-            <InstallBanner />
+          <InstallBanner />
 
-            <main className="w-full px-8 py-10 overflow-x-hidden bg-white text-kings-black">
-              {children}
-            </main>
+          <main className="w-full px-8 py-10 overflow-x-hidden bg-white text-kings-black">
+            {children}
+          </main>
 
-            {debugEnabled ? <DebugPanelDynamic /> : null}
-          </ToastProvider>
+          {debugEnabled ? <DebugPanelDynamic /> : null}
         </AuthProvider>
+        <Toaster
+          position="bottom-center"
+          toastOptions={{
+            duration: 1500,
+            style: {
+              background: "#fff",
+              color: "#222",
+              border: "1px solid #e5e5e5",
+              fontSize: "0.85rem"
+            },
+            success: {
+              iconTheme: {
+                primary: "#cc0000",
+                secondary: "#fff"
+              }
+            }
+          }}
+        />
       </body>
     </html>
   )

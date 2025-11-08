@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core';
 import { useState, type KeyboardEvent } from 'react';
+import toast from 'react-hot-toast';
 
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Step } from '@/types/canvas';
@@ -27,6 +28,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: Step
       ...prev,
       title,
     }));
+    toast('Changes saved', { icon: '💾' });
   };
 
   const style = transform

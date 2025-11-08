@@ -42,6 +42,7 @@ prs_log:
   - "PR 0016: Unified card visuals and added dashed empty-state placeholders with contextual prompts."
   - "PR 0017: Redesigned drag-to-delete with compact circular trash target and drop feedback."
   - "PR 0018: Implemented accessibility improvements — focus rings, colour contrast, ARIA attributes, and live announcements."
+  - "PR 0019: Added toast notifications for create/edit/delete/move actions."
 
 epoch-0001:
   title: "Canvas Columns & Layout"
