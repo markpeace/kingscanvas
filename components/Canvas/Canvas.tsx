@@ -109,6 +109,8 @@ export function Canvas() {
 
       const overId = String(over.id)
 
+      console.debug('Dropped on', overId, 'with type', activeData?.type)
+
       if (overId.startsWith('trash')) {
         const trashIntentionId = overId.replace(/^trash-?/, '')
 
@@ -139,7 +141,11 @@ export function Canvas() {
             toast.success('Step deleted')
             announce(`Deleted step "${draggedStep.title}".`)
           }
-        } else if (activeData.type === 'intention') {
+
+          return
+        }
+
+        if (activeData.type === 'intention') {
           const draggedIntention = activeData.intention as Intention | undefined
 
           if (!draggedIntention) {
@@ -150,6 +156,7 @@ export function Canvas() {
           triggerTrashSuccess(trashIntentionId || draggedIntention.id, 'intention')
           toast.success('Intention deleted')
           announce(`Deleted intention "${draggedIntention.title}".`)
+          return
         }
 
         return
