@@ -18,6 +18,7 @@ prs_log:
   - "PR 0004 (reissue): Rebuilt drag-and-drop using @dnd-kit data payloads for reliable drops."
   - "PR 0004-restrict: Prevented dropping Steps into or after an Intention’s bucket."
   - "PR 0005: Added inline editing for Intention titles, descriptions, and Step titles."
+  - "PR 0005-hotfix: Adjusted inline editing colour scheme to red text on black background."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

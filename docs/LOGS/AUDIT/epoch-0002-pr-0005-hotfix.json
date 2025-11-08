@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0005-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0005-hotfix-inline-editing-colours",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/StepCard.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Updated inline editing inputs and textareas to use King's Red on black for higher contrast."
+}

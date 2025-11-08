@@ -30,7 +30,7 @@ export function StepCard({ step }: { step: Step }) {
           onChange={(e) => titleEdit.setValue(e.target.value)}
           onBlur={() => titleEdit.commit()}
           onKeyDown={(e) => e.key === 'Enter' && titleEdit.commit()}
-          className="w-full border border-kings-grey-light rounded-md px-3 py-1.5 text-sm leading-5 text-kings-black placeholder:text-kings-grey focus:outline-none focus:ring-2 focus:ring-kings-red/30"
+          className="w-full border border-kings-grey-light rounded-md px-3 py-1.5 text-sm leading-5 bg-black text-kings-red placeholder-kings-grey-dark focus:outline-none focus:ring-2 focus:ring-kings-red/30"
           autoFocus
         />
       ) : (
