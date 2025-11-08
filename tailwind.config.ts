@@ -16,8 +16,16 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["Bureau Grotesk 37", "Inter", "Helvetica Neue", "Arial", "sans-serif"],
-        serif: ["Georgia", "serif"]
+        sans: [
+          "Inter",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif"
+        ]
       },
       colors: {
         kings: {

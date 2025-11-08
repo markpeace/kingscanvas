@@ -126,18 +126,24 @@ export function Canvas() {
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <main className="px-8 py-10 w-full overflow-x-hidden">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-kings-red">Your Intentions</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-lg font-semibold text-kings-red">Your Intentions</h1>
           <button
             onClick={() => setModalOpen(true)}
-            className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
+            className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors"
           >
             ＋ Add Intention
           </button>
         </div>
-        <div className="grid grid-cols-4 gap-6 mb-6 text-kings-red font-semibold text-xl">
+        <div className="grid grid-cols-4 gap-6 mb-3">
           {BUCKETS.map((bucket) => (
-            <h2 key={bucket.id}>{bucket.title}</h2>
+            <div key={bucket.id} className="relative h-5">
+              <span
+                className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none px-1 text-center select-none"
+              >
+                {bucket.title}
+              </span>
+            </div>
           ))}
         </div>
         {intentions.map((intention) => (
