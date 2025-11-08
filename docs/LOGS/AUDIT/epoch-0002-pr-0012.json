@@ -1,0 +1,15 @@
+{
+  "epoch": "0002",
+  "pr": "0012",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0012-layout-visual-cohesion",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/StepCard.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Centred Canvas layout, refined title/header grouping, added dashed empty-state placeholders, and harmonised shadows and spacing."
+}

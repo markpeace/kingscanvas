@@ -44,22 +44,25 @@ function BucketColumn({
     <div
       ref={setNodeRef}
       className={[
-        'border rounded-lg p-4 min-h-[140px] flex flex-col justify-start transition-colors',
-        isOver
-          ? 'bg-kings-grey-light/40'
-          : isLater
-            ? 'bg-kings-grey-light/20 border-kings-grey-light/60'
-            : 'bg-white border-kings-grey-light',
+        'border border-kings-grey-light rounded-md p-4 min-h-[140px] flex flex-col gap-3 transition-colors bg-white',
+        isOver ? 'shadow-sm border-kings-red/40' : '',
+        isLater ? 'opacity-70' : '',
       ].join(' ')}
     >
       {isIntentionBucket && <IntentionCard intention={intention} />}
 
-      {steps.length > 0 && (
-        <div className={`flex flex-col gap-2 mb-3 ${isIntentionBucket ? 'mt-3' : ''}`}>
+      {steps.length > 0 ? (
+        <div className="flex flex-col gap-3">
           {steps.map((step) => (
             <StepCard key={step.id} step={step} />
           ))}
         </div>
+      ) : (
+        isEarlier && (
+          <div className="flex items-center justify-center border border-kings-grey-light border-dashed rounded-md h-[120px] text-kings-grey-dark/70 text-sm italic">
+            Empty — Add Step
+          </div>
+        )
       )}
 
       {isEarlier && (
@@ -85,7 +88,7 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
       <div className="relative">
         <section
           aria-label={`Intention: ${intention.title}`}
-          className="grid grid-cols-4 gap-6 mb-12 w-[calc(100%-100px)] inline-grid align-top"
+          className="grid grid-cols-4 gap-6 mb-12"
           style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
         >
           {BUCKETS.map(({ id: colBucket }) => {

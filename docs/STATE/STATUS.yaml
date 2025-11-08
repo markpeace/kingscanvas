@@ -35,6 +35,7 @@ prs_log:
   - "PR 0009-hotfix-8: Forced true centre alignment of column headers and fixed title/button baseline."
   - "PR 0010: Added distinct visual styling for Intention cards (red tint and border) to create clear hierarchy."
   - "PR 0011: Removed stock template header bar for clean full-width Canvas layout."
+  - "PR 0012: Final Canvas layout and visual cohesion adjustments — unified spacing, centring, and placeholders."
 
 epoch-0001:
   title: "Canvas Columns & Layout"
