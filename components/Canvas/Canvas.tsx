@@ -95,6 +95,23 @@ export function Canvas() {
     ])
   }
 
+  const handleDeleteIntention = (id: string) => {
+    setIntentions((prev) => prev.filter((intention) => intention.id !== id))
+  }
+
+  const handleDeleteStep = (intentionId: string, stepId: string) => {
+    setIntentions((prev) =>
+      prev.map((intention) =>
+        intention.id === intentionId
+          ? {
+              ...intention,
+              steps: intention.steps.filter((step) => step.id !== stepId)
+            }
+          : intention
+      )
+    )
+  }
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <main className="px-8 py-10 w-full overflow-x-hidden">
@@ -117,6 +134,8 @@ export function Canvas() {
             key={intention.id}
             intention={intention}
             onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
+            onDeleteIntention={handleDeleteIntention}
+            onDeleteStep={handleDeleteStep}
           />
         ))}
 

@@ -12,6 +12,8 @@ import { Intention, Step } from '@/types/canvas'
 type IntentionRowProps = {
   intention: Intention
   onAddStep: (bucket: Step['bucket'], title: string) => void
+  onDeleteIntention: (id: string) => void
+  onDeleteStep: (intentionId: string, stepId: string) => void
 }
 
 type BucketColumnProps = {
@@ -22,6 +24,8 @@ type BucketColumnProps = {
   isEarlier: boolean
   isLater: boolean
   onAddStepClick: () => void
+  onDeleteIntention: (id: string) => void
+  onDeleteStep: (stepId: string) => void
 }
 
 function BucketColumn({
@@ -31,7 +35,9 @@ function BucketColumn({
   isIntentionBucket,
   isEarlier,
   isLater,
-  onAddStepClick
+  onAddStepClick,
+  onDeleteIntention,
+  onDeleteStep
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`
   const { setNodeRef, isOver } = useDroppable({
@@ -51,12 +57,14 @@ function BucketColumn({
             : 'bg-white border-kings-grey-light'
       ].join(' ')}
     >
-      {isIntentionBucket && <IntentionCard intention={intention} />}
+      {isIntentionBucket && (
+        <IntentionCard intention={intention} onDelete={onDeleteIntention} />
+      )}
 
       {steps.length > 0 && (
         <div className={`flex flex-col gap-2 mb-3 ${isIntentionBucket ? 'mt-3' : ''}`}>
           {steps.map((step) => (
-            <StepCard key={step.id} step={step} />
+            <StepCard key={step.id} step={step} onDelete={onDeleteStep} />
           ))}
         </div>
       )}
@@ -74,7 +82,12 @@ function BucketColumn({
   )
 }
 
-export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
+export function IntentionRow({
+  intention,
+  onAddStep,
+  onDeleteIntention,
+  onDeleteStep
+}: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null)
 
   return (
@@ -101,6 +114,8 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
               isEarlier={isEarlier}
               isLater={isLater}
               onAddStepClick={() => setModalBucket(colBucket)}
+              onDeleteIntention={onDeleteIntention}
+              onDeleteStep={(stepId) => onDeleteStep(intention.id, stepId)}
             />
           )
         })}
