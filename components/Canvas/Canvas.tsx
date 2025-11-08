@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { DndContext, type DragEndEvent, type DragStartEvent, type DragCancelEvent } from '@dnd-kit/core'
 import toast from 'react-hot-toast'
 
@@ -36,7 +36,7 @@ export function Canvas() {
     }
   }, [])
 
-  const triggerHighlight = (bucket: BucketId | null) => {
+  const triggerHighlight = useCallback((bucket: BucketId | null) => {
     if (highlightTimeoutRef.current) {
       window.clearTimeout(highlightTimeoutRef.current)
       highlightTimeoutRef.current = null
@@ -52,9 +52,9 @@ export function Canvas() {
       setHighlightBucket(null)
       highlightTimeoutRef.current = null
     }, 300)
-  }
+  }, [])
 
-  const triggerTrashSuccess = (intentionId: string) => {
+  const triggerTrashSuccess = useCallback((intentionId: string) => {
     if (trashTimeoutRef.current) {
       window.clearTimeout(trashTimeoutRef.current)
       trashTimeoutRef.current = null
@@ -65,17 +65,17 @@ export function Canvas() {
       setTrashSuccessId(null)
       trashTimeoutRef.current = null
     }, 500)
-  }
+  }, [])
 
-  const handleDragStart = (_event: DragStartEvent) => {
+  const handleDragStart = useCallback((_event: DragStartEvent) => {
     document.body.classList.add('dragging')
-  }
+  }, [])
 
-  const handleDragCancel = (_event: DragCancelEvent) => {
+  const handleDragCancel = useCallback((_event: DragCancelEvent) => {
     document.body.classList.remove('dragging')
-  }
+  }, [])
 
-  const announce = (message: string) => {
+  const announce = useCallback((message: string) => {
     if (announcementTimeoutRef.current) {
       window.clearTimeout(announcementTimeoutRef.current)
       announcementTimeoutRef.current = null
@@ -86,156 +86,289 @@ export function Canvas() {
       setAnnouncement('')
       announcementTimeoutRef.current = null
     }, 1000)
-  }
+  }, [])
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    document.body.classList.remove('dragging')
-    const { active, over } = event
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      document.body.classList.remove('dragging')
+      const { active, over } = event
 
-    if (!active || !over) return
+      if (!active || !over) return
 
-    const activeData = active.data?.current
+      const activeData = active.data?.current
 
-    if (!activeData) return
+      if (!activeData) return
 
-    const overId = String(over.id)
+      const overId = String(over.id)
 
-    if (overId.startsWith('trash-')) {
-      const trashIntentionId = overId.replace('trash-', '')
-      triggerTrashSuccess(trashIntentionId)
+      if (overId.startsWith('trash-')) {
+        const trashIntentionId = overId.replace('trash-', '')
+        triggerTrashSuccess(trashIntentionId)
+
+        if (activeData.type === 'step') {
+          const draggedStep = activeData.step as Step | undefined
+
+          if (!draggedStep) {
+            return
+          }
+
+          let stepDeleted = false
+          setIntentions((prev) =>
+            prev.map((intention) => {
+              if (intention.id !== draggedStep.intentionId) return intention
+
+              const remainingSteps = intention.steps.filter((step) => step.id !== draggedStep.id)
+              if (remainingSteps.length === intention.steps.length) {
+                return intention
+              }
+
+              stepDeleted = true
+              return { ...intention, steps: remainingSteps }
+            })
+          )
+
+          if (stepDeleted) {
+            toast.success('Deleted')
+            announce(`Deleted step "${draggedStep.title}".`)
+          }
+        } else if (activeData.type === 'intention') {
+          const draggedIntention = activeData.intention as Intention | undefined
+
+          if (!draggedIntention) {
+            return
+          }
+
+          setIntentions((prev) => prev.filter((intention) => intention.id !== draggedIntention.id))
+          toast.success('Deleted')
+          announce(`Deleted intention "${draggedIntention.title}".`)
+        }
+
+        return
+      }
 
       if (activeData.type === 'step') {
         const draggedStep = activeData.step as Step | undefined
 
-        if (!draggedStep) {
+        if (!draggedStep) return
+
+        const dropData = over.data?.current as
+          | { intentionId: string; bucket: Step['bucket'] }
+          | undefined
+
+        if (!dropData) return
+
+        const { intentionId, bucket: newBucket } = dropData
+
+        if (draggedStep.bucket === newBucket || draggedStep.intentionId !== intentionId) {
           return
         }
 
-        let stepDeleted = false
+        let stepMoved = false
+        const bucketTitle = BUCKETS.find((bucket) => bucket.id === newBucket)?.title ?? newBucket
+
         setIntentions((prev) =>
           prev.map((intention) => {
-            if (intention.id !== draggedStep.intentionId) return intention
+            if (intention.id !== intentionId) return intention
 
-            const remainingSteps = intention.steps.filter((step) => step.id !== draggedStep.id)
-            if (remainingSteps.length === intention.steps.length) {
+            const intentionBucket = intention.bucket
+            const newBucketOrder = bucketOrder[newBucket]
+            const intentionOrder = bucketOrder[intentionBucket]
+
+            if (newBucketOrder === undefined || intentionOrder === undefined) {
+              console.warn('Blocked drop: unknown bucket ordering')
               return intention
             }
 
-            stepDeleted = true
-            return { ...intention, steps: remainingSteps }
+            if (newBucketOrder >= intentionOrder) {
+              console.warn('Blocked drop: cannot move step after intention bucket')
+              return intention
+            }
+
+            const stepsInTarget = intention.steps.filter(
+              (step) => step.bucket === newBucket && step.id !== draggedStep.id
+            )
+
+            stepMoved = true
+
+            const updatedSteps = intention.steps.map((step) =>
+              step.id === draggedStep.id
+                ? { ...step, bucket: newBucket, order: stepsInTarget.length + 1 }
+                : step
+            )
+
+            return { ...intention, steps: updatedSteps }
           })
         )
 
-        if (stepDeleted) {
-          toast.success('Deleted')
-          announce(`Deleted step "${draggedStep.title}".`)
+        if (stepMoved) {
+          triggerHighlight(newBucket)
+          toast.success(`Moved to ${bucketTitle}`)
+          announce(`Moved "${draggedStep.title}" to ${bucketTitle}.`)
         }
-      } else if (activeData.type === 'intention') {
+
+        return
+      }
+
+      if (activeData.type === 'intention') {
         const draggedIntention = activeData.intention as Intention | undefined
 
-        if (!draggedIntention) {
+        if (!draggedIntention) return
+
+        const dropData = over.data?.current as { bucket?: BucketId } | undefined
+        const rawTarget = dropData?.bucket ?? (overId.includes(':') ? overId.split(':').pop() : overId)
+        const targetBucket = rawTarget as BucketId | undefined
+        const validBuckets = BUCKETS.map((bucket) => bucket.id)
+
+        if (!targetBucket || !validBuckets.includes(targetBucket)) {
           return
         }
 
-        setIntentions((prev) => prev.filter((intention) => intention.id !== draggedIntention.id))
-        toast.success('Deleted')
-        announce(`Deleted intention "${draggedIntention.title}".`)
+        if (targetBucket === 'do-now') {
+          toast.error('Intentions can’t be placed in Do Now')
+          return
+        }
+
+        if (targetBucket === draggedIntention.bucket) {
+          return
+        }
+
+        const targetIndex = bucketOrder[targetBucket]
+        const currentIndex = bucketOrder[draggedIntention.bucket]
+
+        if (targetIndex === undefined || currentIndex === undefined) {
+          console.warn('Blocked drop: unknown bucket ordering')
+          return
+        }
+
+        let intentionMoved = false
+        const bucketTitle = BUCKETS.find((bucket) => bucket.id === targetBucket)?.title ?? targetBucket
+
+        setIntentions((prev) => {
+          const updatedIntentions = prev.map((intention) => {
+            if (intention.id !== draggedIntention.id) return intention
+
+            intentionMoved = true
+
+            const baseIntention: Intention = {
+              ...intention,
+              bucket: targetBucket,
+              updatedAt: new Date().toISOString()
+            }
+
+            if (targetIndex < currentIndex) {
+              return {
+                ...baseIntention,
+                steps: concertinaSteps(prev, targetBucket, intention.id)
+              }
+            }
+
+            return baseIntention
+          })
+          return updatedIntentions
+        })
+
+        if (intentionMoved) {
+          triggerHighlight(targetBucket)
+          toast.success(`Moved to ${bucketTitle}`)
+          announce(`Moved "${draggedIntention.title}" to ${bucketTitle}.`)
+        }
+      }
+    },
+    [announce, triggerHighlight, triggerTrashSuccess]
+  )
+
+  const moveStepWithKeyboard = useCallback(
+    (intention: Intention, step: Step, direction: 'forward' | 'backward') => {
+      const currentIndex = bucketOrder[step.bucket]
+      const intentionIndex = bucketOrder[intention.bucket]
+
+      if (currentIndex === undefined || intentionIndex === undefined) {
+        return
       }
 
-      return
-    }
+      const offset = direction === 'forward' ? 1 : -1
+      const targetBucket = BUCKETS[currentIndex + offset]?.id as Step['bucket'] | undefined
 
-    if (activeData.type === 'step') {
-      const draggedStep = activeData.step as Step | undefined
+      if (!targetBucket) {
+        return
+      }
 
-      if (!draggedStep) return
+      const targetIndex = bucketOrder[targetBucket]
 
-      const dropData = over.data?.current as
-        | { intentionId: string; bucket: Step['bucket'] }
-        | undefined
+      if (targetIndex === undefined) {
+        return
+      }
 
-      if (!dropData) return
-
-      const { intentionId, bucket: newBucket } = dropData
-
-      if (draggedStep.bucket === newBucket || draggedStep.intentionId !== intentionId) {
+      if (direction === 'forward' && targetIndex >= intentionIndex) {
+        announce('Steps cannot move beyond their intention bucket.')
         return
       }
 
       let stepMoved = false
-      const bucketTitle = BUCKETS.find((bucket) => bucket.id === newBucket)?.title ?? newBucket
+      const bucketTitle = BUCKETS.find((bucket) => bucket.id === targetBucket)?.title ?? targetBucket
 
       setIntentions((prev) =>
-        prev.map((intention) => {
-          if (intention.id !== intentionId) return intention
+        prev.map((currentIntention) => {
+          if (currentIntention.id !== intention.id) return currentIntention
 
-          const intentionBucket = intention.bucket
-          const newBucketOrder = bucketOrder[newBucket]
-          const intentionOrder = bucketOrder[intentionBucket]
-
-          if (newBucketOrder === undefined || intentionOrder === undefined) {
-            console.warn('Blocked drop: unknown bucket ordering')
-            return intention
-          }
-
-          if (newBucketOrder >= intentionOrder) {
-            console.warn('Blocked drop: cannot move step after intention bucket')
-            return intention
-          }
-
-          const stepsInTarget = intention.steps.filter(
-            (step) => step.bucket === newBucket && step.id !== draggedStep.id
+          const stepsInTarget = currentIntention.steps.filter(
+            (existingStep) => existingStep.bucket === targetBucket && existingStep.id !== step.id
           )
 
-          stepMoved = true
+          const updatedSteps = currentIntention.steps.map((existingStep) => {
+            if (existingStep.id !== step.id) {
+              return existingStep
+            }
 
-          const updatedSteps = intention.steps.map((step) =>
-            step.id === draggedStep.id
-              ? { ...step, bucket: newBucket, order: stepsInTarget.length + 1 }
-              : step
-          )
+            stepMoved = true
+            return {
+              ...existingStep,
+              bucket: targetBucket,
+              order: stepsInTarget.length + 1
+            }
+          })
 
-          return { ...intention, steps: updatedSteps }
+          return { ...currentIntention, steps: updatedSteps }
         })
       )
 
       if (stepMoved) {
-        triggerHighlight(newBucket)
+        triggerHighlight(targetBucket)
         toast.success(`Moved to ${bucketTitle}`)
-        announce(`Moved "${draggedStep.title}" to ${bucketTitle}.`)
+        announce(`Moved "${step.title}" to ${bucketTitle}.`)
+      }
+    },
+    [announce, triggerHighlight]
+  )
+
+  const moveIntentionWithKeyboard = useCallback(
+    (intention: Intention, direction: 'forward' | 'backward') => {
+      const currentIndex = bucketOrder[intention.bucket]
+
+      if (currentIndex === undefined) {
+        return
       }
 
-      return
-    }
+      const offset = direction === 'forward' ? 1 : -1
+      const targetBucket = BUCKETS[currentIndex + offset]?.id as BucketId | undefined
 
-    if (activeData.type === 'intention') {
-      const draggedIntention = activeData.intention as Intention | undefined
-
-      if (!draggedIntention) return
-
-      const dropData = over.data?.current as { bucket?: BucketId } | undefined
-      const rawTarget = dropData?.bucket ?? (overId.includes(':') ? overId.split(':').pop() : overId)
-      const targetBucket = rawTarget as BucketId | undefined
-      const validBuckets = BUCKETS.map((bucket) => bucket.id)
-
-      if (!targetBucket || !validBuckets.includes(targetBucket)) {
+      if (!targetBucket) {
         return
       }
 
       if (targetBucket === 'do-now') {
         toast.error('Intentions can’t be placed in Do Now')
+        announce('Intentions can’t be placed in Do Now.')
         return
       }
 
-      if (targetBucket === draggedIntention.bucket) {
+      if (targetBucket === intention.bucket) {
         return
       }
 
       const targetIndex = bucketOrder[targetBucket]
-      const currentIndex = bucketOrder[draggedIntention.bucket]
 
-      if (targetIndex === undefined || currentIndex === undefined) {
-        console.warn('Blocked drop: unknown bucket ordering')
+      if (targetIndex === undefined) {
         return
       }
 
@@ -243,13 +376,13 @@ export function Canvas() {
       const bucketTitle = BUCKETS.find((bucket) => bucket.id === targetBucket)?.title ?? targetBucket
 
       setIntentions((prev) => {
-        const updatedIntentions = prev.map((intention) => {
-          if (intention.id !== draggedIntention.id) return intention
+        const updatedIntentions = prev.map((currentIntention) => {
+          if (currentIntention.id !== intention.id) return currentIntention
 
           intentionMoved = true
 
           const baseIntention: Intention = {
-            ...intention,
+            ...currentIntention,
             bucket: targetBucket,
             updatedAt: new Date().toISOString()
           }
@@ -263,144 +396,20 @@ export function Canvas() {
 
           return baseIntention
         })
+
         return updatedIntentions
       })
 
       if (intentionMoved) {
         triggerHighlight(targetBucket)
         toast.success(`Moved to ${bucketTitle}`)
-        announce(`Moved "${draggedIntention.title}" to ${bucketTitle}.`)
+        announce(`Moved "${intention.title}" to ${bucketTitle}.`)
       }
-    }
-  }
+    },
+    [announce, triggerHighlight]
+  )
 
-  const moveStepWithKeyboard = (intention: Intention, step: Step, direction: 'forward' | 'backward') => {
-    const currentIndex = bucketOrder[step.bucket]
-    const intentionIndex = bucketOrder[intention.bucket]
-
-    if (currentIndex === undefined || intentionIndex === undefined) {
-      return
-    }
-
-    const offset = direction === 'forward' ? 1 : -1
-    const targetBucket = BUCKETS[currentIndex + offset]?.id as Step['bucket'] | undefined
-
-    if (!targetBucket) {
-      return
-    }
-
-    const targetIndex = bucketOrder[targetBucket]
-
-    if (targetIndex === undefined) {
-      return
-    }
-
-    if (direction === 'forward' && targetIndex >= intentionIndex) {
-      announce('Steps cannot move beyond their intention bucket.')
-      return
-    }
-
-    let stepMoved = false
-    const bucketTitle = BUCKETS.find((bucket) => bucket.id === targetBucket)?.title ?? targetBucket
-
-    setIntentions((prev) =>
-      prev.map((currentIntention) => {
-        if (currentIntention.id !== intention.id) return currentIntention
-
-        const stepsInTarget = currentIntention.steps.filter(
-          (existingStep) => existingStep.bucket === targetBucket && existingStep.id !== step.id
-        )
-
-        const updatedSteps = currentIntention.steps.map((existingStep) => {
-          if (existingStep.id !== step.id) {
-            return existingStep
-          }
-
-          stepMoved = true
-          return {
-            ...existingStep,
-            bucket: targetBucket,
-            order: stepsInTarget.length + 1
-          }
-        })
-
-        return { ...currentIntention, steps: updatedSteps }
-      })
-    )
-
-    if (stepMoved) {
-      triggerHighlight(targetBucket)
-      toast.success(`Moved to ${bucketTitle}`)
-      announce(`Moved "${step.title}" to ${bucketTitle}.`)
-    }
-  }
-
-  const moveIntentionWithKeyboard = (intention: Intention, direction: 'forward' | 'backward') => {
-    const currentIndex = bucketOrder[intention.bucket]
-
-    if (currentIndex === undefined) {
-      return
-    }
-
-    const offset = direction === 'forward' ? 1 : -1
-    const targetBucket = BUCKETS[currentIndex + offset]?.id as BucketId | undefined
-
-    if (!targetBucket) {
-      return
-    }
-
-    if (targetBucket === 'do-now') {
-      toast.error('Intentions can’t be placed in Do Now')
-      announce('Intentions can’t be placed in Do Now.')
-      return
-    }
-
-    if (targetBucket === intention.bucket) {
-      return
-    }
-
-    const targetIndex = bucketOrder[targetBucket]
-
-    if (targetIndex === undefined) {
-      return
-    }
-
-    let intentionMoved = false
-    const bucketTitle = BUCKETS.find((bucket) => bucket.id === targetBucket)?.title ?? targetBucket
-
-    setIntentions((prev) => {
-      const updatedIntentions = prev.map((currentIntention) => {
-        if (currentIntention.id !== intention.id) return currentIntention
-
-        intentionMoved = true
-
-        const baseIntention: Intention = {
-          ...currentIntention,
-          bucket: targetBucket,
-          updatedAt: new Date().toISOString()
-        }
-
-        if (targetIndex < currentIndex) {
-          return {
-            ...baseIntention,
-            steps: concertinaSteps(prev, targetBucket, intention.id)
-          }
-        }
-
-        return baseIntention
-      })
-
-      return updatedIntentions
-    })
-
-    if (intentionMoved) {
-      triggerHighlight(targetBucket)
-      toast.success(`Moved to ${bucketTitle}`)
-      announce(`Moved "${intention.title}" to ${bucketTitle}.`)
-    }
-  }
-
-  const handleAddStep = (intentionId: string, bucket: Step['bucket'], title: string) => {
+  const handleAddStep = useCallback((intentionId: string, bucket: Step['bucket'], title: string) => {
     setIntentions((prev) =>
       prev.map((intention) => {
         if (intention.id !== intentionId) return intention
@@ -418,9 +427,9 @@ export function Canvas() {
         return { ...intention, steps: [...intention.steps, newStep] }
       })
     )
-  }
+  }, [])
 
-  const handleAddIntention = (title: string, description: string, bucket: BucketId) => {
+  const handleAddIntention = useCallback((title: string, description: string, bucket: BucketId) => {
     const timestamp = new Date().toISOString()
     setIntentions((prev) => [
       ...prev,
@@ -434,39 +443,81 @@ export function Canvas() {
         updatedAt: timestamp
       }
     ])
-  }
+  }, [])
 
-  const handleDeleteStep = (step: Step) => {
-    let deleted = false
-    setIntentions((prev) =>
-      prev.map((intention) => {
-        if (intention.id !== step.intentionId) return intention
+  const handleDeleteStep = useCallback(
+    (step: Step) => {
+      let deleted = false
+      setIntentions((prev) =>
+        prev.map((intention) => {
+          if (intention.id !== step.intentionId) return intention
 
-        const remainingSteps = intention.steps.filter((existingStep) => existingStep.id !== step.id)
-        if (remainingSteps.length === intention.steps.length) {
-          return intention
-        }
+          const remainingSteps = intention.steps.filter((existingStep) => existingStep.id !== step.id)
+          if (remainingSteps.length === intention.steps.length) {
+            return intention
+          }
 
-        deleted = true
-        return { ...intention, steps: remainingSteps }
-      })
-    )
+          deleted = true
+          return { ...intention, steps: remainingSteps }
+        })
+      )
 
-    if (deleted) {
-      toast.success('Deleted')
-      announce(`Deleted step "${step.title}".`)
-    }
-  }
+      if (deleted) {
+        toast.success('Deleted')
+        announce(`Deleted step "${step.title}".`)
+      }
+    },
+    [announce]
+  )
 
-  const handleDeleteIntention = (intentionId: string) => {
-    const intention = intentions.find((item) => item.id === intentionId)
-    setIntentions((prev) => prev.filter((intentionItem) => intentionItem.id !== intentionId))
+  const handleDeleteIntention = useCallback(
+    (intentionId: string) => {
+      let deletedTitle: string | null = null
+      setIntentions((prev) =>
+        prev.filter((intentionItem) => {
+          if (intentionItem.id === intentionId) {
+            deletedTitle = intentionItem.title
+            return false
+          }
 
-    if (intention) {
-      toast.success('Deleted')
-      announce(`Deleted intention "${intention.title}".`)
-    }
-  }
+          return true
+        })
+      )
+
+      if (deletedTitle) {
+        toast.success('Deleted')
+        announce(`Deleted intention "${deletedTitle}".`)
+      }
+    },
+    [announce]
+  )
+
+  const renderedIntentions = useMemo(
+    () =>
+      intentions.map((intention) => (
+        <IntentionRow
+          key={intention.id}
+          intention={intention}
+          onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
+          onDeleteStep={handleDeleteStep}
+          onDeleteIntention={handleDeleteIntention}
+          onMoveStep={moveStepWithKeyboard}
+          onMoveIntention={moveIntentionWithKeyboard}
+          highlightBucket={highlightBucket}
+          trashSuccessId={trashSuccessId}
+        />
+      )),
+    [
+      handleAddStep,
+      handleDeleteIntention,
+      handleDeleteStep,
+      highlightBucket,
+      intentions,
+      moveIntentionWithKeyboard,
+      moveStepWithKeyboard,
+      trashSuccessId
+    ]
+  )
 
   return (
     <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
@@ -479,7 +530,7 @@ export function Canvas() {
       <div aria-live="polite" className="sr-only" id="canvas-announcer">
         {announcement}
       </div>
-      <main id="main-canvas" className="max-w-6xl mx-auto px-6 py-10 text-kings-black bg-white">
+      <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
         {/* HEADER GROUP */}
         <header className="mb-8">
           {/* Title + Button Row */}
@@ -506,19 +557,7 @@ export function Canvas() {
             ))}
           </div>
         </header>
-        {intentions.map((intention) => (
-          <IntentionRow
-            key={intention.id}
-            intention={intention}
-            onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
-            onDeleteStep={handleDeleteStep}
-            onDeleteIntention={handleDeleteIntention}
-            onMoveStep={moveStepWithKeyboard}
-            onMoveIntention={moveIntentionWithKeyboard}
-            highlightBucket={highlightBucket}
-            trashSuccessId={trashSuccessId}
-          />
-        ))}
+        {renderedIntentions}
 
         <AddIntentionModal
           isOpen={modalOpen}
