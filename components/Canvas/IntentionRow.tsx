@@ -85,7 +85,7 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
 
   return (
     <>
-      <div className="relative">
+      <div className={`relative group${isDragging ? ' dragging' : ''}`}>
         <section
           aria-label={`Intention: ${intention.title}`}
           className="grid grid-cols-4 gap-6 mb-12"
@@ -113,11 +113,7 @@ export function IntentionRow({ intention, onAddStep }: IntentionRowProps) {
           })}
         </section>
 
-        <div
-          className={`absolute top-0 right-0 h-full flex items-center transition-opacity duration-200 ${
-            isDragging ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}
-        >
+        <div className="absolute top-0 right-0 flex items-center justify-center h-full pointer-events-none group-[.dragging]:pointer-events-auto">
           <TrashZone intentionId={intention.id} />
         </div>
       </div>
