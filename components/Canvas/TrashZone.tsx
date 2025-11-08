@@ -9,16 +9,16 @@ const MemoCheckIcon = memo(CheckIcon);
 
 type TrashZoneProps = {
   intentionId: string;
-  didDrop?: boolean;
+  didDrop?: 'step' | 'intention' | null;
 };
 
-export function TrashZone({ intentionId, didDrop = false }: TrashZoneProps) {
+export function TrashZone({ intentionId, didDrop = null }: TrashZoneProps) {
   const { isOver, setNodeRef } = useDroppable({ id: `trash-${intentionId}` });
-  const [dropped, setDropped] = useState(false);
+  const [dropped, setDropped] = useState<'step' | 'intention' | null>(null);
 
   useEffect(() => {
     if (didDrop) {
-      setDropped(true);
+      setDropped(didDrop);
     }
   }, [didDrop]);
 
@@ -27,7 +27,8 @@ export function TrashZone({ intentionId, didDrop = false }: TrashZoneProps) {
       return;
     }
 
-    const timeout = window.setTimeout(() => setDropped(false), 500);
+    const duration = dropped === 'intention' ? 600 : 500;
+    const timeout = window.setTimeout(() => setDropped(null), duration);
 
     return () => {
       window.clearTimeout(timeout);
@@ -45,22 +46,27 @@ export function TrashZone({ intentionId, didDrop = false }: TrashZoneProps) {
     >
       <div
         className={[
-          'w-14 h-14 rounded-full border-2 flex items-center justify-center',
+          'relative w-14 h-14 rounded-full border-2 flex items-center justify-center',
           'shadow-sm backdrop-blur-md transition-all duration-200',
           isOver
             ? 'bg-kings-red/20 border-kings-red scale-110'
             : 'bg-white/80 border-kings-red/60'
         ].join(' ')}
       >
-        {dropped ? (
-          <MemoCheckIcon className="w-6 h-6 text-kings-red" />
-        ) : (
-          <MemoTrashIcon
-            className={`w-6 h-6 ${
-              isOver ? 'text-kings-red' : 'text-kings-red/70'
-            }`}
-          />
-        )}
+        {dropped === 'intention' ? (
+          <div className="absolute inset-0 bg-kings-red/20 rounded-full animate-pulse" />
+        ) : null}
+        <div className="relative z-10 flex items-center justify-center">
+          {dropped ? (
+            <MemoCheckIcon className="w-6 h-6 text-kings-red" />
+          ) : (
+            <MemoTrashIcon
+              className={`w-6 h-6 ${
+                isOver ? 'text-kings-red' : 'text-kings-red/70'
+              }`}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

@@ -1,0 +1,15 @@
+{
+  "epoch": "0002",
+  "pr": "0020-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0020-hotfix-intention-delete",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/TrashZone.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Enabled Intention deletion via drag-to-trash, deleting associated Steps and showing success toast."
+}

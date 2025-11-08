@@ -26,6 +26,7 @@ type IntentionRowProps = {
   onMoveIntention: (intention: Intention, direction: 'forward' | 'backward') => void;
   highlightBucket: Step['bucket'] | null;
   trashSuccessId?: string | null;
+  trashSuccessType?: 'step' | 'intention' | null;
 };
 
 type BucketColumnProps = {
@@ -132,6 +133,7 @@ export function IntentionRow({
   onMoveIntention,
   highlightBucket,
   trashSuccessId,
+  trashSuccessType,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
@@ -177,7 +179,7 @@ export function IntentionRow({
         <div className="absolute top-1/2 -translate-y-1/2 right-4">
           <TrashZone
             intentionId={intention.id}
-            didDrop={trashSuccessId === intention.id}
+            didDrop={trashSuccessId === intention.id ? trashSuccessType ?? null : null}
           />
         </div>
       </div>
