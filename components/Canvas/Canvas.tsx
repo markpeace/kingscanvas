@@ -126,23 +126,27 @@ export function Canvas() {
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <main className="px-8 py-10 w-full overflow-x-hidden">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-lg font-semibold text-kings-red mb-1">Your Intentions</h1>
-          <button
-            onClick={() => setModalOpen(true)}
-            className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
-          >
-            ＋ Add Intention
-          </button>
-        </div>
-        <div className="grid grid-cols-4 gap-6 mb-3">
-          {BUCKETS.map((bucket) => (
-            <h4
-              key={bucket.id}
-              className="text-kings-red text-base font-normal tracking-wide uppercase"
+        <div className="flex items-center mb-6">
+          <div className="flex-1" aria-hidden="true" />
+          <h1 className="flex-1 text-lg font-semibold text-kings-red mb-1 text-center">
+            Your Intentions
+          </h1>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={() => setModalOpen(true)}
+              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
             >
-              {bucket.title}
-            </h4>
+              ＋ Add Intention
+            </button>
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-6 mb-2">
+          {BUCKETS.map((bucket) => (
+            <div key={bucket.id} className="flex items-center justify-center text-center">
+              <h5 className="text-kings-red/90 text-sm font-medium tracking-wider uppercase text-center w-fit mx-auto">
+                {bucket.title}
+              </h5>
+            </div>
           ))}
         </div>
         {intentions.map((intention) => (

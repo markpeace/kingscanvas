@@ -28,6 +28,7 @@ prs_log:
   - "PR 0009: Replaced global serif typeface with neutral sans-serif (Inter/system stack) for cleaner aesthetic."
   - "PR 0009-hotfix: Reduced column header size and weight for improved grid balance."
   - "PR 0009-hotfix-2: Further reduced column header size and weight for improved visual balance."
+  - "PR 0009-hotfix-3: Centered and reduced Canvas column headers for balanced grid alignment."
 
 epoch-0001:
   title: "Canvas Columns & Layout"
