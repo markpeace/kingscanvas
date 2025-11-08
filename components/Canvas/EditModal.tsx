@@ -62,14 +62,14 @@ export function EditModal({
             value={newTitle}
             onChange={(event) => setNewTitle(event.target.value)}
             placeholder="Title"
-            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white"
+            className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:border-kings-red"
           />
           {typeof initialDescription === 'string' && (
             <textarea
               value={newDesc}
               onChange={(event) => setNewDesc(event.target.value)}
               placeholder="Description"
-              className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white"
+              className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black placeholder-kings-grey-dark bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:border-kings-red"
               rows={3}
             />
           )}
@@ -77,13 +77,13 @@ export function EditModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-kings-grey-dark px-3 py-2 text-sm"
+              className="text-kings-grey-dark px-3 py-2 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors"
+              className="border border-kings-red text-kings-red px-4 py-2 text-sm rounded-md hover:bg-kings-red hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             >
               Save
             </button>

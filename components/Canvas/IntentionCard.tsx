@@ -1,7 +1,7 @@
 'use client';
 
-import { useDraggable } from '@dnd-kit/core';
-import { useState } from 'react';
+import { useDraggable, useDndContext } from '@dnd-kit/core';
+import { useState, type KeyboardEvent } from 'react';
 
 import { EditModal } from '@/components/Canvas/EditModal';
 import type { Intention } from '@/types/canvas';
@@ -9,13 +9,16 @@ import type { Intention } from '@/types/canvas';
 type IntentionCardProps = {
   intention: Intention;
   onDelete: () => void;
+  onMoveForward: () => void;
+  onMoveBackward: () => void;
 };
 
-export function IntentionCard({ intention, onDelete }: IntentionCardProps) {
+export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackward }: IntentionCardProps) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `intention-${intention.id}`,
     data: { type: 'intention', intention },
   });
+  const { active } = useDndContext();
   const [data, setData] = useState(intention);
   const [open, setOpen] = useState(false);
 
@@ -31,6 +34,33 @@ export function IntentionCard({ intention, onDelete }: IntentionCardProps) {
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : undefined;
 
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setOpen(true);
+      return;
+    }
+
+    if (event.key === 'Delete') {
+      event.preventDefault();
+      onDelete();
+      return;
+    }
+
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      onMoveForward();
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      onMoveBackward();
+    }
+  };
+
+  const isDragging = active?.id === `intention-${intention.id}`;
+
   return (
     <>
       <div
@@ -38,19 +68,14 @@ export function IntentionCard({ intention, onDelete }: IntentionCardProps) {
         style={style}
         {...listeners}
         {...attributes}
-        className="relative border-2 border-kings-red/70 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40"
-        onClick={() => setOpen(true)}
+        role="listitem"
+        aria-grabbed={isDragging}
+        aria-dropeffect="move"
         tabIndex={0}
-        aria-label={`Intention: ${data.title || 'Untitled Intention'}. Press Enter to edit or Delete to remove.`}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            setOpen(true);
-          } else if (event.key === 'Delete') {
-            event.preventDefault();
-            onDelete();
-          }
-        }}
+        aria-label={`Intention: ${data.title || 'Untitled Intention'}. Press Enter to edit, Delete to remove, Arrow keys to move.`}
+        onKeyDown={handleKeyDown}
+        className="relative border-2 border-kings-red/70 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+        onClick={() => setOpen(true)}
       >
         <h3 className="font-semibold text-kings-red text-base leading-snug">
           {data.title || 'Untitled Intention'}
