@@ -46,6 +46,7 @@ prs_log:
   - "PR 0020: Optimised Canvas spacing, responsiveness, and DnD performance."
   - "PR 0020-hotfix: Enabled Intention deletion via drag-to-trash, with toast feedback."
   - "PR 0020-hotfix-3: Fixed trash drop recognition for Intentions."
+  - "PR 0020-hotfix-4: Fixed collision priority so trash zone registers intention drops before buckets."
 
 epoch-0001:
   title: "Canvas Columns & Layout"

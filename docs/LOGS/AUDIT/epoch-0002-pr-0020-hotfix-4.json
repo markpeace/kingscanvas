@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0020-hotfix-4",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0020-hotfix-4-trash-drop-priority",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/IntentionRow.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Fixed collision detection so trash zone registers intention drops before underlying buckets; added z-index to ensure interaction priority."
+}
