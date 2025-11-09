@@ -1,17 +1,16 @@
-import { withAuth } from "next-auth/middleware";
+import { withAuth } from "next-auth/middleware"
+import { NextResponse } from "next/server"
 
-const debugUser = process.env.DEBUG_USER || process.env.NEXT_PUBLIC_DEBUG_USER;
+const isProd =
+  process.env.VERCEL_ENV === "production" ||
+  (process.env.VERCEL_ENV === undefined && process.env.NODE_ENV === "production")
 
-export default debugUser
-  ? function debugBypass() {
-      return;
+export default !isProd
+  ? function middleware() {
+      return NextResponse.next()
     }
-  : withAuth({
-      pages: {
-        signIn: "/login",
-      },
-    });
+  : withAuth({ pages: { signIn: "/login" } })
 
 export const config = {
-  matcher: ["/api/:path*"],
-};
+  matcher: isProd ? ["/api/:path*"] : []
+}
