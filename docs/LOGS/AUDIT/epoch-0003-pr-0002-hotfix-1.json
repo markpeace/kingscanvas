@@ -1,0 +1,13 @@
+{
+  "epoch": "0003",
+  "pr": "0002-hotfix-1",
+  "action": "updated",
+  "branch": "feat/epoch-0003/pr-0002-hotfix-1-protect-root-route",
+  "status": "success",
+  "files_changed": [
+    "app/page.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Applied getServerSession authentication guard to root route rendering Canvas; unauthenticated users redirected to /login."
+}
