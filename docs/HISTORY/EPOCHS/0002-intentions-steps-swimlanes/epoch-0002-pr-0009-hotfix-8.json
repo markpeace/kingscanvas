@@ -1,0 +1,13 @@
+{
+  "epoch": "0002",
+  "pr": "0009-hotfix-8",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0009-hotfix-8-header-absolute-center",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Headers now centre–centre via absolute centring; title/button baseline aligned."
+}

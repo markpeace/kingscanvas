@@ -1,9 +1,9 @@
-# Baseline empty state for new workstreams.
-epoch_current: null
-prompt_active: null
-prs_open: []
-next_actions: []
-health:
-  invariants_ok: null
-  last_validated: null
-timezone_display: Europe/London
+epoch_id: null
+title: null
+status: "awaiting-next-epoch"
+started_at: null
+parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
+summary: |
+  Epoch 0002 — Intentions, Steps & Swim Lanes has been completed and archived.
+  Awaiting kickoff of Epoch 0003 — Persistence & Autosave.
+expected_prs: []

@@ -16,8 +16,16 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["Bureau Grotesk 37", "Inter", "Helvetica Neue", "Arial", "sans-serif"],
-        serif: ["Georgia", "serif"]
+        sans: [
+          "Inter",
+          "system-ui",
+          "-apple-system",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica",
+          "Arial",
+          "sans-serif"
+        ]
       },
       colors: {
         kings: {
@@ -28,8 +36,8 @@ const config: Config = {
           black: "#000000",
           white: "#FFFFFF",
           grey: {
-            light: "#7F8E96",
-            dark: "#575756"
+            light: "#D1D5DB",
+            dark: "#4B5563"
           }
         },
         brand: {

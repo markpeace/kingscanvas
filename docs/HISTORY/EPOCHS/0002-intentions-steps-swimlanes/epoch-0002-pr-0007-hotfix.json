@@ -1,0 +1,18 @@
+{
+  "epoch": "0002",
+  "pr": "0007-hotfix",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0007-hotfix-drag-to-delete",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/TrashZone.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/StepCard.tsx",
+    "components/Canvas/Canvas.tsx",
+    "docs/STATE/STATUS.yaml"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Implemented drag-to-delete interaction with trash zone; removed icons and modals."
+}

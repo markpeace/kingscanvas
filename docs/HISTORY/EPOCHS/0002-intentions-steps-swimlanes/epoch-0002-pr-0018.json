@@ -1,0 +1,22 @@
+{
+  "epoch": "0002",
+  "pr": "0018",
+  "action": "created",
+  "branch": "feat/epoch-0002/pr-0018-accessibility-pass",
+  "status": "success",
+  "files_changed": [
+    "app/globals.css",
+    "tailwind.config.ts",
+    "components/Canvas/AddIntentionModal.tsx",
+    "components/Canvas/AddStepModal.tsx",
+    "components/Canvas/Canvas.tsx",
+    "components/Canvas/EditModal.tsx",
+    "components/Canvas/IntentionCard.tsx",
+    "components/Canvas/IntentionRow.tsx",
+    "components/Canvas/StepCard.tsx",
+    "docs/STATE/STATUS.yaml"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Added visible focus rings, improved colour contrast, ARIA attributes, keyboard controls, and live region announcements for Canvas accessibility."
+}
