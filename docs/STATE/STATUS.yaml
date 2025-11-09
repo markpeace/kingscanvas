@@ -1,5 +1,5 @@
 last_updated: "2025-11-09T00:00:00Z"
-current_epoch: null
+current_epoch: "0003-authentication-session"
 last_completed_epoch: "0002-intentions-steps-swimlanes"
 
 epochs:
@@ -21,3 +21,4 @@ epochs:
 
 history:
   - "PR 0021: Closed Epoch 0002 (no-image snapshot)"
+  - "PR 0001: Added PLAN.md for Epoch 0003 (Authentication & Session Handling)"
