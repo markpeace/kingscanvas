@@ -1,10 +1,16 @@
 import { withAuth } from "next-auth/middleware";
 
-export default withAuth({
-  pages: {
-    signIn: "/login",
-  },
-});
+const debugUser = process.env.DEBUG_USER;
+
+export default debugUser
+  ? function debugBypass() {
+      return;
+    }
+  : withAuth({
+      pages: {
+        signIn: "/login",
+      },
+    });
 
 export const config = {
   matcher: ["/api/:path*"],
