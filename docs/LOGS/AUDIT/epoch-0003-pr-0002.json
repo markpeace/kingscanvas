@@ -1,0 +1,16 @@
+{
+  "epoch": "0003",
+  "pr": "0002",
+  "action": "created",
+  "branch": "feat/epoch-0003/pr-0002-protect-canvas-routes",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "app/canvas/page.tsx",
+    "app/page.tsx",
+    "docs/STATE/STATUS.yaml"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Added getServerSession guard to restrict Canvas access to authenticated users and redirect unauthenticated visitors to /login."
+}

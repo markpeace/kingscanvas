@@ -1,0 +1,15 @@
+{
+  "epoch": "0003",
+  "pr": "0002-hotfix-2",
+  "action": "updated",
+  "branch": "feat/epoch-0003/pr-0002-hotfix-2-authoptions-export",
+  "status": "success",
+  "files_changed": [
+    "app/api/auth/[...nextauth]/route.ts",
+    "lib/auth/config.ts",
+    "app/page.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Exported authOptions and fixed getServerSession guard on the root page to redirect unauthenticated users to /login."
+}
