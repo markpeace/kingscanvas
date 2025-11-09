@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
         extendedToken.user = {
           name: debugUser,
           email,
-          image: extendedToken.user?.image ?? null
+          image: null
         }
       }
 
