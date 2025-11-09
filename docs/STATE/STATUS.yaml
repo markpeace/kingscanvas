@@ -1,61 +1,23 @@
-last_updated: "2025-11-07T08:15:00Z"
-active_epoch: "epoch-0002"
+last_updated: "2025-11-09T00:00:00Z"
+current_epoch: null
+last_completed_epoch: "0002-intentions-steps-swimlanes"
 
-prs_log:
-  - "PR 0001: Base Canvas structure scaffolded and rendering placeholder text."
-  - "PR 0002: Four-column grid layout implemented using TailwindCSS."
-  - "PR 0003: Added ColumnHeader component and integrated it into the Canvas layout."
-  - "PR 0004: Integrated King’s brand colour palette into Tailwind and applied to Canvas layout and headers."
-  - "PR 0005: Added typography system with King’s brand fonts and hierarchy."
-  - "PR 0006: Added static placeholders aligning Intentions to the \"Before I Graduate\" bucket and Steps to the earlier action buckets, leaving the \"After I Graduate\" column open for future content."
-  - "PR 0007: Added responsive breakpoints and scaling for desktop resolutions."
-  - "PR 0008: Performed accessibility and contrast review. Adjusted colours, semantics, and focus styles to meet WCAG AA+ compliance."
-  - "PR 0010: Added unit and DOM tests verifying 4-column layout, headers, and placeholder cards."
-  - "PR 0001: Defined Intention and Step interfaces, created mock data, and integrated placeholder render in Canvas."
-  - "PR 0002 (final): Corrected swim lane logic — each intention now sits in its goal bucket, steps appear only before it, multiple steps supported per bucket."
-  - "PR 0003 (reissue): Rebuilt Step creation logic with stable grid layout (4 even columns, flex stacking, inline form)."
-  - "PR 0003-UX: Replaced inline Add Step Form with modal-based flow for cleaner UX."
-  - "PR 0004 (reissue): Rebuilt drag-and-drop using @dnd-kit data payloads for reliable drops."
-  - "PR 0004-restrict: Prevented dropping Steps into or after an Intention’s bucket."
-  - "PR 0005: Added inline editing for Intention titles, descriptions, and Step titles."
-  - "PR 0005-hotfix: Adjusted inline editing colour scheme to red text on black background."
-  - "PR 0005-hotfix: Replaced inline editing with modal editing consistent with Add Step modal."
-  - "PR 0005-hotfix-2: Matched Edit Modal visual styling to Add Step modal (white card, red border, black text)."
-  - "PR 0006: Added Intention creation modal with title, description, and bucket selection."
-  - "PR 0006-hotfix: Restricted Intention creation to Do Later, Before I Graduate, and After I Graduate buckets."
-  - "PR 0007: Added deletion for Steps and Intentions with confirmation modals."
-  - "PR 0007-hotfix: Replaced delete buttons with drag-to-delete trash zone at row edge."
-  - "PR 0009: Replaced global serif typeface with neutral sans-serif (Inter/system stack) for cleaner aesthetic."
-  - "PR 0009-hotfix: Reduced column header size and weight for improved grid balance."
-  - "PR 0009-hotfix-2: Further reduced column header size and weight for improved visual balance."
-  - "PR 0009-hotfix-3: Centered and reduced Canvas column headers for balanced grid alignment."
-  - "PR 0009-hotfix-4: Final header alignment and optical size adjustment for improved grid cohesion."
-  - "PR 0009-hotfix-6: Corrected column header centring by sizing label to content and centring the element."
-  - "PR 0009-hotfix-7: Aligned Canvas title/button and optically centred column headers."
-  - "PR 0009-hotfix-8: Forced true centre alignment of column headers and fixed title/button baseline."
-  - "PR 0010: Added distinct visual styling for Intention cards (red tint and border) to create clear hierarchy."
-  - "PR 0011: Removed stock template header bar for clean full-width Canvas layout."
-  - "PR 0012: Final Canvas layout and visual cohesion adjustments — unified spacing, centring, and placeholders."
-  - "PR 0013-hotfix: Aligned trash zone height and centring; added compact width and fade-in animation on drag."
-  - "PR 0014: Enabled Intention movement between buckets (excluding Do Now) and implemented concertina rule for dependent steps."
-  - "PR 0015: Locked Canvas header group spacing and alignment across breakpoints."
-  - "PR 0016: Unified card visuals and added dashed empty-state placeholders with contextual prompts."
-  - "PR 0017: Redesigned drag-to-delete with compact circular trash target and drop feedback."
-  - "PR 0018: Implemented accessibility improvements — focus rings, colour contrast, ARIA attributes, and live announcements."
-  - "PR 0019: Added toast notifications for create/edit/delete/move actions."
-  - "PR 0020: Optimised Canvas spacing, responsiveness, and DnD performance."
-  - "PR 0020-hotfix: Enabled Intention deletion via drag-to-trash, with toast feedback."
-  - "PR 0020-hotfix-3: Fixed trash drop recognition for Intentions."
-  - "PR 0020-hotfix-4: Fixed collision priority so trash zone registers intention drops before buckets."
+epochs:
+  - id: "0002"
+    title: "Intentions, Steps & Swim Lanes"
+    status: "complete"
+    completed_at: 2025-11-09
+    summary: >
+      Implemented drag-and-drop Canvas for Intentions and Steps.
+      Added modals for creation and editing, distinct card styling,
+      responsive layout, trash-target deletion, accessibility, feedback
+      toasts, and performance optimisations. Verified visually (no image stored).
+    prs_merged:
+      - "0001–0008"
+      - "0009–0012"
+      - "0013–0014"
+      - "0015–0019"
+      - "0020–0020-hotfix-4"
 
-epoch-0001:
-  title: "Canvas Columns & Layout"
-  status: "complete"
-  completed_at: "2025-11-07T08:15:00Z"
-  summary: |
-    Implemented the foundational four-column Canvas layout for King’s Canvas.
-    Includes responsive grid, branded styling, placeholder cards, typography, and full accessibility review.
-    Layout verified via internal preview and automated DOM tests.
-  prs:
-    - 0001–0010
-  next_epoch: "epoch-0002"
+history:
+  - "PR 0021: Closed Epoch 0002 (no-image snapshot)"

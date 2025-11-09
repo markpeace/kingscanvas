@@ -37,20 +37,10 @@ Development proceeds through modular, testable epochs that incrementally build t
 
 ---
 
-### 🧩 **Epoch 0002 — Intentions, Steps & Swim Lanes**
-**Goal:** Add interactivity and logic to the Canvas interface.  
-**Focus Areas:**
-- Introduce **Intentions as rows (swim lanes)** that horizontally span the Canvas  
-- Allow creation, editing, and deletion of **Intentions** and **Steps**  
-- Enable drag-and-drop of Steps between columns  
-- Maintain relationships between Intentions and their associated Steps  
-- Local persistence via temporary JSON or local storage  
-**Deliverables:**
-- Functional front-end prototype  
-- Working swim lane rendering and step association  
-**Exit Criteria:**
-- Intentions generate and maintain swim lanes of Steps  
-- CRUD operations and drag-and-drop logic working locally  
+### ✅ Epoch 0002 — Intentions, Steps & Swim Lanes
+Completed November 2025.
+Delivered responsive Canvas with full CRUD, drag-and-drop, accessibility, and feedback toasts.
+Next epoch: 0003 — Persistence & Autosave.
 
 ---
 

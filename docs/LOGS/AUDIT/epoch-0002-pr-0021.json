@@ -1,0 +1,14 @@
+{
+  "epoch": "0002",
+  "pr": "0021",
+  "action": "archived",
+  "branch": "feat/epoch-0002/pr-0021-epoch-closeout-noimage",
+  "status": "success",
+  "files_changed": [
+    "docs/STATE/STATUS.yaml",
+    "docs/ROADMAP/ROADMAP.md",
+    "docs/CHANGELOG.md"
+  ],
+  "build_status": "clean",
+  "summary": "Closed Epoch 0002 without binary image; updated status, roadmap, and changelog; archived logs."
+}
