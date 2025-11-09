@@ -5,6 +5,7 @@
   "branch": "feat/epoch-0003/pr-0003-branded-login",
   "status": "success",
   "files_changed": [
+    "app/login/LoginContent.tsx",
     "app/login/page.tsx",
     "tailwind.config.ts"
   ],
