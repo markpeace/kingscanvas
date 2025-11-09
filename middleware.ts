@@ -1,17 +1,19 @@
-import { withAuth } from "next-auth/middleware";
+import type { NextRequestWithAuth } from "next-auth/middleware"
+import { withAuth } from "next-auth/middleware"
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server"
 
-const debugUser = process.env.DEBUG_USER || process.env.NEXT_PUBLIC_DEBUG_USER;
+import { isProd } from "@/lib/auth/config"
 
-export default debugUser
-  ? function debugBypass() {
-      return;
-    }
-  : withAuth({
-      pages: {
-        signIn: "/login",
-      },
-    });
+const prodMiddleware = withAuth({ pages: { signIn: "/login" } })
 
-export const config = {
-  matcher: ["/api/:path*"],
-};
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  if (!isProd) {
+    return NextResponse.next()
+  }
+
+  if (!req.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next()
+  }
+
+  return prodMiddleware(req as NextRequestWithAuth, event)
+}

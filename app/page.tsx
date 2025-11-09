@@ -1,12 +1,16 @@
 import Canvas from "@/components/Canvas/Canvas"
-import { authOptions } from "@/lib/auth/config"
-import { getServerSession } from "next-auth"
+import { isProd } from "@/lib/auth/config"
+import { getSession } from "@/lib/auth/server"
 import { redirect } from "next/navigation"
 
 export const metadata = { title: "Canvas • Lumin" }
 
 export default async function HomePage() {
-  const session = await getServerSession(authOptions)
+  if (!isProd) {
+    return <Canvas />
+  }
+
+  const session = await getSession()
 
   if (!session) {
     redirect("/login")

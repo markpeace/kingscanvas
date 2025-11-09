@@ -1,54 +1,50 @@
-import type { DefaultSession, NextAuthOptions } from "next-auth"
+import type { DefaultSession, Session } from "next-auth"
+import type { NextAuthOptions } from "next-auth"
 import type { JWT } from "next-auth/jwt"
-import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google"
+import GoogleProvider from "next-auth/providers/google"
 
-const debugUser = process.env.DEBUG_USER || process.env.NEXT_PUBLIC_DEBUG_USER
+export const isProd =
+  process.env.VERCEL_ENV === "production" ||
+  (process.env.VERCEL_ENV === undefined && process.env.NODE_ENV === "production")
 
-type ExtendedToken = JWT & {
-  accessToken?: string
-  user?: DefaultSession["user"]
+type SessionUser = NonNullable<DefaultSession["user"]>
+
+type ExtendedToken = JWT & { user?: SessionUser }
+
+export const testUser: SessionUser = {
+  name: "Test User",
+  email: "test@test.com",
+  image: null
+}
+
+export function createTestSession(): Session {
+  return {
+    user: { ...testUser },
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  }
 }
 
 export const authOptions: NextAuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!
+      clientId: process.env.GOOGLE_CLIENT_ID || "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || ""
     })
   ],
-  session: {
-    strategy: "jwt",
-    maxAge: 24 * 60 * 60
-  },
-  secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: "/login"
-  },
+  session: { strategy: "jwt" },
+  pages: { signIn: "/login" },
   callbacks: {
     async jwt({ token, account, profile }) {
       const extendedToken = token as ExtendedToken
 
-      if (account) {
-        extendedToken.accessToken = account.access_token ?? extendedToken.accessToken
-      }
-
-      if (profile) {
-        const { name, email, picture } = profile as GoogleProfile
+      if (account && profile) {
+        const profileData = profile as Record<string, unknown>
 
         extendedToken.user = {
-          name: name ?? extendedToken.user?.name ?? null,
-          email: email ?? extendedToken.user?.email ?? null,
-          image: picture ?? extendedToken.user?.image ?? null
-        }
-      }
-
-      if (debugUser && !extendedToken.user) {
-        const email = `${debugUser.toLowerCase().replace(/\s+/g, ".")}@debug.local`
-
-        extendedToken.user = {
-          name: debugUser,
-          email,
-          image: null
+          name: typeof profileData.name === "string" ? profileData.name : extendedToken.user?.name ?? null,
+          email: typeof profileData.email === "string" ? profileData.email : extendedToken.user?.email ?? null,
+          image: typeof profileData.picture === "string" ? profileData.picture : extendedToken.user?.image ?? null
         }
       }
 
