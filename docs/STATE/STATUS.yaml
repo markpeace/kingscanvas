@@ -30,3 +30,4 @@ history:
   - "PR 0003: Added King’s-branded login page with styled Google sign-in."
   - "PR 0004: Reissued session UI and header menu with text-based avatar (no images)."
   - "PR 0005: Added UserProvider and useUser() hook for centralised session context."
+  - "PR 0006: Added NextAuth middleware to protect /api routes with session validation."
