@@ -40,38 +40,31 @@ Development proceeds through modular, testable epochs that incrementally build t
 ### ✅ Epoch 0002 — Intentions, Steps & Swim Lanes
 Completed November 2025.
 Delivered responsive Canvas with full CRUD, drag-and-drop, accessibility, and feedback toasts.
-Next epoch: 0003 — Persistence & Autosave.
+Next epoch: 0004 — Persistence & Autosave.
 
 ---
 
-### 🔐 **Epoch 0003 — Google Login Integration (NextAuth)**
-**Goal:** Enable user authentication and secure sessions using built-in repo components.  
-**Focus Areas:**
-- Activate **Google Login via NextAuth** (pre-integrated in the repository)  
-- Configure secure session management  
-- Associate user sessions with distinct Canvas data contexts  
-**Deliverables:**
-- Authenticated login and logout flow  
-- User session awareness across the app  
-**Exit Criteria:**
-- Users can sign in with Google  
-- Each user’s Canvas context is isolated and secure  
+### ✅ Epoch 0003 — Authentication & Session Handling  
+Completed Nov 2025.  
+Delivered Google sign-in via NextAuth, session UI, route guards, API protection, and local/preview bypass.
+
+Next epoch: 0004 — Persistence & Autosave (MongoDB integration and background sync)
 
 ---
 
-### 🗄️ **Epoch 0004 — MongoDB Data Model & API Layer**
-**Goal:** Implement a database-backed persistence layer.  
+### 🗄️ **Epoch 0004 — Persistence & Autosave**
+**Goal:** Implement MongoDB-backed persistence with autosave and background sync reliability.
 **Focus Areas:**
-- Define MongoDB schema and models (students, intentions, steps, opportunities)  
-- Build CRUD API endpoints for all entities  
-- Implement authenticated data persistence  
-- Create initial migration and seeding scripts  
+- Define MongoDB schema and models (students, intentions, steps, opportunities)
+- Build CRUD API endpoints with authenticated session access
+- Introduce autosave flows for Canvas interactions with optimistic updates
+- Implement background sync workers to reconcile local/preview bypass data
 **Deliverables:**
-- Live CRUD operations connected to MongoDB  
-- Working backend API routes  
+- Persistent Canvas data connected to MongoDB with autosave enabled
+- Background sync service ensuring session data consistency across environments
 **Exit Criteria:**
-- Data persists between authenticated sessions  
-- MongoDB integration stable in both dev and staging  
+- Canvas edits persist automatically without manual save actions
+- Background sync maintains data integrity between sessions and devices
 
 ---
 
