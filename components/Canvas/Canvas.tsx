@@ -1,7 +1,16 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { DndContext, type DragEndEvent, type DragStartEvent, type DragCancelEvent } from '@dnd-kit/core'
+import {
+  DndContext,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DragCancelEvent,
+  pointerWithin,
+  closestCenter,
+  rectIntersection,
+  type CollisionDetection
+} from '@dnd-kit/core'
 import toast from 'react-hot-toast'
 
 import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
@@ -109,6 +118,8 @@ export function Canvas() {
 
       const overId = String(over.id)
 
+      console.debug('Drop target:', over.id)
+
       if (overId.startsWith('trash')) {
         const trashIntentionId = overId.replace(/^trash-?/, '')
 
@@ -139,7 +150,11 @@ export function Canvas() {
             toast.success('Step deleted')
             announce(`Deleted step "${draggedStep.title}".`)
           }
-        } else if (activeData.type === 'intention') {
+
+          return
+        }
+
+        if (activeData.type === 'intention') {
           const draggedIntention = activeData.intention as Intention | undefined
 
           if (!draggedIntention) {
@@ -150,6 +165,7 @@ export function Canvas() {
           triggerTrashSuccess(trashIntentionId || draggedIntention.id, 'intention')
           toast.success('Intention deleted')
           announce(`Deleted intention "${draggedIntention.title}".`)
+          return
         }
 
         return
@@ -530,8 +546,37 @@ export function Canvas() {
     ]
   )
 
+  const collisionDetection: CollisionDetection = (args) => {
+    const pointerCollisions = pointerWithin(args)
+
+    if (pointerCollisions.length > 0) {
+      const trashHit = pointerCollisions.find((collision) =>
+        String(collision.id).startsWith('trash')
+      )
+
+      if (trashHit) {
+        return [trashHit]
+      }
+
+      return pointerCollisions
+    }
+
+    const rectangleCollisions = rectIntersection(args)
+
+    if (rectangleCollisions.length > 0) {
+      return rectangleCollisions
+    }
+
+    return closestCenter(args)
+  }
+
   return (
-    <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd} onDragCancel={handleDragCancel}>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+      collisionDetection={collisionDetection}
+    >
       <a
         href="#main-canvas"
         className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"

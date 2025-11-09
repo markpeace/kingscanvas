@@ -1,0 +1,11 @@
+{
+  "epoch": "0002",
+  "pr": "0020-hotfix-3",
+  "action": "updated",
+  "branch": "feat/epoch-0002/pr-0020-hotfix-3-intention-trash-drop",
+  "status": "success",
+  "files_changed": ["components/Canvas/Canvas.tsx"],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Fixed drag-to-delete so Intentions can be dropped on the trash target and deleted with toast feedback."
+}

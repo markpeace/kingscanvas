@@ -176,7 +176,7 @@ export function IntentionRow({
           })}
         </section>
 
-        <div className="absolute top-1/2 -translate-y-1/2 right-4">
+        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-50">
           <TrashZone
             intentionId={intention.id}
             didDrop={trashSuccessId === intention.id ? trashSuccessType ?? null : null}
