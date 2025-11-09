@@ -2,6 +2,8 @@ import type { DefaultSession, NextAuthOptions } from "next-auth"
 import type { JWT } from "next-auth/jwt"
 import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google"
 
+const debugUser = process.env.DEBUG_USER || process.env.NEXT_PUBLIC_DEBUG_USER
+
 type ExtendedToken = JWT & {
   accessToken?: string
   user?: DefaultSession["user"]
@@ -37,6 +39,16 @@ export const authOptions: NextAuthOptions = {
           name: name ?? extendedToken.user?.name ?? null,
           email: email ?? extendedToken.user?.email ?? null,
           image: picture ?? extendedToken.user?.image ?? null
+        }
+      }
+
+      if (debugUser && !extendedToken.user) {
+        const email = `${debugUser.toLowerCase().replace(/\s+/g, ".")}@debug.local`
+
+        extendedToken.user = {
+          name: debugUser,
+          email,
+          image: null
         }
       }
 
