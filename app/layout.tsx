@@ -3,6 +3,7 @@ import dynamicImport from "next/dynamic"
 import { Toaster } from "react-hot-toast"
 import AuthProvider from "../components/auth/AuthProvider"
 import InstallBanner from "../components/pwa/InstallBanner"
+import Header from "../components/Layout/Header"
 
 export const metadata = {
   title: "NextJS PWA Template",
@@ -41,9 +42,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           <InstallBanner />
 
-          <main className="w-full px-8 py-10 overflow-x-hidden bg-white text-kings-black">
-            {children}
-          </main>
+          <div className="flex min-h-screen flex-col bg-white text-kings-black">
+            <Header />
+            <main className="w-full flex-1 overflow-x-hidden px-8 py-10">
+              {children}
+            </main>
+          </div>
 
           {debugEnabled ? <DebugPanelDynamic /> : null}
         </AuthProvider>
