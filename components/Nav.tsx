@@ -2,11 +2,11 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useSession } from "next-auth/react"
 import { useEffect } from "react"
 import { debugLog } from "@/lib/debug/log"
 import SignInButton from "@/components/auth/SignInButton"
 import UserMenu from "@/components/auth/UserMenu"
+import { useUser } from "@/context/UserContext"
 
 const links = [
   { href: "/", label: "Home" },
@@ -17,7 +17,7 @@ const links = [
 
 export default function Nav() {
   const pathname = usePathname()
-  const { status } = useSession()
+  const { status } = useUser()
 
   useEffect(() => {
     debugLog("AuthStatusChange", { status }, { level: "info", channel: "auth" })
