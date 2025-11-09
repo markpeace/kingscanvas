@@ -1,0 +1,12 @@
+epoch_id: "0003"
+title: "Authentication & Session Handling"
+status: "complete"
+completed_at: "2025-11-10"
+summary: |
+  Implemented Google OAuth via NextAuth with protected routes, session UI, header menu,
+  and shared UserProvider context.
+  Added API middleware plus preview/local authentication bypass for faster testing.
+prs_merged:
+  - "0001–0006A-hotfix-6"
+notes:
+  - Epoch archived following PR 0007 close-out snapshot (no images).
