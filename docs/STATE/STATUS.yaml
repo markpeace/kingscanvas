@@ -33,4 +33,5 @@ history:
   - "PR 0006: Added NextAuth middleware to protect /api routes with session validation."
   - "PR 0006A: Added DEBUG_USER environment override to bypass authentication for local debugging."
   - "PR 0006A-hotfix-5: Disabled auth in non-production across NextAuth, middleware, and SSR guard; Test User is returned on previews/dev."
+  - "PR 0006A-hotfix-6: Consolidated NextAuth handlers to resolve app/pages route conflict and restore build stability."
 
