@@ -24,3 +24,4 @@ history:
   - "PR 0001: Added PLAN.md for Epoch 0003 (Authentication & Session Handling)"
   - "PR 0002: Added getServerSession guard to protect Canvas routes from unauthenticated access."
   - "PR 0002-hotfix-1: Applied authentication guard to root route (index.tsx) rendering Canvas."
+  - "PR 0002-hotfix-2: Exported authOptions and fixed getServerSession guard on root route."
