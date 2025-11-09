@@ -1,0 +1,11 @@
+{
+  "epoch": "0003",
+  "pr": "0006",
+  "action": "created",
+  "branch": "feat/epoch-0003/pr-0006-auth-middleware",
+  "status": "success",
+  "files_changed": ["middleware.ts", "lib/withAuth.ts"],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Added NextAuth middleware to secure /api routes; unauthenticated requests return 401 or redirect to /login."
+}

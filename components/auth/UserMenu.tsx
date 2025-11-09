@@ -1,16 +1,15 @@
 "use client"
 
-import { useSession } from "next-auth/react"
-import { Button, Card, CardContent } from "@/components/ui"
+import { useUser } from "@/context/UserContext"
 import SignOutButton from "./SignOutButton"
 
 export default function UserMenu() {
-  const { data: session, status } = useSession()
-  if (status !== "authenticated") return null
+  const { user, status } = useUser()
+  if (status !== "authenticated" || !user) return null
 
-  const name = session.user?.name ?? "Account"
-  const email = session.user?.email ?? ""
-  const image = session.user?.image
+  const name = user.name ?? "Account"
+  const email = user.email ?? ""
+  const image = user.image
 
   return (
     <div className="flex items-center gap-2">

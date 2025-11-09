@@ -3,6 +3,12 @@
 import { SessionProvider } from "next-auth/react"
 import type { Session } from "next-auth"
 
+import { UserProvider } from "@/context/UserContext"
+
 export default function AuthProvider({ children, session }: { children: React.ReactNode; session?: Session | null }) {
-  return <SessionProvider session={session}>{children}</SessionProvider>
+  return (
+    <SessionProvider session={session}>
+      <UserProvider>{children}</UserProvider>
+    </SessionProvider>
+  )
 }

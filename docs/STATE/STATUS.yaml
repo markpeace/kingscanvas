@@ -1,6 +1,6 @@
-last_updated: "2025-11-09T00:00:00Z"
+last_updated: "2025-11-10T00:00:00Z"
 current_epoch: null
-last_completed_epoch: "0002-intentions-steps-swimlanes"
+last_completed_epoch: "0003-authentication-session"
 
 epochs:
   - id: "0002"
@@ -19,5 +19,31 @@ epochs:
       - "0015–0019"
       - "0020–0020-hotfix-4"
 
+  - id: "0003"
+    title: "Authentication & Session Handling"
+    status: "complete"
+    completed_at: 2025-11-10
+    summary: >
+      Implemented Google OAuth via NextAuth, protected routes, session UI,
+      header sign-out menu, UserProvider context, and API middleware.
+      Added preview/local bypass for faster testing.
+    prs_merged:
+      - "0001–0006A-hotfix-6"
+
 history:
   - "PR 0021: Closed Epoch 0002 (no-image snapshot)"
+  - "PR 0001: Added PLAN.md for Epoch 0003 (Authentication & Session Handling)"
+  - "PR 0002: Added getServerSession guard to protect Canvas routes from unauthenticated access."
+  - "PR 0002-hotfix-1: Applied authentication guard to root route (index.tsx) rendering Canvas."
+  - "PR 0002-hotfix-2: Exported authOptions and fixed getServerSession guard on root route."
+  - "PR 0002-hotfix-3: Fixed session persistence and redirect loop by correcting NextAuth configuration and environment variables."
+  - "PR 0002-hotfix-4: Fixed login redirect loop by aligning session strategy and import paths, and preventing automatic sign-in loop."
+  - "PR 0003: Added King’s-branded login page with styled Google sign-in."
+  - "PR 0004: Reissued session UI and header menu with text-based avatar (no images)."
+  - "PR 0005: Added UserProvider and useUser() hook for centralised session context."
+  - "PR 0006: Added NextAuth middleware to protect /api routes with session validation."
+  - "PR 0006A: Added DEBUG_USER environment override to bypass authentication for local debugging."
+  - "PR 0006A-hotfix-5: Disabled auth in non-production across NextAuth, middleware, and SSR guard; Test User is returned on previews/dev."
+  - "PR 0006A-hotfix-6: Served static test sessions outside production while keeping Google OAuth unchanged in production."
+  - "PR 0007: Closed Epoch 0003 (Authentication & Session Handling)"
+

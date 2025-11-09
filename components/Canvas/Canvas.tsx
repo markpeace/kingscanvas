@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useUser } from '@/context/UserContext'
 import {
   DndContext,
   type DragEndEvent,
@@ -21,6 +22,7 @@ import type { BucketId, Intention, Step } from '@/types/canvas'
 import { concertinaSteps } from '@/lib/steps'
 
 export function Canvas() {
+  const { status } = useUser()
   const [intentions, setIntentions] = useState(mockIntentions)
   const [modalOpen, setModalOpen] = useState(false)
   const [highlightBucket, setHighlightBucket] = useState<BucketId | null>(null)
@@ -568,6 +570,14 @@ export function Canvas() {
     }
 
     return closestCenter(args)
+  }
+
+  if (status === 'loading') {
+    return <p>Loading…</p>
+  }
+
+  if (status === 'unauthenticated') {
+    return null
   }
 
   return (

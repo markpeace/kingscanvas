@@ -1,0 +1,14 @@
+{
+  "epoch": "0003",
+  "pr": "0006A",
+  "action": "created",
+  "branch": "feat/epoch-0003/pr-0006a-debug-auth-override",
+  "status": "success",
+  "files_changed": [
+    "pages/api/auth/[...nextauth].ts",
+    "middleware.ts"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Added DEBUG_USER environment variable override allowing devs to bypass authentication and auto-inject a fake session user for local debugging."
+}

@@ -28,6 +28,7 @@ const config: Config = {
         ]
       },
       colors: {
+        "kings-red": "#cc0000",
         kings: {
           red: {
             DEFAULT: "#E2231A",
