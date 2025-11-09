@@ -28,3 +28,4 @@ history:
   - "PR 0002-hotfix-3: Fixed session persistence and redirect loop by correcting NextAuth configuration and environment variables."
   - "PR 0002-hotfix-4: Fixed login redirect loop by aligning session strategy and import paths, and preventing automatic sign-in loop."
   - "PR 0003: Added King’s-branded login page with styled Google sign-in."
+  - "PR 0004: Reissued session UI and header menu with text-based avatar (no images)."
