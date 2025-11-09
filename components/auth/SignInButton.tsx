@@ -5,7 +5,10 @@ import { Button } from "@/components/ui"
 
 export default function SignInButton({ label = "Sign in with Google" }: { label?: string }) {
   return (
-    <Button onClick={() => signIn("google")} aria-label="Sign in with Google">
+    <Button
+      onClick={() => signIn("google", { callbackUrl: "/" })}
+      aria-label="Sign in with Google"
+    >
       {label}
     </Button>
   )

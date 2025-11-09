@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import {
   DndContext,
   type DragEndEvent,
@@ -577,7 +577,6 @@ export function Canvas() {
   }
 
   if (status === 'unauthenticated') {
-    signIn('google')
     return null
   }
 
