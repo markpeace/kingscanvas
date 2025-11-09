@@ -27,3 +27,4 @@ history:
   - "PR 0002-hotfix-2: Exported authOptions and fixed getServerSession guard on root route."
   - "PR 0002-hotfix-3: Fixed session persistence and redirect loop by correcting NextAuth configuration and environment variables."
   - "PR 0002-hotfix-4: Fixed login redirect loop by aligning session strategy and import paths, and preventing automatic sign-in loop."
+  - "PR 0003: Added King’s-branded login page with styled Google sign-in."

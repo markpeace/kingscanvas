@@ -1,0 +1,14 @@
+{
+  "epoch": "0003",
+  "pr": "0003",
+  "action": "created",
+  "branch": "feat/epoch-0003/pr-0003-branded-login",
+  "status": "success",
+  "files_changed": [
+    "app/login/page.tsx",
+    "tailwind.config.ts"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Replaced minimal login with King’s-branded page styled to match Canvas UI; retained Google sign-in integration."
+}
