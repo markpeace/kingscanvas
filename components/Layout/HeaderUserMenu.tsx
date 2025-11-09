@@ -1,20 +1,22 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import { useState, useEffect } from "react"
 
+import { useUser } from "@/context/UserContext"
+
 export default function HeaderUserMenu() {
-  const { data: session } = useSession()
+  const { user } = useUser()
   const [open, setOpen] = useState(false)
   const [initial, setInitial] = useState("U")
 
   useEffect(() => {
-    if (session?.user?.name) {
-      setInitial(session.user.name[0]?.toUpperCase() || "U")
+    if (user?.name) {
+      setInitial(user.name[0]?.toUpperCase() || "U")
     }
-  }, [session])
+  }, [user])
 
-  if (!session?.user) return null
+  if (!user) return null
 
   return (
     <div className="relative">
@@ -32,9 +34,7 @@ export default function HeaderUserMenu() {
           role="menu"
           className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-md z-50"
         >
-          <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
-            {session.user.name?.split(" ")[0] || "User"}
-          </div>
+          <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">{user.name?.split(" ")[0] || "User"}</div>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
