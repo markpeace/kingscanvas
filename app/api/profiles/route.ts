@@ -1,8 +1,7 @@
 import { NextRequest } from "next/server"
 import { db } from "@/lib/db/mongo"
 import { ProfileInputSchema } from "@/lib/db/types"
-import { authOptions } from "@/lib/auth/config"
-import { getServerSession } from "next-auth"
+import { getSession } from "@/lib/auth/server"
 import { ObjectId } from "mongodb"
 
 function isoNow() {
@@ -29,7 +28,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    const session = await getSession()
     if (!session?.user?.email) {
       return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), { status: 401, headers: { "content-type": "application/json" } })
     }

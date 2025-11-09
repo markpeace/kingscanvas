@@ -1,16 +1,19 @@
+import type { NextRequestWithAuth } from "next-auth/middleware"
 import { withAuth } from "next-auth/middleware"
-import { NextResponse } from "next/server"
+import { NextFetchEvent, NextRequest, NextResponse } from "next/server"
 
-const isProd =
-  process.env.VERCEL_ENV === "production" ||
-  (process.env.VERCEL_ENV === undefined && process.env.NODE_ENV === "production")
+import { isProd } from "@/lib/auth/config"
 
-export default !isProd
-  ? function middleware() {
-      return NextResponse.next()
-    }
-  : withAuth({ pages: { signIn: "/login" } })
+const prodMiddleware = withAuth({ pages: { signIn: "/login" } })
 
-export const config = {
-  matcher: isProd ? ["/api/:path*"] : []
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
+  if (!isProd) {
+    return NextResponse.next()
+  }
+
+  if (!req.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.next()
+  }
+
+  return prodMiddleware(req as NextRequestWithAuth, event)
 }

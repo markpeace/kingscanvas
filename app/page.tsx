@@ -1,11 +1,7 @@
 import Canvas from "@/components/Canvas/Canvas"
-import { authOptions } from "@/lib/auth/config"
-import { getServerSession } from "next-auth"
+import { isProd } from "@/lib/auth/config"
+import { getSession } from "@/lib/auth/server"
 import { redirect } from "next/navigation"
-
-const isProd =
-  process.env.VERCEL_ENV === "production" ||
-  (process.env.VERCEL_ENV === undefined && process.env.NODE_ENV === "production")
 
 export const metadata = { title: "Canvas • Lumin" }
 
@@ -14,7 +10,7 @@ export default async function HomePage() {
     return <Canvas />
   }
 
-  const session = await getServerSession(authOptions)
+  const session = await getSession()
 
   if (!session) {
     redirect("/login")
