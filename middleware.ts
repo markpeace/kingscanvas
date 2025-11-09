@@ -1,6 +1,6 @@
 import { withAuth } from "next-auth/middleware";
 
-const debugUser = process.env.DEBUG_USER;
+const debugUser = process.env.DEBUG_USER || process.env.NEXT_PUBLIC_DEBUG_USER;
 
 export default debugUser
   ? function debugBypass() {
