@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import useAutosave from '@/hooks/useAutosave'
 import { useUser } from '@/context/UserContext'
 import {
   DndContext,
@@ -24,6 +25,8 @@ import { concertinaSteps } from '@/lib/steps'
 export function Canvas() {
   const { status } = useUser()
   const [intentions, setIntentions] = useState(mockIntentions)
+  const canvasData = useMemo(() => ({ intentions }), [intentions])
+  const { saving, error } = useAutosave(canvasData, '/api/intentions')
   const [modalOpen, setModalOpen] = useState(false)
   const [highlightBucket, setHighlightBucket] = useState<BucketId | null>(null)
   const [trashSuccessId, setTrashSuccessId] = useState<string | null>(null)
@@ -631,6 +634,9 @@ export function Canvas() {
           onAdd={handleAddIntention}
         />
       </main>
+      <footer className="fixed bottom-4 right-6 text-xs text-gray-500">
+        {saving ? 'Saving…' : error ? 'Error saving' : 'Saved'}
+      </footer>
     </DndContext>
   )
 }
