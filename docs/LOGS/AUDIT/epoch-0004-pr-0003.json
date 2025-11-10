@@ -1,0 +1,14 @@
+{
+  "epoch": "0004",
+  "pr": "0003",
+  "action": "created",
+  "branch": "feat/epoch-0004/pr-0003-crud-api-routes",
+  "status": "success",
+  "files_changed": [
+    "pages/api/intentions.ts",
+    "pages/api/steps.ts"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Implemented secure CRUD API routes for intentions and steps collections with per-user scoping and debug bypass."
+}

@@ -19,3 +19,4 @@ const staticHandler: NextApiHandler = (req, res) => {
 const handler: NextApiHandler = isProd ? NextAuth(authOptions) : staticHandler
 
 export default handler
+export { authOptions }
