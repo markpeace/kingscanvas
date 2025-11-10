@@ -1,4 +1,5 @@
 import { getIntentionsCollection, getStepsCollection } from "./dbHelpers";
+import { debug } from "./debug";
 
 export async function getUserIntentions(email: string) {
   const col = await getIntentionsCollection();
@@ -7,11 +8,26 @@ export async function getUserIntentions(email: string) {
 
 export async function saveUserIntentions(email: string, data: any) {
   const col = await getIntentionsCollection();
-  await col.updateOne(
+  const dbName = (col as { dbName?: string }).dbName ?? "(unknown)";
+
+  debug.trace("Mongo: upserting intentions", {
+    db: dbName,
+    collection: col.collectionName,
+    user: email,
+    payloadKeys: Object.keys(data ?? {})
+  });
+
+  const result = await col.updateOne(
     { user: email },
-    { $set: { intentions: data.intentions, updatedAt: new Date() } },
+    { $set: { intentions: data?.intentions ?? [], updatedAt: new Date() } },
     { upsert: true }
   );
+
+  debug.info("Mongo: upsert result", {
+    matched: result.matchedCount,
+    modified: result.modifiedCount,
+    upserted: result.upsertedId ?? null
+  });
 }
 
 export async function getUserSteps(email: string) {
