@@ -49,4 +49,5 @@ history:
   - "PR 0001: Added PLAN.md for Epoch 0004 (Persistence & Autosave)"
   - "PR 0002: Extended MongoDB utilities with user-scoped helpers for intentions and steps collections."
   - "PR 0003: Added CRUD API routes for user intentions and steps."
+  - "PR 0004: Added debounced autosave hook to persist Canvas changes via API."
 
