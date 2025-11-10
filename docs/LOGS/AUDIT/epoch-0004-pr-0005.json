@@ -1,0 +1,14 @@
+{
+  "epoch": "0004",
+  "pr": "0005",
+  "action": "created",
+  "branch": "feat/epoch-0004/pr-0005-save-status-ui",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/SaveStatus.tsx",
+    "components/Canvas/Canvas.tsx"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Added SaveStatus component showing autosave feedback at bottom-right of Canvas with 'Saving…', 'Saved', and error states."
+}

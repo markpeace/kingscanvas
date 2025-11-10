@@ -1,7 +1,6 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import useAutosave from '@/hooks/useAutosave'
 import { useUser } from '@/context/UserContext'
 import {
   DndContext,
@@ -21,6 +20,8 @@ import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
 import type { BucketId, Intention, Step } from '@/types/canvas'
 import { concertinaSteps } from '@/lib/steps'
+import SaveStatus from './SaveStatus'
+import useAutosave from '../../hooks/useAutosave'
 
 export function Canvas() {
   const { status } = useUser()
@@ -584,60 +585,60 @@ export function Canvas() {
   }
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-      collisionDetection={collisionDetection}
-    >
-      <a
-        href="#main-canvas"
-        className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
+    <>
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+        collisionDetection={collisionDetection}
       >
-        Skip to Canvas
-      </a>
-      <div aria-live="polite" className="sr-only" id="canvas-announcer">
-        {announcement}
-      </div>
-      <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
-        {/* HEADER GROUP */}
-        <header className="mb-8">
-          {/* Title + Button Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-            <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-            >
-              ＋ Add Intention
-            </button>
-          </div>
+        <a
+          href="#main-canvas"
+          className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
+        >
+          Skip to Canvas
+        </a>
+        <div aria-live="polite" className="sr-only" id="canvas-announcer">
+          {announcement}
+        </div>
+        <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
+          {/* HEADER GROUP */}
+          <header className="mb-8">
+            {/* Title + Button Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
+              <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              >
+                ＋ Add Intention
+              </button>
+            </div>
 
-          {/* Column Headers */}
-          <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
-            {BUCKETS.map((b) => (
-              <div key={b.id} className="relative h-5 flex justify-center">
-                <span
-                  className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
-                >
-                  {b.title}
-                </span>
-              </div>
-            ))}
-          </div>
-        </header>
-        {renderedIntentions}
+            {/* Column Headers */}
+            <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
+              {BUCKETS.map((b) => (
+                <div key={b.id} className="relative h-5 flex justify-center">
+                  <span
+                    className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
+                  >
+                    {b.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </header>
+          {renderedIntentions}
 
-        <AddIntentionModal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onAdd={handleAddIntention}
-        />
-      </main>
-      <footer className="fixed bottom-4 right-6 text-xs text-gray-500">
-        {saving ? 'Saving…' : error ? 'Error saving' : 'Saved'}
-      </footer>
-    </DndContext>
+          <AddIntentionModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onAdd={handleAddIntention}
+          />
+        </main>
+      </DndContext>
+      <SaveStatus saving={saving} error={error} />
+    </>
   )
 }
 
