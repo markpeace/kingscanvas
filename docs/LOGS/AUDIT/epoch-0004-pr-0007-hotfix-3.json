@@ -1,0 +1,11 @@
+{
+  "epoch": "0004",
+  "pr": "0007-hotfix-3",
+  "action": "created",
+  "branch": "feat/epoch-0004/pr-0007-hotfix-3-disable-msw-default",
+  "status": "success",
+  "files_changed": ["pages/_app.tsx"],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Modified MSW startup condition so it runs only in local development when explicitly enabled, defaulting to off in all environments."
+}
