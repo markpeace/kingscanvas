@@ -1,0 +1,14 @@
+{
+  "epoch": "0004",
+  "pr": "0007",
+  "action": "created",
+  "branch": "feat/epoch-0004/pr-0007-offline-fallback",
+  "status": "success",
+  "files_changed": [
+    "lib/offlineStore.ts",
+    "hooks/useAutosave.ts"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Implemented offline fallback with IndexedDB cache and automatic synchronisation when connection returns."
+}
