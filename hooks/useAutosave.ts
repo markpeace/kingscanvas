@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { debug } from '../lib/debug'
 import { loadOfflineData, saveOfflineData } from '../lib/offlineStore'
 
 export default function useAutosave<T>(
@@ -18,12 +19,14 @@ export default function useAutosave<T>(
   const saveAttempt = useCallback(
     async (attempt = 1): Promise<boolean> => {
       try {
+        debug.trace('Autosave: attempting save', { endpoint, attempt })
         setSaving(true)
         setError(null)
 
         const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine
 
         if (!isOnline) {
+          debug.warn('Autosave: offline, saving to IndexedDB fallback')
           await saveOfflineData('pending', latestData.current)
           return true
         }
@@ -32,6 +35,11 @@ export default function useAutosave<T>(
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(latestData.current)
+        })
+
+        debug.trace('Autosave: response received', {
+          ok: res.ok,
+          status: res.status
         })
 
         if (!res.ok) {
@@ -43,12 +51,13 @@ export default function useAutosave<T>(
         setRetryCount(0)
 
         await saveOfflineData('pending', null)
+        debug.info('Autosave: save succeeded')
         return true
       } catch (err) {
-        console.error('Autosave error:', err)
-
         const isOnline = typeof navigator === 'undefined' ? true : navigator.onLine
         const message = err instanceof Error ? err.message : 'Save failed'
+
+        debug.error('Autosave: save failed', { message })
 
         if (attempt < maxRetries && isOnline) {
           const delayMs = Math.pow(2, attempt) * 500
@@ -74,6 +83,12 @@ export default function useAutosave<T>(
     if (timeout.current) {
       clearTimeout(timeout.current)
     }
+
+    debug.trace('Autosave: state change detected', {
+      endpoint,
+      delay,
+      timestamp: new Date().toISOString()
+    })
 
     timeout.current = setTimeout(() => {
       void saveAttempt()

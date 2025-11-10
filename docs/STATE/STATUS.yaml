@@ -53,4 +53,5 @@ history:
   - "PR 0005: Added SaveStatus UI component linked to autosave hook."
   - "PR 0006: Added retry logic and offline queueing to autosave hook."
   - "PR 0007: Added offline fallback and sync with IndexedDB for autosave."
+  - "PR 0007-hotfix-1: Added trace-level autosave logs to built-in debug console."
 
