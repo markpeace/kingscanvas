@@ -27,7 +27,7 @@ export function Canvas() {
   const { status } = useUser()
   const [intentions, setIntentions] = useState(mockIntentions)
   const canvasData = useMemo(() => ({ intentions }), [intentions])
-  const { saving, error } = useAutosave(canvasData, '/api/intentions')
+  const { saving, error, retryCount } = useAutosave(canvasData, '/api/intentions')
   const [modalOpen, setModalOpen] = useState(false)
   const [highlightBucket, setHighlightBucket] = useState<BucketId | null>(null)
   const [trashSuccessId, setTrashSuccessId] = useState<string | null>(null)
@@ -637,7 +637,7 @@ export function Canvas() {
           />
         </main>
       </DndContext>
-      <SaveStatus saving={saving} error={error} />
+      <SaveStatus saving={saving} error={error} retryCount={retryCount} />
     </>
   )
 }

@@ -51,4 +51,5 @@ history:
   - "PR 0003: Added CRUD API routes for user intentions and steps."
   - "PR 0004: Added debounced autosave hook to persist Canvas changes via API."
   - "PR 0005: Added SaveStatus UI component linked to autosave hook."
+  - "PR 0006: Added retry logic and offline queueing to autosave hook."
 
