@@ -48,4 +48,5 @@ history:
   - "PR 0007: Closed Epoch 0003 (Authentication & Session Handling)"
   - "PR 0001: Added PLAN.md for Epoch 0004 (Persistence & Autosave)"
   - "PR 0002: Disabled Mock Service Worker by default; only active in local dev with explicit env flag."
+  - "PR 0002: Reissued to fully remove and disable mocking; all API requests now reach live endpoints."
 
