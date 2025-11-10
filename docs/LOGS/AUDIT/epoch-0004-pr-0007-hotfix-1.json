@@ -1,0 +1,11 @@
+{
+  "epoch": "0004",
+  "pr": "0007-hotfix-1",
+  "action": "created",
+  "branch": "feat/epoch-0004/pr-0007-hotfix-1-autosave-trace",
+  "status": "success",
+  "files_changed": ["hooks/useAutosave.ts"],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Injected detailed trace logs into autosave lifecycle using built-in debug system to observe save flow, success, failure, and offline queueing."
+}
