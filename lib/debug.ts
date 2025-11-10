@@ -1,6 +1,6 @@
 const DEFAULT_CHANNEL = "app"
 
-type DebugLevel = "debug" | "info" | "warn" | "error"
+type DebugLevel = "trace" | "debug" | "info" | "warn" | "error"
 
 type DebugOptions = {
   channel?: string
@@ -11,7 +11,7 @@ type LogPayload = unknown
 const logToConsole = (level: DebugLevel, channel: string, message: string, payload?: LogPayload) => {
   const prefix = channel ? `[${channel}] ${message}` : message
   const method =
-    level === "debug"
+    level === "trace" || level === "debug"
       ? console.debug
       : level === "info"
       ? console.info
@@ -47,6 +47,7 @@ const emit = (level: DebugLevel, message: string, payload?: LogPayload, options?
 }
 
 export type DebugLogger = {
+  trace: (message: string, payload?: LogPayload, options?: DebugOptions) => void
   debug: (message: string, payload?: LogPayload, options?: DebugOptions) => void
   info: (message: string, payload?: LogPayload, options?: DebugOptions) => void
   warn: (message: string, payload?: LogPayload, options?: DebugOptions) => void
@@ -54,6 +55,9 @@ export type DebugLogger = {
 }
 
 export const debug: DebugLogger = {
+  trace(message, payload, options) {
+    emit("trace", message, payload, options)
+  },
   debug(message, payload, options) {
     emit("debug", message, payload, options)
   },
