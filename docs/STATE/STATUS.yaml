@@ -54,4 +54,5 @@ history:
   - "PR 0006: Added retry logic and offline queueing to autosave hook."
   - "PR 0007: Added offline fallback and sync with IndexedDB for autosave."
   - "PR 0007-hotfix-1: Added trace-level autosave logs to built-in debug console."
+  - "PR 0007-hotfix-2: Added debug traces for API and MongoDB write operations."
 
