@@ -1,18 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]";
-import { getUserSteps, saveUserStep } from "../../../lib/userData";
-import { debug } from "../../../lib/debug";
+
+import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
+import { debug } from "@/lib/debug";
+import { getUserSteps, saveUserStep } from "@/lib/userData";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const session = await getServerSession(req, res, authOptions);
-  const email =
-    process.env.VERCEL_ENV === "production"
-      ? session?.user?.email
-      : "test@test.com";
+  const session = isProd
+    ? await getServerSession(req, res, authOptions)
+    : createTestSession();
+  const email = session?.user?.email ?? null;
 
   if (!email) {
     debug.error("Steps API: unauthenticated request");
