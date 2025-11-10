@@ -1,8 +1,8 @@
 {
   "epoch": "0004",
   "pr": "0002",
-  "action": "created",
-  "branch": "feat/epoch-0004/pr-0002-disable-mocking",
+  "action": "reissued",
+  "branch": "feat/epoch-0004/pr-0002-disable-mocking-reissue",
   "status": "success",
   "files_changed": [
     "pages/_app.tsx",
@@ -10,5 +10,5 @@
   ],
   "tests_passed": true,
   "build_status": "clean",
-  "summary": "Disabled Mock Service Worker by default. It only runs in local development when explicitly enabled via NEXT_PUBLIC_API_MOCKING=enabled."
+  "summary": "Removed all MSW references and disabled mocking globally; all endpoints now route to live Next.js API handlers."
 }

@@ -76,3 +76,17 @@ debug.info(
       ? "explicitly enabled"
       : "disabled or default")
 )
+
+declare global {
+  interface Window {
+    msw?: {
+      stop?: () => void
+    }
+  }
+}
+
+if (typeof window !== "undefined" && window.msw) {
+  console.warn("[MSW] Unexpected mock worker detected — forcibly stopping")
+  window.msw.stop?.()
+  delete window.msw
+}

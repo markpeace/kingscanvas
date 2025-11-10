@@ -1,18 +1,11 @@
 import type { AppProps } from "next/app"
 
 import "@/app/globals.css"
-import "@/lib/debug"
 
-const isMockingEnabled =
-  process.env.NEXT_PUBLIC_API_MOCKING === "enabled" &&
-  process.env.VERCEL_ENV === "development"
+import { debug } from "../lib/debug"
 
-if (isMockingEnabled) {
-  import("../mocks").then(({ setupMocks }) => setupMocks())
-  console.log("[MSW] Mocking enabled for local development")
-} else {
-  console.log("[MSW] Disabled — using live API endpoints")
-}
+console.log("[MSW] Mocking disabled globally — all endpoints use live APIs")
+debug.info("[Startup] Mocking disabled globally — all endpoints use live APIs")
 
 export default function App({ Component, pageProps }: AppProps) {
   return <Component {...pageProps} />
