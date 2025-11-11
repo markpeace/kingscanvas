@@ -51,4 +51,5 @@ history:
   - "PR 0002: Reissued to fully remove and disable mocking; all API requests now reach live endpoints."
   - "PR 0003: Extended MongoDB utilities with user-scoped helpers and debug tracing."
   - "PR 0004: Added CRUD API routes for intentions and steps with debug tracing."
+  - PR 0005: Removed mock data and wired Canvas to live /api/intentions with debug tracing.
 
