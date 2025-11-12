@@ -1125,12 +1125,14 @@ export function Canvas() {
           position: 'fixed',
           bottom: '12px',
           right: '12px',
-          zIndex: 9999
+          zIndex: 9999,
+          pointerEvents: 'none'
         }}
       >
         <button
           onClick={triggerAISuggestionTest}
           style={{
+            pointerEvents: 'auto',
             background: '#ffffff',
             border: '1px solid #ddd',
             borderRadius: '4px',

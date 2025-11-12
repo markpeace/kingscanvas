@@ -86,6 +86,7 @@ function BucketColumn({
           ? 'bg-kings-grey-light/20 border-kings-grey-light/60 opacity-70'
           : 'bg-white border-kings-grey-light'
       ].join(' ')}
+      style={{ position: 'relative', zIndex: 0, pointerEvents: 'auto' }}
     >
       {isIntentionBucket && (
         <IntentionCard

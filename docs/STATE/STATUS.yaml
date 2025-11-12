@@ -60,3 +60,4 @@ history:
   - PR 0004: Linked intention creation to background AI generation with ghost placeholders and persistence.
   - PR 0005: Implemented Accept / Reject suggestion flow with persistence and debug tracing.
   - PR 0005-hotfix-1: Fixed Accept/Reject alignment and ensured clickability.
+  - PR 0005-hotfix-2: Fixed container stacking and restored Accept/Reject clickability while removing the Suggested label.

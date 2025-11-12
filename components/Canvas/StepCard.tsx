@@ -1,7 +1,7 @@
 'use client';
 
 import { useDraggable, useDndContext } from '@dnd-kit/core';
-import { useCallback, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useCallback, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
 import toast from 'react-hot-toast';
 
 import { EditModal } from '@/components/Canvas/EditModal';
@@ -36,9 +36,16 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
     toast('Changes saved', { icon: '💾' });
   };
 
-  const style = transform
+  const transformStyle = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined;
+    : {};
+  const cardStyle: CSSProperties = {
+    ...transformStyle,
+    overflow: 'hidden',
+    position: 'relative',
+    zIndex: 50,
+    pointerEvents: isGhost ? 'none' : 'auto',
+  };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (isGhost) {
@@ -94,7 +101,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
     <>
       <div
         ref={setNodeRef}
-        style={style}
+        style={cardStyle}
         {...(isGhost ? {} : listeners)}
         {...(isGhost ? {} : attributes)}
         role="listitem"
@@ -123,7 +130,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
           <div className="text-sm leading-snug">{displayText}</div>
 
           {isSuggested && (
-            <div className="mt-1 flex flex-row items-center gap-3 text-xs">
+            <div className="mt-1 flex flex-row items-center gap-3 text-xs pointer-events-auto">
               <button
                 type="button"
                 onClick={handleDecision(onAccept)}
@@ -138,7 +145,6 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
               >
                 Reject
               </button>
-              <span className="ml-auto text-[10px] text-gray-400">Suggested</span>
             </div>
           )}
         </div>
