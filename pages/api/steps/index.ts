@@ -3,7 +3,12 @@ import { getServerSession } from "next-auth";
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
-import { createSuggestedSteps, getUserSteps, saveUserStep } from "@/lib/userData";
+import {
+  createSuggestedSteps,
+  getUserSteps,
+  saveUserStep,
+  updateStepStatus,
+} from "@/lib/userData";
 
 export default async function handler(
   req: NextApiRequest,
@@ -51,15 +56,30 @@ export default async function handler(
 
         return res.status(200).json({ ok: true });
       }
-    }
 
-    if (req.method === "PUT" || req.method === "POST") {
       debug.trace("Steps API: write", {
         user: email,
         payloadKeys: Object.keys(req.body || {}),
       });
       await saveUserStep(email, req.body);
       debug.info("Steps API: write complete", { user: email });
+      return res.status(200).json({ ok: true });
+    }
+
+    if (req.method === "PUT") {
+      const { stepId, status } = req.body || {};
+
+      if (typeof stepId !== "string" || typeof status !== "string") {
+        debug.error("Steps API: update status missing fields", { user: email });
+        return res.status(400).json({ error: "Missing stepId or status" });
+      }
+
+      debug.trace("Steps API: update status", { stepId, status, user: email });
+      const result = await updateStepStatus(email, stepId, status);
+      debug.info("Steps API: update result", {
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+      });
       return res.status(200).json({ ok: true });
     }
 
