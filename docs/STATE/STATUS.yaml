@@ -54,3 +54,5 @@ history:
   - PR 0005: Removed mock data and wired Canvas to live /api/intentions with debug tracing.
   - PR 0006: Added debounced autosave hook and Save Status UI with full debug tracing.
   - PR 0001: Added PLAN.md for Epoch 0005 (AI Recommendations)
+  - PR 0002: Added /api/ai/suggest-steps endpoint with LangGraph integration and diagnostic trigger.
+  - PR 0002-hotfix-1: Exposed Test AI Suggestions button visibly in Canvas for diagnostic use.

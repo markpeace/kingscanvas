@@ -663,6 +663,40 @@ export function Canvas() {
     return closestCenter(args)
   }
 
+  const triggerAISuggestionTest = useCallback(async () => {
+    const payload = {
+      intentionId: 'test-intention',
+      intentionText: 'Become a teacher',
+      intentionBucket: 'after-graduation',
+      historyAccepted: ['Apply for PGCE'],
+      historyRejected: ['Volunteer in a school']
+    }
+
+    debug.trace('Canvas: manual AI suggestion test triggered', payload)
+
+    try {
+      const res = await fetch('/api/ai/suggest-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await res.json()
+      debug.info('Canvas: AI suggestion test result', data)
+
+      const suggestionCount = Array.isArray(data?.suggestions) ? data.suggestions.length : 0
+      alert(
+        suggestionCount
+          ? `AI returned ${suggestionCount} suggestion${suggestionCount === 1 ? '' : 's'}`
+          : 'No suggestions returned'
+      )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      debug.error('Canvas: AI suggestion test errored', { message })
+      alert('Unable to fetch AI suggestions')
+    }
+  }, [])
+
   if (status === 'loading') {
     return <p>Loading…</p>
   }
@@ -676,69 +710,94 @@ export function Canvas() {
   }
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-      collisionDetection={collisionDetection}
-    >
-      <button
-        onClick={saveIntentionsManually}
-        style={{ position: 'fixed', bottom: 10, left: 10 }}
+    <>
+      <DndContext
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+        collisionDetection={collisionDetection}
       >
-        Save Now
-      </button>
-      <a
-        href="#main-canvas"
-        className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
-      >
-        Skip to Canvas
-      </a>
-      <div aria-live="polite" className="sr-only" id="canvas-announcer">
-        {announcement}
-      </div>
-      <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
-        {/* HEADER GROUP */}
-        <header className="mb-8">
-          {/* Title + Button Row */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-            <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
-            <button
-              onClick={() => setModalOpen(true)}
-              className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-            >
-              ＋ Add Intention
-            </button>
-          </div>
+        <button
+          onClick={saveIntentionsManually}
+          style={{ position: 'fixed', bottom: 10, left: 10 }}
+        >
+          Save Now
+        </button>
+        <a
+          href="#main-canvas"
+          className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
+        >
+          Skip to Canvas
+        </a>
+        <div aria-live="polite" className="sr-only" id="canvas-announcer">
+          {announcement}
+        </div>
+        <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
+          {/* HEADER GROUP */}
+          <header className="mb-8">
+            {/* Title + Button Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
+              <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
+              <button
+                onClick={() => setModalOpen(true)}
+                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              >
+                ＋ Add Intention
+              </button>
+            </div>
 
-          {/* Column Headers */}
-          <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
-            {BUCKETS.map((b) => (
-              <div key={b.id} className="relative h-5 flex justify-center">
-                <span
-                  className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
-                >
-                  {b.title}
-                </span>
-              </div>
-            ))}
-          </div>
-        </header>
-        {renderedIntentions}
+            {/* Column Headers */}
+            <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
+              {BUCKETS.map((b) => (
+                <div key={b.id} className="relative h-5 flex justify-center">
+                  <span
+                    className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
+                  >
+                    {b.title}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </header>
+          {renderedIntentions}
 
-        <AddIntentionModal
-          isOpen={modalOpen}
-          onClose={() => setModalOpen(false)}
-          onAdd={handleAddIntention}
+          <AddIntentionModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onAdd={handleAddIntention}
+          />
+        </main>
+        <SaveStatus
+          saving={saving}
+          error={error}
+          lastSavedAt={lastSavedAt}
+          retryCount={retryCount}
         />
-      </main>
-      <SaveStatus
-        saving={saving}
-        error={error}
-        lastSavedAt={lastSavedAt}
-        retryCount={retryCount}
-      />
-    </DndContext>
+      </DndContext>
+      <div
+        style={{
+          position: 'fixed',
+          bottom: '12px',
+          right: '12px',
+          zIndex: 9999
+        }}
+      >
+        <button
+          onClick={triggerAISuggestionTest}
+          style={{
+            background: '#ffffff',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            padding: '6px 10px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+          }}
+        >
+          Test AI Suggestions
+        </button>
+      </div>
+    </>
   )
 }
 
