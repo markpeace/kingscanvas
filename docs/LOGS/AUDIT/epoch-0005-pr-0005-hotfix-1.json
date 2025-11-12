@@ -1,0 +1,11 @@
+{
+  "epoch": "0005",
+  "pr": "0005-hotfix-1",
+  "action": "updated",
+  "branch": "feat/epoch-0005/pr-0005-hotfix-1-fix-accept-reject",
+  "status": "success",
+  "files_changed": ["components/Canvas/StepCard.tsx"],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Fixed visual alignment and clickability issues for Accept/Reject controls."
+}

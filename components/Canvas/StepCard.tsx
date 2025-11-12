@@ -1,7 +1,7 @@
 'use client';
 
 import { useDraggable, useDndContext } from '@dnd-kit/core';
-import { useMemo, useState, type KeyboardEvent, type MouseEvent } from 'react';
+import { useCallback, useState, type KeyboardEvent, type MouseEvent } from 'react';
 import toast from 'react-hot-toast';
 
 import { EditModal } from '@/components/Canvas/EditModal';
@@ -71,50 +71,24 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
   const isDragging = active?.id === step.id;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
+    'mb-2 rounded-md border border-kings-grey-light p-3 shadow-sm text-sm leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
   const interactiveClasses =
     'cursor-pointer hover:border-kings-grey transition-colors';
   const ghostClasses =
     'bg-white border-dashed border-kings-grey-light/80 text-kings-grey-dark/70 animate-pulse cursor-default pointer-events-none select-none';
   const suggestedClasses =
-    'bg-kings-grey-light/20 border-dashed border-kings-grey-light text-kings-grey-dark';
+    'border-dashed border-kings-grey-light bg-kings-grey-light/20 text-kings-grey-dark';
   const defaultBackground = 'bg-white';
 
-  const acceptRejectButtons = useMemo(() => {
-    if (!isSuggested) {
-      return null;
-    }
-
-    const handleClick = (
-      event: MouseEvent<HTMLButtonElement>,
-      handler?: (step: Step) => void
-    ) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (handler) {
-        handler(step);
-      }
-    };
-
-    return (
-      <div className="ml-2 flex gap-2">
-        <button
-          type="button"
-          onClick={(event) => handleClick(event, onAccept)}
-          className="text-green-700 text-xs underline"
-        >
-          Accept
-        </button>
-        <button
-          type="button"
-          onClick={(event) => handleClick(event, onReject)}
-          className="text-red-600 text-xs underline"
-        >
-          Reject
-        </button>
-      </div>
-    );
-  }, [isSuggested, onAccept, onReject, step]);
+  const handleDecision = useCallback(
+    (handler?: (step: Step) => void) =>
+      (event: MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+        event.stopPropagation();
+        handler?.(step);
+      },
+    [step]
+  );
 
   return (
     <>
@@ -134,7 +108,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
             : `Step: ${displayText}. Press Enter to edit, Delete to remove, Arrow keys to move.`
         }
         onKeyDown={handleKeyDown}
-        className={`${baseClasses} ${
+        className={`${baseClasses} relative overflow-hidden ${
           isGhost
             ? ghostClasses
             : `${interactiveClasses} ${isSuggested ? suggestedClasses : defaultBackground}`
@@ -145,15 +119,29 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
           }
         }}
       >
-        <div className="flex items-start justify-between gap-3">
-          <span className="flex-1 text-left">{displayText}</span>
-          {acceptRejectButtons}
+        <div className="flex flex-col gap-2">
+          <div className="text-sm leading-snug">{displayText}</div>
+
+          {isSuggested && (
+            <div className="mt-1 flex flex-row items-center gap-3 text-xs">
+              <button
+                type="button"
+                onClick={handleDecision(onAccept)}
+                className="text-green-700 underline hover:text-green-900"
+              >
+                Accept
+              </button>
+              <button
+                type="button"
+                onClick={handleDecision(onReject)}
+                className="text-red-600 underline hover:text-red-800"
+              >
+                Reject
+              </button>
+              <span className="ml-auto text-[10px] text-gray-400">Suggested</span>
+            </div>
+          )}
         </div>
-        {isSuggested && (
-          <span className="mt-2 inline-block text-[10px] uppercase tracking-wide text-kings-grey-dark/70">
-            Suggested
-          </span>
-        )}
       </div>
 
       {!isGhost && (
