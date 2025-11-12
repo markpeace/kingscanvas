@@ -61,3 +61,4 @@ history:
   - PR 0005: Implemented Accept / Reject suggestion flow with persistence and debug tracing.
   - PR 0005-hotfix-1: Fixed Accept/Reject alignment and ensured clickability.
   - PR 0005-hotfix-2: Fixed container stacking and restored Accept/Reject clickability while removing the Suggested label.
+  - PR 0005-hotfix-3: Disabled drag initiation on Accept/Reject buttons for touch inputs and improved mobile tap behaviour.

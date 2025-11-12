@@ -1,7 +1,15 @@
 'use client';
 
 import { useDraggable, useDndContext } from '@dnd-kit/core';
-import { useCallback, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react';
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type SyntheticEvent,
+} from 'react';
 import toast from 'react-hot-toast';
 
 import { EditModal } from '@/components/Canvas/EditModal';
@@ -45,7 +53,31 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
     position: 'relative',
     zIndex: 50,
     pointerEvents: isGhost ? 'none' : 'auto',
+    touchAction: 'manipulation',
   };
+
+  const sanitizedListeners = useMemo(() => {
+    if (!listeners) {
+      return listeners;
+    }
+
+    const originalPointerDown = listeners.onPointerDown;
+
+    return {
+      ...listeners,
+      onPointerDown(event: PointerEvent) {
+        const target = event.target as HTMLElement | null;
+
+        if (target?.closest('.accept-reject-zone')) {
+          event.stopPropagation();
+          event.preventDefault();
+          return;
+        }
+
+        originalPointerDown?.(event);
+      },
+    };
+  }, [listeners]);
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (isGhost) {
@@ -87,14 +119,18 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
     'border-dashed border-kings-grey-light bg-kings-grey-light/20 text-kings-grey-dark';
   const defaultBackground = 'bg-white';
 
+  const blockDrag = useCallback((event: SyntheticEvent<HTMLElement>) => {
+    event.stopPropagation();
+    event.preventDefault();
+  }, []);
+
   const handleDecision = useCallback(
     (handler?: (step: Step) => void) =>
       (event: MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault();
-        event.stopPropagation();
+        blockDrag(event);
         handler?.(step);
       },
-    [step]
+    [blockDrag, step]
   );
 
   return (
@@ -102,7 +138,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
       <div
         ref={setNodeRef}
         style={cardStyle}
-        {...(isGhost ? {} : listeners)}
+        {...(isGhost ? {} : sanitizedListeners ?? {})}
         {...(isGhost ? {} : attributes)}
         role="listitem"
         aria-grabbed={isGhost ? undefined : isDragging}
@@ -130,10 +166,12 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
           <div className="text-sm leading-snug">{displayText}</div>
 
           {isSuggested && (
-            <div className="mt-1 flex flex-row items-center gap-3 text-xs pointer-events-auto">
+            <div className="mt-1 flex flex-row items-center gap-3 text-xs pointer-events-auto accept-reject-zone">
               <button
                 type="button"
                 onClick={handleDecision(onAccept)}
+                onTouchStart={blockDrag}
+                onMouseDown={blockDrag}
                 className="text-green-700 underline hover:text-green-900"
               >
                 Accept
@@ -141,6 +179,8 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward, onAcce
               <button
                 type="button"
                 onClick={handleDecision(onReject)}
+                onTouchStart={blockDrag}
+                onMouseDown={blockDrag}
                 className="text-red-600 underline hover:text-red-800"
               >
                 Reject

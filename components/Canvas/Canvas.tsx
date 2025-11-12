@@ -204,7 +204,15 @@ export function Canvas() {
     }, duration)
   }, [])
 
-  const handleDragStart = useCallback((_event: DragStartEvent) => {
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const target = (event.activatorEvent?.target ?? null) as HTMLElement | null
+
+    if (target?.closest('.accept-reject-zone')) {
+      event.activatorEvent?.stopPropagation?.()
+      event.activatorEvent?.preventDefault?.()
+      return
+    }
+
     document.body.classList.add('dragging')
   }, [])
 
