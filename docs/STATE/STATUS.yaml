@@ -1,5 +1,5 @@
 last_updated: "2025-11-10T00:00:00Z"
-current_epoch: "0004-persistence-autosave"
+current_epoch: "0005-ai-recommendations"
 last_completed_epoch: "0003-authentication-session"
 
 epochs:
@@ -53,4 +53,4 @@ history:
   - "PR 0004: Added CRUD API routes for intentions and steps with debug tracing."
   - PR 0005: Removed mock data and wired Canvas to live /api/intentions with debug tracing.
   - PR 0006: Added debounced autosave hook and Save Status UI with full debug tracing.
-
+  - PR 0001: Added PLAN.md for Epoch 0005 (AI Recommendations)
