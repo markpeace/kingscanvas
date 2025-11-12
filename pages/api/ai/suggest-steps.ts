@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth'
 import { debug } from '@/lib/debug'
 import { runWorkflow } from '@/lib/langgraph/workflow'
 
-import { authOptions } from '../auth/[...nextauth]'
+import { authOptions } from '@/lib/auth/config'
 
 type SuggestStepsRequestBody = {
   intentionId?: string
