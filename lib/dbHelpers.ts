@@ -25,3 +25,9 @@ export async function getCollection<TSchema extends Document = Document>(
   debug.trace("MongoDB: using collection", { name });
   return db.collection<TSchema>(name);
 }
+
+export async function ensureStepIndexes() {
+  const col = await getCollection("steps");
+  await col.createIndex({ user: 1, intentionId: 1 });
+  await col.createIndex({ user: 1, status: 1 });
+}

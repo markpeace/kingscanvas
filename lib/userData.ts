@@ -64,3 +64,56 @@ export async function saveUserStep(email: string, step: any) {
     upserted: result.upsertedId,
   });
 }
+
+export async function createSuggestedSteps(user: string, intentionId: string, suggestions: any[]) {
+  const col = await getCollection("steps");
+  const docs = suggestions.map((s) => ({
+    user,
+    intentionId,
+    bucket: s.bucket,
+    text: s.text,
+    status: "suggested",
+    source: "ai",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }));
+
+  if (!docs.length) {
+    debug.warn("Mongo: createSuggestedSteps called with empty suggestions", { intentionId });
+    return [];
+  }
+
+  debug.trace("Mongo: inserting suggested steps", { user, intentionId, count: docs.length });
+  const result = await col.insertMany(docs);
+  debug.info("Mongo: inserted suggested steps", { inserted: result.insertedCount });
+  return result;
+}
+
+export async function updateStepStatus(user: string, stepId: any, status: string) {
+  const col = await getCollection("steps");
+  debug.trace("Mongo: updating step status", { stepId, status });
+  const result = await col.updateOne(
+    { _id: stepId, user },
+    { $set: { status, updatedAt: new Date() } }
+  );
+  debug.info("Mongo: step status updated", { matched: result.matchedCount });
+  return result;
+}
+
+export async function listRecentHistory(user: string, intentionId: string, limit = 25) {
+  const col = await getCollection("steps");
+  debug.trace("Mongo: fetching recent step history", { user, intentionId });
+  const docs = await col
+    .find(
+      { user, intentionId, status: { $in: ["accepted", "rejected"] } },
+      { projection: { text: 1, status: 1 } }
+    )
+    .sort({ updatedAt: -1 })
+    .limit(limit)
+    .toArray();
+
+  const accepted = docs.filter((d) => d.status === "accepted").map((d) => d.text);
+  const rejected = docs.filter((d) => d.status === "rejected").map((d) => d.text);
+  debug.info("Mongo: step history loaded", { accepted: accepted.length, rejected: rejected.length });
+  return { accepted, rejected };
+}
