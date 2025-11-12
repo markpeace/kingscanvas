@@ -2,7 +2,7 @@
 import { debugSink } from "../../components/debug/sink"
 
 type DebugOptions = {
-  level?: "debug" | "info" | "warn" | "error"
+  level?: "trace" | "debug" | "info" | "warn" | "error"
   channel?: string
 }
 

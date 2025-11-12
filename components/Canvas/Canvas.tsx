@@ -15,15 +15,18 @@ import {
 import toast from 'react-hot-toast'
 
 import { AddIntentionModal } from '@/components/Canvas/AddIntentionModal'
-import { mockIntentions } from '@/data/mockIntentions'
 import { BUCKETS, bucketOrder } from '@/lib/buckets'
 import { IntentionRow } from '@/components/Canvas/IntentionRow'
+import { debug } from '@/lib/debug'
 import type { BucketId, Intention, Step } from '@/types/canvas'
 import { concertinaSteps } from '@/lib/steps'
+import useAutosave from '@/hooks/useAutosave'
+import SaveStatus from '@/components/Canvas/SaveStatus'
 
 export function Canvas() {
   const { status } = useUser()
-  const [intentions, setIntentions] = useState(mockIntentions)
+  const [intentions, setIntentions] = useState<Intention[]>([])
+  const [loadingIntentions, setLoadingIntentions] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [highlightBucket, setHighlightBucket] = useState<BucketId | null>(null)
   const [trashSuccessId, setTrashSuccessId] = useState<string | null>(null)
@@ -32,6 +35,13 @@ export function Canvas() {
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
+  const autosavePayload = useMemo(() => ({ intentions }), [intentions])
+  const { saving, error, lastSavedAt, retryCount } = useAutosave(
+    autosavePayload,
+    '/api/intentions',
+    1500,
+    3
+  )
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) {
@@ -51,6 +61,87 @@ export function Canvas() {
       }
     }
   }, [])
+
+  useEffect(() => {
+    if (status !== 'authenticated') {
+      return
+    }
+
+    let ignore = false
+
+    const loadIntentions = async () => {
+      setLoadingIntentions(true)
+      debug.trace('Canvas: loading intentions for current user', {
+        endpoint: '/api/intentions',
+        time: new Date().toISOString()
+      })
+
+      try {
+        const res = await fetch('/api/intentions')
+        const data: { intentions?: Intention[]; error?: string } = await res.json()
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Failed to load')
+        }
+
+        if (!data.intentions || data.intentions.length === 0) {
+          debug.info('Canvas: no saved intentions found, initialising empty board')
+          if (!ignore) {
+            setIntentions([])
+          }
+        } else {
+          debug.info('Canvas: loaded intentions', { count: data.intentions.length })
+          if (!ignore) {
+            setIntentions(data.intentions)
+          }
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown error'
+        debug.error('Canvas: failed to load intentions', { message })
+        if (!ignore) {
+          setIntentions([])
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingIntentions(false)
+        }
+      }
+    }
+
+    loadIntentions()
+
+    return () => {
+      ignore = true
+    }
+  }, [status])
+
+  const saveIntentionsManually = useCallback(async () => {
+    debug.trace('Canvas: manual save triggered', {
+      count: intentions.length,
+      time: new Date().toISOString()
+    })
+
+    try {
+      const res = await fetch('/api/intentions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ intentions })
+      })
+
+      debug.info('Canvas: manual save result', { status: res.status })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        debug.error('Canvas: manual save failed', {
+          status: res.status,
+          response: data
+        })
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      debug.error('Canvas: manual save errored', { message })
+    }
+  }, [intentions])
 
   const triggerHighlight = useCallback((bucket: BucketId | null) => {
     if (highlightTimeoutRef.current) {
@@ -580,6 +671,10 @@ export function Canvas() {
     return null
   }
 
+  if (loadingIntentions) {
+    return <p style={{ textAlign: 'center' }}>Loading your intentions…</p>
+  }
+
   return (
     <DndContext
       onDragStart={handleDragStart}
@@ -587,6 +682,12 @@ export function Canvas() {
       onDragCancel={handleDragCancel}
       collisionDetection={collisionDetection}
     >
+      <button
+        onClick={saveIntentionsManually}
+        style={{ position: 'fixed', bottom: 10, left: 10 }}
+      >
+        Save Now
+      </button>
       <a
         href="#main-canvas"
         className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
@@ -631,6 +732,12 @@ export function Canvas() {
           onAdd={handleAddIntention}
         />
       </main>
+      <SaveStatus
+        saving={saving}
+        error={error}
+        lastSavedAt={lastSavedAt}
+        retryCount={retryCount}
+      />
     </DndContext>
   )
 }
