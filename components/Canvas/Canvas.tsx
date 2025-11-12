@@ -663,6 +663,32 @@ export function Canvas() {
     return closestCenter(args)
   }
 
+  const testAISuggestions = useCallback(async () => {
+    const payload = {
+      intentionId: 'test-intention',
+      intentionText: 'Become a teacher',
+      intentionBucket: 'after-graduation',
+      historyAccepted: ['Apply for PGCE'],
+      historyRejected: ['Volunteer in a school']
+    }
+
+    debug.trace('Canvas: triggering AI suggestion test', payload)
+
+    try {
+      const res = await fetch('/api/ai/suggest-steps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      const data = await res.json()
+      debug.info('Canvas: AI suggestion test result', data)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      debug.error('Canvas: AI suggestion test errored', { message })
+    }
+  }, [])
+
   if (status === 'loading') {
     return <p>Loading…</p>
   }
@@ -687,6 +713,20 @@ export function Canvas() {
         style={{ position: 'fixed', bottom: 10, left: 10 }}
       >
         Save Now
+      </button>
+      <button
+        onClick={testAISuggestions}
+        style={{
+          position: 'fixed',
+          bottom: 10,
+          right: 10,
+          background: '#f6f6f6',
+          border: '1px solid #ccc',
+          padding: '4px 8px',
+          fontSize: '12px'
+        }}
+      >
+        Test AI Suggestions
       </button>
       <a
         href="#main-canvas"
