@@ -20,6 +20,8 @@ import { IntentionRow } from '@/components/Canvas/IntentionRow'
 import { debug } from '@/lib/debug'
 import type { BucketId, Intention, Step } from '@/types/canvas'
 import { concertinaSteps } from '@/lib/steps'
+import useAutosave from '@/hooks/useAutosave'
+import SaveStatus from '@/components/Canvas/SaveStatus'
 
 export function Canvas() {
   const { status } = useUser()
@@ -33,6 +35,13 @@ export function Canvas() {
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
+  const autosavePayload = useMemo(() => ({ intentions }), [intentions])
+  const { saving, error, lastSavedAt, retryCount } = useAutosave(
+    autosavePayload,
+    '/api/intentions',
+    1500,
+    3
+  )
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) {
@@ -723,6 +732,12 @@ export function Canvas() {
           onAdd={handleAddIntention}
         />
       </main>
+      <SaveStatus
+        saving={saving}
+        error={error}
+        lastSavedAt={lastSavedAt}
+        retryCount={retryCount}
+      />
     </DndContext>
   )
 }
