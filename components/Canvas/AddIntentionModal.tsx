@@ -16,7 +16,7 @@ export function AddIntentionModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  onAdd: (title: string, description: string, bucket: BucketId) => void
+  onAdd: (title: string, description: string, bucket: BucketId) => void | Promise<void>
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
@@ -29,7 +29,7 @@ export function AddIntentionModal({
       toast.error('Intentions can’t be placed in Do Now')
       return
     }
-    onAdd(title.trim(), description.trim(), bucket)
+    void onAdd(title.trim(), description.trim(), bucket)
     toast.success('Intention created')
     setTitle('')
     setDescription('')

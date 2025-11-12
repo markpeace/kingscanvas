@@ -57,3 +57,4 @@ history:
   - PR 0002: Added /api/ai/suggest-steps endpoint with LangGraph integration and diagnostic trigger.
   - PR 0002-hotfix-1: Exposed Test AI Suggestions button visibly in Canvas for diagnostic use.
   - PR 0003: Added step status helpers and Mongo indexes for AI recommendations.
+  - PR 0004: Linked intention creation to background AI generation with ghost placeholders and persistence.

@@ -3,9 +3,13 @@ export type BucketId = 'do-now' | 'do-later' | 'before-graduation' | 'after-grad
 export interface Step {
   id: string
   intentionId: string
-  title: string
+  title?: string
+  text?: string
   bucket: BucketId
   order: number
+  status?: string
+  source?: string
+  user?: string
 }
 
 export interface Intention {
