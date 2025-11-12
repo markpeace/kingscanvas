@@ -67,16 +67,25 @@ export async function saveUserStep(email: string, step: any) {
 
 export async function createSuggestedSteps(user: string, intentionId: string, suggestions: any[]) {
   const col = await getCollection("steps");
-  const docs = suggestions.map((s) => ({
-    user,
-    intentionId,
-    bucket: s.bucket,
-    text: s.text,
-    status: "suggested",
-    source: "ai",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
+  const docs = suggestions.map((s) => {
+    const timestamp = new Date();
+    const doc: Record<string, any> = {
+      user,
+      intentionId,
+      bucket: s.bucket,
+      text: s.text,
+      status: "suggested",
+      source: "ai",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    if (s.id) {
+      doc._id = s.id;
+    }
+
+    return doc;
+  });
 
   if (!docs.length) {
     debug.warn("Mongo: createSuggestedSteps called with empty suggestions", { intentionId });

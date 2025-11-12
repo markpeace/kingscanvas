@@ -58,3 +58,4 @@ history:
   - PR 0002-hotfix-1: Exposed Test AI Suggestions button visibly in Canvas for diagnostic use.
   - PR 0003: Added step status helpers and Mongo indexes for AI recommendations.
   - PR 0004: Linked intention creation to background AI generation with ghost placeholders and persistence.
+  - PR 0005: Implemented Accept / Reject suggestion flow with persistence and debug tracing.

@@ -25,6 +25,8 @@ import SaveStatus from '@/components/Canvas/SaveStatus'
 
 const DEFAULT_BUCKET: BucketId = 'do-now'
 
+const getStepIdentifier = (step: Step): string => step._id ?? step.id
+
 function determineBuckets(base: BucketId): BucketId[] {
   switch (base) {
     case 'after-graduation':
@@ -572,6 +574,151 @@ export function Canvas() {
     )
   }, [])
 
+  const handleAcceptSuggestion = useCallback(
+    async (step: Step) => {
+      const stepId = getStepIdentifier(step)
+      const intentionId = step.intentionId
+
+      if (!stepId) {
+        debug.warn('Canvas: accept suggestion missing identifier', { intentionId })
+        return
+      }
+
+      const currentIntention = intentions.find((item) => item.id === intentionId)
+      const existingStep = currentIntention?.steps.find((candidate) => getStepIdentifier(candidate) === stepId)
+
+      if (!existingStep) {
+        debug.warn('Canvas: accept suggestion step not found', { stepId, intentionId })
+        return
+      }
+
+      const originalStatus = existingStep.status ?? 'suggested'
+
+      debug.trace('Canvas: accept suggestion', { stepId, intentionId })
+
+      setIntentions((prev) =>
+        prev.map((intention) => {
+          if (intention.id !== intentionId) {
+            return intention
+          }
+
+          const updatedSteps = intention.steps.map((candidate) =>
+            getStepIdentifier(candidate) === stepId ? { ...candidate, status: 'accepted' } : candidate
+          )
+
+          return { ...intention, steps: updatedSteps }
+        })
+      )
+
+      try {
+        const res = await fetch('/api/steps', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stepId, status: 'accepted' })
+        })
+
+        if (!res.ok) {
+          const errorBody = await res.json().catch(() => ({}))
+          throw new Error(errorBody?.error || `Request failed with status ${res.status}`)
+        }
+
+        debug.info('Canvas: suggestion accepted and persisted', { stepId })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        debug.error('Canvas: failed to accept suggestion', { stepId, message })
+        toast.error('Could not accept suggestion. Please try again.')
+
+        setIntentions((prev) =>
+          prev.map((intention) => {
+            if (intention.id !== intentionId) {
+              return intention
+            }
+
+            const restoredSteps = intention.steps.map((candidate) =>
+              getStepIdentifier(candidate) === stepId ? { ...candidate, status: originalStatus } : candidate
+            )
+
+            return { ...intention, steps: restoredSteps }
+          })
+        )
+      }
+    },
+    [intentions]
+  )
+
+  const handleRejectSuggestion = useCallback(
+    async (step: Step) => {
+      const stepId = getStepIdentifier(step)
+      const intentionId = step.intentionId
+
+      if (!stepId) {
+        debug.warn('Canvas: reject suggestion missing identifier', { intentionId })
+        return
+      }
+
+      const currentIntention = intentions.find((item) => item.id === intentionId)
+      const existingSteps = currentIntention?.steps ?? []
+      const targetIndex = existingSteps.findIndex((candidate) => getStepIdentifier(candidate) === stepId)
+
+      if (targetIndex === -1) {
+        debug.warn('Canvas: reject suggestion step not found', { stepId, intentionId })
+        return
+      }
+
+      const stepToRestore = existingSteps[targetIndex]
+
+      debug.trace('Canvas: reject suggestion', { stepId, intentionId })
+
+      setIntentions((prev) =>
+        prev.map((intention) => {
+          if (intention.id !== intentionId) {
+            return intention
+          }
+
+          const remainingSteps = intention.steps.filter(
+            (candidate) => getStepIdentifier(candidate) !== stepId
+          )
+
+          return { ...intention, steps: remainingSteps }
+        })
+      )
+
+      try {
+        const res = await fetch('/api/steps', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ stepId, status: 'rejected' })
+        })
+
+        if (!res.ok) {
+          const errorBody = await res.json().catch(() => ({}))
+          throw new Error(errorBody?.error || `Request failed with status ${res.status}`)
+        }
+
+        debug.info('Canvas: suggestion rejected and persisted', { stepId })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        debug.error('Canvas: failed to reject suggestion', { stepId, message })
+        toast.error('Could not reject suggestion. Please try again.')
+
+        setIntentions((prev) =>
+          prev.map((intention) => {
+            if (intention.id !== intentionId) {
+              return intention
+            }
+
+            const restoredSteps = [...intention.steps]
+            const insertIndex = Math.min(targetIndex, restoredSteps.length)
+            restoredSteps.splice(insertIndex, 0, stepToRestore)
+
+            return { ...intention, steps: restoredSteps }
+          })
+        )
+      }
+    },
+    [intentions]
+  )
+
   const handleAddIntention = useCallback(
     async (title: string, description: string, bucket: BucketId) => {
       const now = Date.now()
@@ -671,6 +818,14 @@ export function Canvas() {
         debug.info('Canvas: AI suggestions received', { count: suggestionEntries.length })
 
         const suggestionTimestamp = Date.now()
+        const suggestionRecords = suggestionEntries.map((suggestion, index) => {
+          const bucketId = normaliseBucketId(suggestion?.bucket)
+          return {
+            id: `ai-${bucketId}-${suggestionTimestamp}-${index}`,
+            bucket: bucketId,
+            text: suggestion.text
+          }
+        })
 
         setIntentions((prev) =>
           prev.map((intention) => {
@@ -684,13 +839,14 @@ export function Canvas() {
               return acc
             }, {} as Record<BucketId, number>)
 
-            const newSuggestions: Step[] = suggestionEntries.map((suggestion, index) => {
-              const bucketId = normaliseBucketId(suggestion?.bucket)
+            const newSuggestions: Step[] = suggestionRecords.map((suggestion) => {
+              const bucketId = suggestion.bucket
               const order = (bucketCounts[bucketId] ?? 0) + 1
               bucketCounts[bucketId] = order
 
               return {
-                id: `ai-${bucketId}-${suggestionTimestamp}-${index}`,
+                _id: suggestion.id,
+                id: suggestion.id,
                 intentionId,
                 title: suggestion.text,
                 text: suggestion.text,
@@ -709,9 +865,10 @@ export function Canvas() {
           })
         )
 
-        if (suggestionEntries.length > 0) {
-          const persistPayload = suggestionEntries.map((suggestion) => ({
-            bucket: normaliseBucketId(suggestion.bucket),
+        if (suggestionRecords.length > 0) {
+          const persistPayload = suggestionRecords.map((suggestion) => ({
+            id: suggestion.id,
+            bucket: suggestion.bucket,
             text: suggestion.text
           }))
 
@@ -803,6 +960,8 @@ export function Canvas() {
           intention={intention}
           onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
           onDeleteStep={handleDeleteStep}
+          onAcceptStep={handleAcceptSuggestion}
+          onRejectStep={handleRejectSuggestion}
           onDeleteIntention={handleDeleteIntention}
           onMoveStep={moveStepWithKeyboard}
           onMoveIntention={moveIntentionWithKeyboard}
@@ -815,6 +974,8 @@ export function Canvas() {
       handleAddStep,
       handleDeleteIntention,
       handleDeleteStep,
+      handleAcceptSuggestion,
+      handleRejectSuggestion,
       highlightBucket,
       intentions,
       moveIntentionWithKeyboard,

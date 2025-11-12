@@ -21,6 +21,8 @@ type IntentionRowProps = {
   intention: Intention;
   onAddStep: (bucket: Step['bucket'], title: string) => void;
   onDeleteStep: (step: Step) => void;
+  onAcceptStep: (step: Step) => void;
+  onRejectStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
   onMoveStep: (intention: Intention, step: Step, direction: 'forward' | 'backward') => void;
   onMoveIntention: (intention: Intention, direction: 'forward' | 'backward') => void;
@@ -38,6 +40,8 @@ type BucketColumnProps = {
   isLater: boolean;
   highlightBucket: Step['bucket'] | null;
   onDeleteStep: (step: Step) => void;
+  onAcceptStep: (step: Step) => void;
+  onRejectStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
   onAddStepClick: () => void;
   onMoveStep: (step: Step, direction: 'forward' | 'backward') => void;
@@ -54,6 +58,8 @@ function BucketColumn({
   isLater,
   highlightBucket,
   onDeleteStep,
+  onAcceptStep,
+  onRejectStep,
   onDeleteIntention,
   onAddStepClick,
   onMoveStep,
@@ -94,11 +100,13 @@ function BucketColumn({
         <div className="flex flex-col gap-3">
           {steps.map((step) => (
             <StepCard
-              key={step.id}
+              key={step._id ?? step.id}
               step={step}
               onDelete={() => onDeleteStep(step)}
               onMoveForward={() => onMoveStep(step, 'forward')}
               onMoveBackward={() => onMoveStep(step, 'backward')}
+              onAccept={onAcceptStep}
+              onReject={onRejectStep}
             />
           ))}
         </div>
@@ -128,6 +136,8 @@ export function IntentionRow({
   intention,
   onAddStep,
   onDeleteStep,
+  onAcceptStep,
+  onRejectStep,
   onDeleteIntention,
   onMoveStep,
   onMoveIntention,
@@ -165,10 +175,12 @@ export function IntentionRow({
                 isEarlier={isEarlier}
                 isLater={isLater}
                 highlightBucket={highlightBucket}
-                onDeleteStep={onDeleteStep}
-                onDeleteIntention={onDeleteIntention}
-                onAddStepClick={() => setModalBucket(colBucket)}
-                onMoveStep={(step, direction) => onMoveStep(intention, step, direction)}
+          onDeleteStep={onDeleteStep}
+          onAcceptStep={onAcceptStep}
+          onRejectStep={onRejectStep}
+          onDeleteIntention={onDeleteIntention}
+          onAddStepClick={() => setModalBucket(colBucket)}
+          onMoveStep={(step, direction) => onMoveStep(intention, step, direction)}
                 onMoveIntention={(direction) => onMoveIntention(intention, direction)}
                 bucketTitle={BUCKETS.find((bucket) => bucket.id === colBucket)?.title ?? colBucket}
               />
