@@ -107,7 +107,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: Step
           isOpen={open}
           onClose={() => setOpen(false)}
           title="Edit Step"
-          initialTitle={data.title}
+          initialTitle={data.title ?? data.text ?? ''}
           onSave={handleSave}
         />
       )}

@@ -590,7 +590,7 @@ export function Canvas() {
       }
 
       const bucketsToFill = determineBuckets(bucket)
-      const ghostOrder: Record<BucketId, number> = {}
+      const ghostOrder: Partial<Record<BucketId, number>> = {}
       const ghostSuggestions: Step[] = bucketsToFill.map((targetBucket) => {
         const order = (ghostOrder[targetBucket] ?? 0) + 1
         ghostOrder[targetBucket] = order
