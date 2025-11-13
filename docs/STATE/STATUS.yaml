@@ -65,3 +65,4 @@ history:
   - PR 0009A: Implemented multi-bucket distribution and sequential ghost/suggestion flow.
   - PR 0009B: Implemented Prompt Builder v2 for richer, more intention-aware AI suggestions.
   - PR 0009C: Upgraded Prompt Builder to v3 (advisor identity, anti-signposting, better variation, Edge-shaped developmental structure).
+  - PR 0009D: Upgraded Prompt Builder to v4 (high-level developmental guidance).
