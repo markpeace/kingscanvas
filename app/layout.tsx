@@ -25,7 +25,8 @@ const DebugPanelDynamic = dynamicImport(() => import("../components/debug/DebugP
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const serverFlag = process.env.DEBUG_PANEL_ENABLED === "true"
   const publicFlag = process.env.NEXT_PUBLIC_DEBUG_PANEL === "true"
-  const debugEnabled = serverFlag || publicFlag
+  const isDev = process.env.NODE_ENV !== "production"
+  const debugEnabled = isDev || serverFlag || publicFlag
 
   return (
     <html lang="en" className="h-full antialiased" suppressHydrationWarning>
