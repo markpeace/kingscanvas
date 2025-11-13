@@ -1,5 +1,7 @@
-import { BUCKETS, bucketOrder } from '@/lib/buckets'
-import type { BucketId } from '@/types/canvas'
+import { getChatModel } from "@/lib/ai/client"
+import { buildSuggestionPrompt } from "@/lib/ai/promptBuilder"
+import { debug } from "@/lib/debug"
+import type { BucketId } from "@/types/canvas"
 
 type SuggestStepsInput = {
   intentionText?: string
@@ -10,50 +12,109 @@ type SuggestStepsInput = {
 
 type Suggestion = { bucket: BucketId; text: string }
 
-type WorkflowName = 'suggest-steps'
+type WorkflowName = "suggest-steps"
 
 type WorkflowResult = { suggestions: Suggestion[] }
 
-const suggestionTemplates: Record<BucketId, (goal: string) => string> = {
-  'do-now': (goal) => `Write a quick action list for "${goal}" to capture momentum today.`,
-  'do-later': (goal) => `Schedule a 30-minute block this week to explore next steps toward "${goal}".`,
-  'before-graduation': (goal) => `Map the skills, qualifications, and milestones needed before graduating to achieve "${goal}".`,
-  'after-graduation': (goal) => `Outline a post-graduation support network that keeps "${goal}" moving forward.`
+const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
+
+function normaliseBucket(bucket?: string): BucketId {
+  if (bucket && (VALID_BUCKETS as string[]).includes(bucket)) {
+    return bucket as BucketId
+  }
+
+  return "do-now"
 }
 
-function normaliseBucket(bucket?: string): BucketId | undefined {
-  if (!bucket) return undefined
-  return BUCKETS.find((b) => b.id === bucket)?.id
+function mapBucketToPromptTarget(bucket: BucketId): string {
+  switch (bucket) {
+    case "do-now":
+      return "do_now"
+    case "do-later":
+      return "do_soon"
+    case "before-graduation":
+      return "before_grad"
+    case "after-graduation":
+      return "before_grad"
+    default:
+      return "do_now"
+  }
 }
 
-function lowerSet(values: string[] | undefined) {
-  return new Set((values || []).map((value) => value.trim().toLowerCase()).filter(Boolean))
+function sanitiseHistory(history?: string[]): string[] {
+  if (!Array.isArray(history)) {
+    return []
+  }
+
+  return history.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
 }
 
-function buildSuggestions(input: SuggestStepsInput): Suggestion[] {
-  const intentionText = (input.intentionText || 'your goal').trim()
-  const normalisedBucket = normaliseBucket(input.intentionBucket)
-  const intentionIndex = normalisedBucket ? bucketOrder[normalisedBucket] ?? BUCKETS.length - 1 : BUCKETS.length - 1
-  const allowedBuckets = BUCKETS.filter((bucket) => (bucketOrder[bucket.id] ?? BUCKETS.length) <= intentionIndex)
-  const consideredBuckets = allowedBuckets.length > 0 ? allowedBuckets : BUCKETS.slice(0, 1)
+function extractResponseText(response: unknown): string {
+  if (typeof response === "string") {
+    return response
+  }
 
-  const seen = lowerSet([...(input.historyAccepted || []), ...(input.historyRejected || [])])
+  if (response && typeof response === "object") {
+    const message = response as { content?: unknown }
+    const { content } = message
 
-  const suggestions = consideredBuckets
-    .map(({ id }) => {
-      const template = suggestionTemplates[id]
-      return { bucket: id, text: template(intentionText) }
-    })
-    .filter((suggestion) => !seen.has(suggestion.text.toLowerCase()))
+    if (typeof content === "string") {
+      return content
+    }
 
-  return suggestions
+    if (Array.isArray(content)) {
+      return content
+        .map((part) => {
+          if (typeof part === "string") {
+            return part
+          }
+
+          if (part && typeof part === "object" && typeof (part as { text?: unknown }).text === "string") {
+            return (part as { text: string }).text
+          }
+
+          return ""
+        })
+        .filter(Boolean)
+        .join("\n")
+    }
+  }
+
+  return String(response ?? "")
 }
 
 export async function runWorkflow(name: WorkflowName, input: SuggestStepsInput): Promise<WorkflowResult> {
-  if (name !== 'suggest-steps') {
+  if (name !== "suggest-steps") {
     throw new Error(`Unknown workflow: ${name}`)
   }
 
-  const suggestions = buildSuggestions(input)
-  return { suggestions }
+  const bucket = normaliseBucket(input.intentionBucket)
+  const promptBucket = mapBucketToPromptTarget(bucket)
+  const intentionText = (input.intentionText ?? "").trim() || "your intention"
+  const historyAccepted = sanitiseHistory(input.historyAccepted)
+  const historyRejected = sanitiseHistory(input.historyRejected)
+
+  const prompt = buildSuggestionPrompt({
+    intentionText,
+    targetBucket: promptBucket,
+    historyAccepted,
+    historyRejected
+  })
+
+  debug.trace("AI Prompt Builder: constructed prompt", { prompt })
+
+  const llm = getChatModel()
+  const response = await llm.invoke(prompt)
+  const responseText = extractResponseText(response).trim()
+
+  debug.info("AI: model response", { response: responseText })
+
+  return {
+    suggestions: [
+      {
+        bucket,
+        text: responseText
+      }
+    ]
+  }
 }

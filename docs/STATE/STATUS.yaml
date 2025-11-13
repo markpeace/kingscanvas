@@ -60,3 +60,4 @@ history:
   - PR 0004: Linked intention creation to background AI generation with ghost placeholders and persistence.
   - PR 0005: Clean Accept/Reject flow with touch-safe drag suppression and correct UI layout.
   - PR 0006: On-demand AI suggestion via magic wand added to bucket headers.
+  - PR 0007: Added Prompt Builder for high-quality, bucket-specific AI suggestions.
