@@ -1,0 +1,14 @@
+{
+  "epoch": "0005",
+  "pr": "0004",
+  "action": "created",
+  "branch": "feat/epoch-0005/pr-0004-intentions-trigger-ai",
+  "status": "success",
+  "files_changed": [
+    "components/Canvas/Canvas.tsx",
+    "pages/api/steps/history.ts"
+  ],
+  "tests_passed": true,
+  "build_status": "clean",
+  "summary": "Connected intention creation to background AI generation with ghost placeholders and live debug instrumentation."
+}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal';
 import { IntentionCard } from '@/components/Canvas/IntentionCard';
@@ -20,13 +20,17 @@ const emptyText: Record<Step['bucket'], string> = {
 type IntentionRowProps = {
   intention: Intention;
   onAddStep: (bucket: Step['bucket'], title: string) => void;
+  onAddAIStep: (bucket: Step['bucket']) => void;
   onDeleteStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
   onMoveStep: (intention: Intention, step: Step, direction: 'forward' | 'backward') => void;
   onMoveIntention: (intention: Intention, direction: 'forward' | 'backward') => void;
+  onAcceptSuggestion: (step: Step) => void;
+  onRejectSuggestion: (step: Step) => void;
   highlightBucket: Step['bucket'] | null;
   trashSuccessId?: string | null;
   trashSuccessType?: 'step' | 'intention' | null;
+  ghostStyle?: CSSProperties;
 };
 
 type BucketColumnProps = {
@@ -40,9 +44,13 @@ type BucketColumnProps = {
   onDeleteStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
   onAddStepClick: () => void;
+  onAddAIStepClick: () => void;
   onMoveStep: (step: Step, direction: 'forward' | 'backward') => void;
   onMoveIntention: (direction: 'forward' | 'backward') => void;
+  onAcceptSuggestion: (step: Step) => void;
+  onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
+  ghostStyle?: CSSProperties;
 };
 
 function BucketColumn({
@@ -56,9 +64,13 @@ function BucketColumn({
   onDeleteStep,
   onDeleteIntention,
   onAddStepClick,
+  onAddAIStepClick,
   onMoveStep,
   onMoveIntention,
+  onAcceptSuggestion,
+  onRejectSuggestion,
   bucketTitle,
+  ghostStyle,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -99,6 +111,9 @@ function BucketColumn({
               onDelete={() => onDeleteStep(step)}
               onMoveForward={() => onMoveStep(step, 'forward')}
               onMoveBackward={() => onMoveStep(step, 'backward')}
+              onAccept={onAcceptSuggestion}
+              onReject={onRejectSuggestion}
+              ghostStyle={ghostStyle}
             />
           ))}
         </div>
@@ -112,13 +127,32 @@ function BucketColumn({
       )}
 
       {isEarlier && (
-        <button
-          type="button"
-          onClick={onAddStepClick}
-          className="text-kings-grey-dark text-sm hover:text-kings-red mt-auto self-start focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-        >
-          ＋ Add Step
-        </button>
+        <div className="flex flex-row items-center gap-2 mb-2 mt-auto">
+          <button
+            className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+            onClick={onAddStepClick}
+            type="button"
+          >
+            + Add Step
+          </button>
+
+          <button
+            onClick={onAddAIStepClick}
+            className="text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 rounded"
+            aria-label="Suggest step with AI"
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              lineHeight: '1',
+              userSelect: 'none'
+            }}
+            type="button"
+          >
+            ✨
+          </button>
+        </div>
       )}
     </div>
   );
@@ -127,13 +161,17 @@ function BucketColumn({
 export function IntentionRow({
   intention,
   onAddStep,
+  onAddAIStep,
   onDeleteStep,
   onDeleteIntention,
   onMoveStep,
   onMoveIntention,
+  onAcceptSuggestion,
+  onRejectSuggestion,
   highlightBucket,
   trashSuccessId,
   trashSuccessType,
+  ghostStyle,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
@@ -168,9 +206,13 @@ export function IntentionRow({
                 onDeleteStep={onDeleteStep}
                 onDeleteIntention={onDeleteIntention}
                 onAddStepClick={() => setModalBucket(colBucket)}
+                onAddAIStepClick={() => onAddAIStep(colBucket)}
                 onMoveStep={(step, direction) => onMoveStep(intention, step, direction)}
                 onMoveIntention={(direction) => onMoveIntention(intention, direction)}
+                onAcceptSuggestion={onAcceptSuggestion}
+                onRejectSuggestion={onRejectSuggestion}
                 bucketTitle={BUCKETS.find((bucket) => bucket.id === colBucket)?.title ?? colBucket}
+                ghostStyle={ghostStyle}
               />
             );
           })}
