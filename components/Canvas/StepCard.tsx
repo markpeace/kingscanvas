@@ -1,21 +1,45 @@
-'use client';
+'use client'
 
-import { useDraggable, useDndContext } from '@dnd-kit/core';
-import { useState, type KeyboardEvent } from 'react';
-import toast from 'react-hot-toast';
+import { useDraggable, useDndContext } from '@dnd-kit/core'
+import {
+  useState,
+  type CSSProperties,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type TouchEvent
+} from 'react'
+import toast from 'react-hot-toast'
 
-import { EditModal } from '@/components/Canvas/EditModal';
-import type { Step } from '@/types/canvas';
+import { EditModal } from '@/components/Canvas/EditModal'
+import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
-  step: Step;
-  onDelete: () => void;
-  onMoveForward: () => void;
-  onMoveBackward: () => void;
-};
+  step: Step
+  onDelete: () => void
+  onMoveForward: () => void
+  onMoveBackward: () => void
+  onAccept?: (step: Step) => void
+  onReject?: (step: Step) => void
+}
 
-export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: StepCardProps) {
+type DragBlockEvent = MouseEvent<HTMLElement> | TouchEvent<HTMLElement> | PointerEvent<HTMLElement>
+
+function blockDrag(event: DragBlockEvent) {
+  event.stopPropagation()
+  event.preventDefault()
+}
+
+export function StepCard({
+  step,
+  onDelete,
+  onMoveForward,
+  onMoveBackward,
+  onAccept,
+  onReject
+}: StepCardProps) {
   const isGhost = step.status === 'ghost';
+  const isSuggested = step.status === 'suggested';
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.id,
     data: { type: 'step', step },
@@ -33,9 +57,17 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: Step
     toast('Changes saved', { icon: '💾' });
   };
 
-  const style = transform
+  const transformStyle = transform
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : undefined;
+    : {}
+
+  const cardStyle: CSSProperties = {
+    ...transformStyle,
+    touchAction: 'manipulation',
+    overflow: 'hidden',
+    position: 'relative',
+    ...(isGhost ? { pointerEvents: 'none', opacity: 0.6 } : {})
+  }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (isGhost) {
@@ -68,17 +100,40 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: Step
   const isDragging = active?.id === step.id;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'bg-white border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white';
-  const interactiveClasses =
-    'cursor-pointer hover:border-kings-grey transition-colors';
+    'relative bg-white border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+  const interactiveClasses = 'cursor-pointer hover:border-kings-grey transition-colors'
   const ghostClasses =
-    'border-dashed border-kings-grey-light/80 text-kings-grey-dark/70 animate-pulse cursor-default pointer-events-none select-none';
+    'border-dashed border-kings-grey-light/80 text-kings-grey-dark/70 animate-pulse cursor-default select-none'
+  const suggestedClasses = 'border-dashed border-kings-grey-light bg-kings-grey-light/10'
+  const cardClasses = [
+    baseClasses,
+    isGhost ? ghostClasses : interactiveClasses,
+    isSuggested ? suggestedClasses : ''
+  ]
+    .filter(Boolean)
+    .join(' ')
+
+  const showActions = isSuggested && (onAccept || onReject)
+
+  const handleAcceptClick = (event: MouseEvent<HTMLButtonElement>) => {
+    blockDrag(event)
+    if (onAccept) {
+      void onAccept(step)
+    }
+  }
+
+  const handleRejectClick = (event: MouseEvent<HTMLButtonElement>) => {
+    blockDrag(event)
+    if (onReject) {
+      void onReject(step)
+    }
+  }
 
   return (
     <>
       <div
         ref={setNodeRef}
-        style={style}
+        style={cardStyle}
         {...(isGhost ? {} : listeners)}
         {...(isGhost ? {} : attributes)}
         role="listitem"
@@ -92,7 +147,7 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: Step
             : `Step: ${displayText}. Press Enter to edit, Delete to remove, Arrow keys to move.`
         }
         onKeyDown={handleKeyDown}
-        className={`${baseClasses} ${isGhost ? ghostClasses : interactiveClasses}`}
+        className={cardClasses}
         onDoubleClick={() => {
           if (!isGhost) {
             setOpen(true);
@@ -100,6 +155,39 @@ export function StepCard({ step, onDelete, onMoveForward, onMoveBackward }: Step
         }}
       >
         {displayText}
+
+        {showActions && (
+          <div
+            className="flex flex-row gap-4 items-center mt-2 accept-reject-zone"
+            style={{ pointerEvents: 'auto' }}
+          >
+            {onAccept && (
+              <button
+                type="button"
+                className="text-green-700 underline text-xs"
+                onClick={handleAcceptClick}
+                onMouseDown={blockDrag}
+                onTouchStart={blockDrag}
+                onPointerDown={blockDrag}
+              >
+                Accept
+              </button>
+            )}
+
+            {onReject && (
+              <button
+                type="button"
+                className="text-red-600 underline text-xs"
+                onClick={handleRejectClick}
+                onMouseDown={blockDrag}
+                onTouchStart={blockDrag}
+                onPointerDown={blockDrag}
+              >
+                Reject
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {!isGhost && (

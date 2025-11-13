@@ -24,6 +24,8 @@ type IntentionRowProps = {
   onDeleteIntention: (intentionId: string) => void;
   onMoveStep: (intention: Intention, step: Step, direction: 'forward' | 'backward') => void;
   onMoveIntention: (intention: Intention, direction: 'forward' | 'backward') => void;
+  onAcceptSuggestion: (step: Step) => void;
+  onRejectSuggestion: (step: Step) => void;
   highlightBucket: Step['bucket'] | null;
   trashSuccessId?: string | null;
   trashSuccessType?: 'step' | 'intention' | null;
@@ -42,6 +44,8 @@ type BucketColumnProps = {
   onAddStepClick: () => void;
   onMoveStep: (step: Step, direction: 'forward' | 'backward') => void;
   onMoveIntention: (direction: 'forward' | 'backward') => void;
+  onAcceptSuggestion: (step: Step) => void;
+  onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
 };
 
@@ -58,6 +62,8 @@ function BucketColumn({
   onAddStepClick,
   onMoveStep,
   onMoveIntention,
+  onAcceptSuggestion,
+  onRejectSuggestion,
   bucketTitle,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
@@ -99,6 +105,8 @@ function BucketColumn({
               onDelete={() => onDeleteStep(step)}
               onMoveForward={() => onMoveStep(step, 'forward')}
               onMoveBackward={() => onMoveStep(step, 'backward')}
+              onAccept={onAcceptSuggestion}
+              onReject={onRejectSuggestion}
             />
           ))}
         </div>
@@ -131,6 +139,8 @@ export function IntentionRow({
   onDeleteIntention,
   onMoveStep,
   onMoveIntention,
+  onAcceptSuggestion,
+  onRejectSuggestion,
   highlightBucket,
   trashSuccessId,
   trashSuccessType,
@@ -170,6 +180,8 @@ export function IntentionRow({
                 onAddStepClick={() => setModalBucket(colBucket)}
                 onMoveStep={(step, direction) => onMoveStep(intention, step, direction)}
                 onMoveIntention={(direction) => onMoveIntention(intention, direction)}
+                onAcceptSuggestion={onAcceptSuggestion}
+                onRejectSuggestion={onRejectSuggestion}
                 bucketTitle={BUCKETS.find((bucket) => bucket.id === colBucket)?.title ?? colBucket}
               />
             );

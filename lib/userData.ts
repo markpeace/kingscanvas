@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
 
@@ -91,9 +93,27 @@ export async function createSuggestedSteps(user: string, intentionId: string, su
 
 export async function updateStepStatus(user: string, stepId: any, status: string) {
   const col = await getCollection("steps");
-  debug.trace("Mongo: updating step status", { stepId, status });
+  let lookupId = stepId;
+
+  if (typeof stepId === "string") {
+    try {
+      lookupId = new ObjectId(stepId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      debug.error("Mongo: invalid step id for status update", { stepId, message });
+      return {
+        acknowledged: false,
+        matchedCount: 0,
+        modifiedCount: 0,
+        upsertedCount: 0,
+        upsertedId: null,
+      } as any;
+    }
+  }
+
+  debug.trace("Mongo: updating step status", { stepId: lookupId, status });
   const result = await col.updateOne(
-    { _id: stepId, user },
+    { _id: lookupId, user },
     { $set: { status, updatedAt: new Date() } }
   );
   debug.info("Mongo: step status updated", { matched: result.matchedCount });
