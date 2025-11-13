@@ -114,12 +114,12 @@ export function StepCard({
   const isDragging = active?.id === step.id;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'relative bg-white border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-  const interactiveClasses = 'cursor-pointer hover:border-kings-grey transition-colors'
+    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+  const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
   const ghostClasses = 'cursor-default select-none'
-  const suggestedClasses = 'border-dashed border-kings-grey-light bg-kings-grey-light/10'
+  const suggestedClasses =
+    'border-amber-200 bg-amber-50'
   const cardClasses = [
-    'step-card',
     isSuggested ? 'suggested' : '',
     baseClasses,
     isGhost ? ghostClasses : interactiveClasses,
@@ -128,7 +128,9 @@ export function StepCard({
     .filter(Boolean)
     .join(' ')
 
-  const suggestedAccent = isSuggested ? { borderLeft: '4px solid #f0b76e' } : {}
+  const suggestedAccent = isSuggested
+    ? { boxShadow: 'inset 3px 0 0 0 rgba(217, 119, 6, 0.6)' }
+    : {}
 
   const showActions = isSuggested && (onAccept || onReject)
 
@@ -171,18 +173,27 @@ export function StepCard({
           }
         }}
       >
-        {displayText}
+        {isSuggested && (
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
+              Suggested
+            </span>
+          </div>
+        )}
+
+        <div className="flex flex-col gap-3 text-left">
+          <p className="max-w-prose text-sm font-medium leading-relaxed text-slate-900">{displayText}</p>
+        </div>
 
         {showActions && (
           <div
-            className="flex flex-row gap-4 mt-2 accept-reject-zone"
+            className="accept-reject-zone mt-4 flex flex-wrap items-center gap-3"
             style={{ pointerEvents: 'auto' }}
           >
             {onAccept && (
               <button
                 type="button"
-                className="text-green-700 underline text-sm"
-                style={{ padding: '6px 4px' }}
+                className="inline-flex items-center justify-center rounded-md border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 transition-colors hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40"
                 onClick={handleAcceptClick}
                 onMouseDown={blockDrag}
                 onTouchStart={blockDrag}
@@ -195,8 +206,7 @@ export function StepCard({
             {onReject && (
               <button
                 type="button"
-                className="text-red-600 underline text-sm"
-                style={{ padding: '6px 4px' }}
+                className="text-xs font-medium text-red-600 underline-offset-2 hover:underline"
                 onClick={handleRejectClick}
                 onMouseDown={blockDrag}
                 onTouchStart={blockDrag}
