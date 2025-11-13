@@ -71,6 +71,8 @@ export function Canvas() {
     1500,
     3
   )
+  const debugUiEnabled =
+    process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
   const userEmail = user?.email ?? 'test@test.com'
   useEffect(() => {
     return () => {
@@ -144,34 +146,6 @@ export function Canvas() {
       ignore = true
     }
   }, [status])
-
-  const saveIntentionsManually = useCallback(async () => {
-    debug.trace('Canvas: manual save triggered', {
-      count: intentions.length,
-      time: new Date().toISOString()
-    })
-
-    try {
-      const res = await fetch('/api/intentions', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intentions })
-      })
-
-      debug.info('Canvas: manual save result', { status: res.status })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        debug.error('Canvas: manual save failed', {
-          status: res.status,
-          response: data
-        })
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      debug.error('Canvas: manual save errored', { message })
-    }
-  }, [intentions])
 
   const triggerHighlight = useCallback((bucket: BucketId | null) => {
     if (highlightTimeoutRef.current) {
@@ -1390,12 +1364,6 @@ export function Canvas() {
         onDragCancel={handleDragCancel}
         collisionDetection={collisionDetection}
       >
-        <button
-          onClick={saveIntentionsManually}
-          style={{ position: 'fixed', bottom: 10, left: 10 }}
-        >
-          Save Now
-        </button>
         <a
           href="#main-canvas"
           className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
@@ -1456,29 +1424,31 @@ export function Canvas() {
           retryCount={retryCount}
         />
       </DndContext>
-      <div
-        style={{
-          position: 'fixed',
-          bottom: '12px',
-          right: '12px',
-          zIndex: 9999
-        }}
-      >
-        <button
-          onClick={triggerAISuggestionTest}
+      {debugUiEnabled ? (
+        <div
           style={{
-            background: '#ffffff',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            padding: '6px 10px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            position: 'fixed',
+            bottom: '12px',
+            right: '12px',
+            zIndex: 9999
           }}
         >
-          Test AI Suggestions
-        </button>
-      </div>
+          <button
+            onClick={triggerAISuggestionTest}
+            style={{
+              background: '#ffffff',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              padding: '6px 10px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            }}
+          >
+            Test AI Suggestions
+          </button>
+        </div>
+      ) : null}
     </>
   )
 }
