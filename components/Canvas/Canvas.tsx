@@ -938,7 +938,7 @@ export function Canvas() {
             debug.info('Suggestion received', {
               intentionId: intention.id,
               bucket: targetBucket,
-              preview: suggestion.text?.slice(0, 80)
+              preview: suggestion?.text?.slice(0, 80)
             })
           } catch (error) {
             const message = error instanceof Error ? error.message : 'Unknown error'
@@ -1033,7 +1033,7 @@ export function Canvas() {
                 }
                 return String(value)
               })
-              .find((value): value is string => Boolean(value))
+              .find((value: string | null): value is string => Boolean(value))
 
             if (insertedId) {
               setIntentions((prev) =>
