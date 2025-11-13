@@ -13,11 +13,11 @@ export default function SaveStatus({ saving, error, lastSavedAt, retryCount }: P
   const [recentlySaved, setRecentlySaved] = useState(false)
 
   useEffect(() => {
-    let timeout: ReturnType<typeof window.setTimeout> | null = null
+    let timeout: ReturnType<typeof setTimeout> | null = null
 
     if (!saving && !error && lastSavedAt) {
       setRecentlySaved(true)
-      timeout = window.setTimeout(() => setRecentlySaved(false), RECENT_DURATION)
+      timeout = setTimeout(() => setRecentlySaved(false), RECENT_DURATION)
     }
 
     if (saving) {
@@ -26,7 +26,7 @@ export default function SaveStatus({ saving, error, lastSavedAt, retryCount }: P
 
     return () => {
       if (timeout) {
-        window.clearTimeout(timeout)
+        clearTimeout(timeout)
       }
     }
   }, [saving, error, lastSavedAt])
