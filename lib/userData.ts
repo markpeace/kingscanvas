@@ -285,12 +285,9 @@ export async function upsertOpportunity(
       { upsert: true }
     );
 
-    const targetId =
-      lookupId ||
-      (result.upsertedId &&
-        ("_id" in result.upsertedId ? result.upsertedId._id : result.upsertedId));
+    const targetId = lookupId;
 
-    const stored = targetId ? await col.findOne({ _id: targetId, user }) : null;
+    const stored = await col.findOne({ _id: { $eq: targetId }, user });
 
     if (!stored) {
       debug.error("Mongo: opportunity missing after upsert", { user, opportunityId: opportunity.id });
