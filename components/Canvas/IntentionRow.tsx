@@ -1,7 +1,7 @@
 'use client';
 
 import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal';
 import { IntentionCard } from '@/components/Canvas/IntentionCard';
@@ -30,6 +30,7 @@ type IntentionRowProps = {
   highlightBucket: Step['bucket'] | null;
   trashSuccessId?: string | null;
   trashSuccessType?: 'step' | 'intention' | null;
+  ghostStyle?: CSSProperties;
 };
 
 type BucketColumnProps = {
@@ -49,6 +50,7 @@ type BucketColumnProps = {
   onAcceptSuggestion: (step: Step) => void;
   onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
+  ghostStyle?: CSSProperties;
 };
 
 function BucketColumn({
@@ -68,6 +70,7 @@ function BucketColumn({
   onAcceptSuggestion,
   onRejectSuggestion,
   bucketTitle,
+  ghostStyle,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -110,6 +113,7 @@ function BucketColumn({
               onMoveBackward={() => onMoveStep(step, 'backward')}
               onAccept={onAcceptSuggestion}
               onReject={onRejectSuggestion}
+              ghostStyle={ghostStyle}
             />
           ))}
         </div>
@@ -167,6 +171,7 @@ export function IntentionRow({
   highlightBucket,
   trashSuccessId,
   trashSuccessType,
+  ghostStyle,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
@@ -207,6 +212,7 @@ export function IntentionRow({
                 onAcceptSuggestion={onAcceptSuggestion}
                 onRejectSuggestion={onRejectSuggestion}
                 bucketTitle={BUCKETS.find((bucket) => bucket.id === colBucket)?.title ?? colBucket}
+                ghostStyle={ghostStyle}
               />
             );
           })}

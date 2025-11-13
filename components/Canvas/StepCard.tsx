@@ -21,6 +21,7 @@ type StepCardProps = {
   onMoveBackward: () => void
   onAccept?: (step: Step) => void
   onReject?: (step: Step) => void
+  ghostStyle?: CSSProperties
 }
 
 type DragBlockEvent = MouseEvent<HTMLElement> | TouchEvent<HTMLElement> | PointerEvent<HTMLElement>
@@ -36,7 +37,8 @@ export function StepCard({
   onMoveForward,
   onMoveBackward,
   onAccept,
-  onReject
+  onReject,
+  ghostStyle
 }: StepCardProps) {
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
@@ -61,12 +63,24 @@ export function StepCard({
     ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
     : {}
 
+  const defaultGhostStyle: CSSProperties = {
+    pointerEvents: 'none',
+    opacity: 0.6
+  }
+
+  const suggestedAnimation: CSSProperties = isSuggested
+    ? { opacity: 0, animation: 'fadeInStep 0.35s ease forwards' }
+    : {}
+
   const cardStyle: CSSProperties = {
     ...transformStyle,
     touchAction: 'manipulation',
     overflow: 'hidden',
     position: 'relative',
-    ...(isGhost ? { pointerEvents: 'none', opacity: 0.6 } : {})
+    ...suggestedAnimation,
+    ...(isGhost
+      ? { ...defaultGhostStyle, ...(ghostStyle ?? {}) }
+      : {})
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -102,16 +116,19 @@ export function StepCard({
   const baseClasses =
     'relative bg-white border border-kings-grey-light rounded-lg p-3 shadow-sm text-sm leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
   const interactiveClasses = 'cursor-pointer hover:border-kings-grey transition-colors'
-  const ghostClasses =
-    'border-dashed border-kings-grey-light/80 text-kings-grey-dark/70 animate-pulse cursor-default select-none'
+  const ghostClasses = 'cursor-default select-none'
   const suggestedClasses = 'border-dashed border-kings-grey-light bg-kings-grey-light/10'
   const cardClasses = [
+    'step-card',
+    isSuggested ? 'suggested' : '',
     baseClasses,
     isGhost ? ghostClasses : interactiveClasses,
     isSuggested ? suggestedClasses : ''
   ]
     .filter(Boolean)
     .join(' ')
+
+  const suggestedAccent = isSuggested ? { borderLeft: '4px solid #f0b76e' } : {}
 
   const showActions = isSuggested && (onAccept || onReject)
 
@@ -133,7 +150,7 @@ export function StepCard({
     <>
       <div
         ref={setNodeRef}
-        style={cardStyle}
+        style={{ ...cardStyle, ...suggestedAccent }}
         {...(isGhost ? {} : listeners)}
         {...(isGhost ? {} : attributes)}
         role="listitem"
@@ -158,13 +175,14 @@ export function StepCard({
 
         {showActions && (
           <div
-            className="flex flex-row gap-4 items-center mt-2 accept-reject-zone"
+            className="flex flex-row gap-4 mt-2 accept-reject-zone"
             style={{ pointerEvents: 'auto' }}
           >
             {onAccept && (
               <button
                 type="button"
-                className="text-green-700 underline text-xs"
+                className="text-green-700 underline text-sm"
+                style={{ padding: '6px 4px' }}
                 onClick={handleAcceptClick}
                 onMouseDown={blockDrag}
                 onTouchStart={blockDrag}
@@ -177,7 +195,8 @@ export function StepCard({
             {onReject && (
               <button
                 type="button"
-                className="text-red-600 underline text-xs"
+                className="text-red-600 underline text-sm"
+                style={{ padding: '6px 4px' }}
                 onClick={handleRejectClick}
                 onMouseDown={blockDrag}
                 onTouchStart={blockDrag}
