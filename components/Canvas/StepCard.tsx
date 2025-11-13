@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent,
@@ -12,6 +13,8 @@ import {
 import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
+import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+import { useFakeOpportunities } from '@/hooks/useFakeOpportunities'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -49,7 +52,10 @@ export function StepCard({
   });
   const { active } = useDndContext();
   const [data, setData] = useState(step);
-  const [open, setOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
+  const opportunitiesTriggerRef = useRef<HTMLButtonElement>(null);
+  const { opportunities, count: opportunitiesCount } = useFakeOpportunities(step.id);
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -89,7 +95,7 @@ export function StepCard({
     }
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      setOpen(true);
+      setIsEditOpen(true);
       return;
     }
 
@@ -169,15 +175,47 @@ export function StepCard({
         className={cardClasses}
         onDoubleClick={() => {
           if (!isGhost) {
-            setOpen(true);
+            setIsEditOpen(true);
           }
         }}
       >
-        {isSuggested && (
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
-              Suggested
-            </span>
+        {(isSuggested || !isGhost) && (
+          <div className="flex items-start justify-between gap-3">
+            {isSuggested && (
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+                <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
+                  Suggested
+                </span>
+              </div>
+            )}
+
+            {!isGhost && (
+              <button
+                type="button"
+                ref={opportunitiesTriggerRef}
+                onClick={(event) => {
+                  blockDrag(event);
+                  setIsOpportunitiesOpen(true);
+                }}
+                onMouseDown={blockDrag}
+                onTouchStart={blockDrag}
+                onPointerDown={blockDrag}
+                className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                  opportunitiesCount > 0
+                    ? 'border-kings-red/40 bg-kings-red/10 text-kings-red hover:bg-kings-red/20'
+                    : 'border-kings-grey-light bg-kings-grey-light/40 text-kings-grey-dark hover:bg-kings-grey-light/60'
+                }`}
+                aria-label={
+                  opportunitiesCount === 1
+                    ? 'View 1 opportunity for this step'
+                    : `View ${opportunitiesCount} opportunities for this step`
+                }
+              >
+                {opportunitiesCount === 1
+                  ? '1 opportunity'
+                  : `${opportunitiesCount} opportunities`}
+              </button>
+            )}
           </div>
         )}
 
@@ -221,11 +259,23 @@ export function StepCard({
 
       {!isGhost && (
         <EditModal
-          isOpen={open}
-          onClose={() => setOpen(false)}
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
           title="Edit Step"
           initialTitle={data.title ?? data.text ?? ''}
           onSave={handleSave}
+        />
+      )}
+
+      {!isGhost && (
+        <StepOpportunitiesModal
+          isOpen={isOpportunitiesOpen}
+          onClose={() => {
+            setIsOpportunitiesOpen(false);
+            opportunitiesTriggerRef.current?.focus();
+          }}
+          stepTitle={displayText}
+          opportunities={opportunities}
         />
       )}
     </>
