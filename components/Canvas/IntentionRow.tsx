@@ -78,20 +78,24 @@ function BucketColumn({
     data: { intentionId: intention.id, bucket: bucketId },
   });
 
+  const columnClasses = [
+    'border rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors transition-shadow duration-150',
+    highlightBucket === bucketId ? 'ring-2 ring-kings-red/50' : '',
+    isOver ? 'ring-2 ring-kings-red/40 bg-kings-red/10 border-kings-red/40 shadow-lg shadow-kings-red/10' : '',
+    isLater
+      ? 'bg-kings-grey-light/20 border-kings-grey-light/60 opacity-70'
+      : 'bg-white border-kings-grey-light'
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
     <div
       ref={setNodeRef}
       role="region"
       aria-label={`${bucketTitle} bucket`}
       aria-dropeffect="move"
-      className={[
-        'border rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors duration-150',
-        highlightBucket === bucketId ? 'ring-2 ring-kings-red/50' : '',
-        isOver ? 'shadow-sm border-kings-red/40' : '',
-        isLater
-          ? 'bg-kings-grey-light/20 border-kings-grey-light/60 opacity-70'
-          : 'bg-white border-kings-grey-light'
-      ].join(' ')}
+      className={columnClasses}
     >
       {isIntentionBucket && (
         <IntentionCard
@@ -129,7 +133,7 @@ function BucketColumn({
       {isEarlier && (
         <div className="flex flex-row items-center gap-2 mb-2 mt-auto">
           <button
-            className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+            className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             onClick={(event) => onAddStepClick(event)}
             type="button"
           >
@@ -138,7 +142,7 @@ function BucketColumn({
 
           <button
             onClick={onAddAIStepClick}
-            className="text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 rounded"
+            className="text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded"
             aria-label="Suggest step with AI"
             style={{
               background: 'none',

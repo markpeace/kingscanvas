@@ -79,7 +79,7 @@ export function IntentionCard({ intention, onDelete, onMoveForward, onMoveBackwa
         tabIndex={0}
         aria-label={`Intention: ${data.title || 'Untitled Intention'}. Press Enter to edit, Delete to remove, Arrow keys to move.`}
         onKeyDown={handleKeyDown}
-        className="relative border-2 border-kings-red/70 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+        className="relative border-2 border-kings-red/70 bg-kings-red/5 rounded-lg p-5 shadow-sm hover:border-kings-red transition-colors transition-shadow flex flex-col gap-2 min-h-[130px] focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
         onClick={() => setOpen(true)}
       >
         <h3 className="font-semibold text-kings-red text-base leading-snug">

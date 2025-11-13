@@ -48,6 +48,7 @@ export function StepCard({
     disabled: isGhost,
   });
   const { active } = useDndContext();
+  const isDragging = active?.id === step.id;
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
 
@@ -59,9 +60,14 @@ export function StepCard({
     toast('Changes saved', { icon: '💾' });
   };
 
-  const transformStyle = transform
-    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
-    : {}
+  const baseTransform = transform
+    ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+    : '';
+  let transformValue = baseTransform;
+  if (isDragging) {
+    transformValue = transformValue ? `${transformValue} scale(1.02)` : 'scale(1.02)';
+  }
+  const transformStyle = transformValue ? { transform: transformValue } : {};
 
   const defaultGhostStyle: CSSProperties = {
     pointerEvents: 'none',
@@ -77,6 +83,14 @@ export function StepCard({
     touchAction: 'manipulation',
     overflow: 'hidden',
     position: 'relative',
+    transition: 'box-shadow 150ms ease, transform 150ms ease, opacity 150ms ease',
+    ...(isDragging
+      ? {
+          boxShadow: '0 18px 32px -12px rgba(15, 23, 42, 0.35)',
+          opacity: 0.95,
+          zIndex: 20,
+        }
+      : {}),
     ...suggestedAnimation,
     ...(isGhost
       ? { ...defaultGhostStyle, ...(ghostStyle ?? {}) }
@@ -111,11 +125,10 @@ export function StepCard({
     }
   };
 
-  const isDragging = active?.id === step.id;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
-  const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
+    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/60 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+  const interactiveClasses = 'cursor-pointer transition-colors transition-shadow hover:border-kings-grey'
   const ghostClasses = 'cursor-default select-none'
   const suggestedClasses =
     'border-amber-200 bg-amber-50'
@@ -193,7 +206,7 @@ export function StepCard({
             {onAccept && (
               <button
                 type="button"
-                className="inline-flex items-center justify-center rounded-md border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 transition-colors hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40"
+                className="inline-flex items-center justify-center rounded-md border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 transition-colors hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                 onClick={handleAcceptClick}
                 onMouseDown={blockDrag}
                 onTouchStart={blockDrag}
@@ -206,7 +219,7 @@ export function StepCard({
             {onReject && (
               <button
                 type="button"
-                className="text-xs font-medium text-red-600 underline-offset-2 hover:underline"
+                className="text-xs font-medium text-red-600 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white rounded"
                 onClick={handleRejectClick}
                 onMouseDown={blockDrag}
                 onTouchStart={blockDrag}
