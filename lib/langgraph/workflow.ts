@@ -1,5 +1,5 @@
 import { getChatModel } from "@/lib/ai/client"
-import { buildSuggestionPrompt } from "@/lib/ai/promptBuilder"
+import { buildSuggestionPromptV2 } from "../ai/promptBuilder"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
 
@@ -94,20 +94,26 @@ export async function runWorkflow(name: WorkflowName, input: SuggestStepsInput):
   const historyAccepted = sanitiseHistory(input.historyAccepted)
   const historyRejected = sanitiseHistory(input.historyRejected)
 
-  const prompt = buildSuggestionPrompt({
+  const prompt = buildSuggestionPromptV2({
     intentionText,
     targetBucket: promptBucket,
     historyAccepted,
     historyRejected
   })
 
-  debug.trace("AI Prompt Builder: constructed prompt", { prompt })
+  debug.trace("AI Prompt Builder v2: constructed prompt", {
+    bucket: input.intentionBucket ?? bucket,
+    intention: intentionText
+  })
 
   const llm = getChatModel()
   const response = await llm.invoke(prompt)
   const responseText = extractResponseText(response).trim()
 
-  debug.info("AI: model response", { response: responseText })
+  debug.info("AI: model response (prompt v2)", {
+    bucket: input.intentionBucket ?? bucket,
+    preview: responseText.slice(0, 120)
+  })
 
   return {
     suggestions: [
