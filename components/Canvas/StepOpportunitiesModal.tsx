@@ -1,24 +1,51 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
-import type { FakeOpportunity } from '@/hooks/useFakeOpportunities'
+import type { Opportunity } from '@/hooks/useOpportunities'
+
+function formatOpportunityLabel(value: string | undefined): string {
+  if (!value) {
+    return ''
+  }
+
+  return value
+    .split('_')
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ')
+}
 
 type StepOpportunitiesModalProps = {
   isOpen: boolean
   onClose: () => void
   stepTitle: string
-  opportunities: FakeOpportunity[]
+  opportunities: Opportunity[]
+  isLoading: boolean
+  error: Error | null
+  onRetry?: () => void
 }
 
 export function StepOpportunitiesModal({
   isOpen,
   onClose,
   stepTitle,
-  opportunities
+  opportunities,
+  isLoading,
+  error,
+  onRetry
 }: StepOpportunitiesModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+
+  const formattedOpportunities = useMemo(() => {
+    return opportunities.map((opportunity) => ({
+      ...opportunity,
+      formLabel: formatOpportunityLabel(opportunity.form),
+      focusLabels: Array.isArray(opportunity.focus)
+        ? opportunity.focus.map((focusItem) => formatOpportunityLabel(focusItem))
+        : [],
+    }))
+  }, [opportunities])
 
   useEffect(() => {
     if (!isOpen) return
@@ -75,9 +102,26 @@ export function StepOpportunitiesModal({
         </div>
 
         <div className="mt-4 space-y-4">
-          {opportunities.length > 0 ? (
+          {isLoading ? (
+            <div className="rounded-xl border border-kings-grey-light/70 bg-kings-grey-light/10 p-6 text-center text-sm leading-relaxed text-slate-600">
+              Loading opportunities...
+            </div>
+          ) : error ? (
+            <div className="space-y-3 rounded-xl border border-red-200 bg-red-50 p-6 text-center text-sm leading-relaxed text-red-700">
+              <p>We could not load opportunities for this step. Please try again later.</p>
+              {onRetry && (
+                <button
+                  type="button"
+                  onClick={onRetry}
+                  className="inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-red-50"
+                >
+                  Try again
+                </button>
+              )}
+            </div>
+          ) : formattedOpportunities.length > 0 ? (
             <ul className="space-y-4">
-              {opportunities.map((opportunity) => (
+              {formattedOpportunities.map((opportunity) => (
                 <li
                   key={opportunity.id}
                   className="rounded-xl border border-kings-grey-light/70 bg-white p-4 shadow-sm"
@@ -88,18 +132,21 @@ export function StepOpportunitiesModal({
                   <p className="mt-2 text-sm leading-relaxed text-slate-600">
                     {opportunity.summary}
                   </p>
-                  {(opportunity.form || opportunity.focus) && (
+                  {(opportunity.formLabel || opportunity.focusLabels.length > 0) && (
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-                      {opportunity.form && (
+                      {opportunity.formLabel && (
                         <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                          {opportunity.form}
+                          {opportunity.formLabel}
                         </span>
                       )}
-                      {opportunity.focus && (
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                          {opportunity.focus}
+                      {opportunity.focusLabels.map((focusLabel) => (
+                        <span
+                          key={`${opportunity.id}-${focusLabel}`}
+                          className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600"
+                        >
+                          {focusLabel}
                         </span>
-                      )}
+                      ))}
                     </div>
                   )}
                 </li>
