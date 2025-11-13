@@ -1,8 +1,8 @@
 import { getClient } from "./db/mongo";
-import { ensureStepIndexes } from "./dbHelpers";
+import { ensureOpportunityIndexes, ensureStepIndexes } from "./dbHelpers";
 
 const clientPromise = getClient();
 
-ensureStepIndexes().catch(console.error);
+Promise.all([ensureStepIndexes(), ensureOpportunityIndexes()]).catch(console.error);
 
 export default clientPromise;
