@@ -1,17 +1,19 @@
-epoch_id: "0006-roadmap-ux-refresh"
-title: "Epoch 0006 — Roadmap & UX Refresh"
-status: "in_progress"
+epoch_id: "0007-opportunities-model-ui"
+title: "Epoch 0007 — Opportunities Model & UI"
+status: "awaiting_kickoff"
 started_at: null
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
-last_completed_epoch: "0005-langgraph-ai-step-suggestions"
-current_epoch: "0006-roadmap-ux-refresh"
+last_completed_epoch: "0006-roadmap-ux-refresh"
+current_epoch: "0007-opportunities-model-ui"
 epochs:
   - id: "0005-langgraph-ai-step-suggestions"
     status: "completed"
   - id: "0006-roadmap-ux-refresh"
-    status: "in_progress"
+    status: "completed"
+  - id: "0007-opportunities-model-ui"
+    status: "up_next"
 summary: |
-  Epoch 0005 — LangGraph AI Step Suggestions has been completed and archived.
-  Focusing now on Epoch 0006 — Roadmap & UX Refresh to realign documentation
-  and apply light UX polish across the Canvas experience.
+  Epoch 0006 — Roadmap & UX Refresh is complete with documentation and UX
+  polish shipped. Preparing to kick off Epoch 0007 — Opportunities Model & UI,
+  which will introduce opportunity persistence and surface the initial UI.
 expected_prs: []

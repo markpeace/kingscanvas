@@ -1,19 +1,22 @@
-status: "not_started"
-updated_at: null
+status: "complete"
+updated_at: "2025-11-13"
+completed_at: "2025-11-13"
 plan: "./PLAN.md"
 summary: |
-  Epoch 0006 is ready to kick off. Documentation updates and UX polish are
-  scoped, with execution to begin once the branch is prioritised.
+  Epoch 0006 wrapped with roadmap, state, and changelog artefacts updated to
+  reflect the delivered UX polish and documentation sync. Canvas layout,
+  modals, saving indicator, and drag-and-drop cues all shipped alongside the
+  refreshed roadmap narrative.
 tasks:
   - id: "doc-sync"
     title: "Update STATE and ROADMAP artefacts"
-    status: "not_started"
-    notes: "Align CURRENT.yaml and ROADMAP.md with the agreed roadmap through Epoch 0009."
+    status: "complete"
+    notes: "Aligned CURRENT.yaml, ROADMAP.md, and STATUS records through Epoch 0009."
   - id: "canvas-ux-refresh"
     title: "Apply light Canvas UX polish"
-    status: "not_started"
-    notes: "Incorporate feedback from Epoch 0005 without disrupting autosave or AI flows."
+    status: "complete"
+    notes: "Incorporated feedback from Epoch 0005 while preserving autosave and AI flows."
   - id: "status-tracking"
     title: "Maintain STATUS updates"
-    status: "not_started"
-    notes: "Record progress and decisions as the epoch advances."
+    status: "complete"
+    notes: "Recorded progress, completion date, and supporting documentation links."

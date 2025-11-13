@@ -50,12 +50,12 @@ Integrated LangGraph workflows to generate suggested steps, added prompt builder
 
 ---
 
-### 🚧 Epoch 0006 — Roadmap and UX Refresh
-**Status:** In progress. ([PLAN](./EPOCHS/0006-roadmap-ux-refresh/PLAN.md))
+### ✅ Epoch 0006 — Roadmap and UX Refresh
+**Status:** Completed. ([PLAN](./EPOCHS/0006-roadmap-ux-refresh/PLAN.md))
 
-- Realign `/docs/STATE/CURRENT.yaml` and `/docs/ROADMAP/ROADMAP.md` so STATE accurately reflects the live roadmap.
-- Apply light UX and layout polish across the Canvas to incorporate feedback gathered during Epoch 0005.
-- Capture updated scope and status via `/docs/ROADMAP/EPOCHS/0006-roadmap-ux-refresh/STATUS.yaml`.
+Delivered: Synced STATE and ROADMAP artefacts, refreshed changelog coverage,
+and shipped Canvas UX polish across layout, modals, saving feedback, and
+drag-and-drop cues informed by Epoch 0005 learnings.
 
 ---
 

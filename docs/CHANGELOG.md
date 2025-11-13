@@ -1,5 +1,10 @@
 # Changelog
 
+### 2025-11-13 – Epoch 0006 "Roadmap and UX Refresh" completed
+- Synced `/docs/STATE/CURRENT.yaml`, roadmap artefacts, and STATUS records to archive Epoch 0006 and queue Epoch 0007.
+- Polished Canvas layout hierarchy, modal treatments, and saving indicator feedback informed by Epoch 0005 observations.
+- Refined drag-and-drop affordances and documentation to reflect the refreshed UX flow.
+
 ### 2025-11-13 – Hotfix: AI suggestion reliability and feedback
 - Guard `/api/ai/suggest-steps` against missing OpenAI credentials and return clearer errors when generation fails.
 - Trim large histories before building prompts and log the configured model for debugging.
