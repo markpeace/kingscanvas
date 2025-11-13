@@ -1081,7 +1081,8 @@ export function Canvas() {
   )
 
   const handleAddIntention = useCallback(
-    async (title: string, description: string, bucket: BucketId) => {
+    async (title: string, description: string, bucket?: BucketId) => {
+      const resolvedBucket: BucketId = bucket ?? 'after-graduation'
       const now = Date.now()
       const timestamp = new Date(now).toISOString()
       const intentionId = `int-${now}`
@@ -1089,7 +1090,7 @@ export function Canvas() {
         id: intentionId,
         title,
         description,
-        bucket,
+        bucket: resolvedBucket,
         steps: [],
         createdAt: timestamp,
         updatedAt: timestamp
@@ -1100,7 +1101,7 @@ export function Canvas() {
       debug.trace('Canvas: intention created', {
         id: intentionId,
         title,
-        bucket
+        bucket: resolvedBucket
       })
 
       generateSuggestionsForIntention(baseIntention)

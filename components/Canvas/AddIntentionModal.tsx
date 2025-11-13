@@ -16,11 +16,16 @@ export function AddIntentionModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  onAdd: (title: string, description: string, bucket: BucketId) => void | Promise<void>
+  onAdd: (title: string, description: string, bucket?: BucketId) => void | Promise<void>
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [bucket, setBucket] = useState<BucketId>(VALID_BUCKETS[0].id)
+  const DEFAULT_BUCKET: BucketId = 'after-graduation'
+  const resolvedDefaultBucket: BucketId =
+    VALID_BUCKETS.find((candidate) => candidate.id === DEFAULT_BUCKET)?.id ??
+    VALID_BUCKETS[0]?.id ??
+    DEFAULT_BUCKET
+  const [bucket, setBucket] = useState<BucketId>(resolvedDefaultBucket)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
@@ -33,7 +38,7 @@ export function AddIntentionModal({
     toast.success('Intention created')
     setTitle('')
     setDescription('')
-    setBucket(VALID_BUCKETS[0].id)
+    setBucket(resolvedDefaultBucket)
     onClose()
   }
 
