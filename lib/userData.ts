@@ -1,4 +1,5 @@
 import { ObjectId } from "mongodb";
+import type { Document, InsertManyResult } from "mongodb";
 
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
@@ -67,7 +68,11 @@ export async function saveUserStep(email: string, step: any) {
   });
 }
 
-export async function createSuggestedSteps(user: string, intentionId: string, suggestions: any[]) {
+export async function createSuggestedSteps(
+  user: string,
+  intentionId: string,
+  suggestions: any[]
+): Promise<InsertManyResult<Document> | null> {
   const col = await getCollection("steps");
   const docs = suggestions.map((s) => ({
     user,
@@ -82,7 +87,7 @@ export async function createSuggestedSteps(user: string, intentionId: string, su
 
   if (!docs.length) {
     debug.warn("Mongo: createSuggestedSteps called with empty suggestions", { intentionId });
-    return [];
+    return null;
   }
 
   debug.trace("Mongo: inserting suggested steps", { user, intentionId, count: docs.length });

@@ -745,7 +745,7 @@ export function Canvas() {
               }
               return String(value)
             })
-            .filter((value): value is string => Boolean(value))
+            .filter((value: string | null): value is string => Boolean(value))
 
           if (insertedIds.length > 0 && generatedSteps.length > 0) {
             const mapping = new Map<string, string>()
