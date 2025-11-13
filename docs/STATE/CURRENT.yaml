@@ -1,9 +1,17 @@
-epoch_id: null
-title: null
-status: "awaiting-next-epoch"
+epoch_id: "0006-roadmap-ux-refresh"
+title: "Epoch 0006 — Roadmap & UX Refresh"
+status: "in_progress"
 started_at: null
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
+last_completed_epoch: "0005-langgraph-ai-step-suggestions"
+current_epoch: "0006-roadmap-ux-refresh"
+epochs:
+  - id: "0005-langgraph-ai-step-suggestions"
+    status: "completed"
+  - id: "0006-roadmap-ux-refresh"
+    status: "in_progress"
 summary: |
-  Epoch 0002 — Intentions, Steps & Swim Lanes has been completed and archived.
-  Awaiting kickoff of Epoch 0003 — Persistence & Autosave.
+  Epoch 0005 — LangGraph AI Step Suggestions has been completed and archived.
+  Focusing now on Epoch 0006 — Roadmap & UX Refresh to realign documentation
+  and apply light UX polish across the Canvas experience.
 expected_prs: []

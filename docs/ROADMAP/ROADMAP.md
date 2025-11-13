@@ -1,190 +1,101 @@
 # Roadmap — King’s Canvas
 
-This roadmap outlines the planned development epochs for the **King’s Canvas** application.  
-Each epoch represents a small, functional milestone — progressing the platform from concept to full MVP release.  
+This roadmap outlines the development epochs for **King’s Canvas**. Each epoch is a focused, user-visible slice that moves the product closer to the long-term vision: helping King’s College London students map intentions, actionable steps, and real-world opportunities.
 
-Detailed implementation plans for each epoch will live under:  
-`/docs/ROADMAP/EPOCHS/epoch-####-<slug>/`
+Detailed implementation plans for each epoch live under `/docs/ROADMAP/EPOCHS/<epoch-slug>/`.
 
 ---
 
 ## 🧭 Overview
 
-**Product Vision:**  
-King’s Canvas enables King’s College London students to design their life journey — mapping long-term intentions, breaking them into achievable steps, and connecting them to real opportunities at King’s.  
-
-Development proceeds through modular, testable epochs that incrementally build towards an MVP release.
+- **Product Vision:** Students use King’s Canvas to design their life journey, breaking intentions into steps and connecting them to actionable opportunities.
+- **Approach:** Ship incrementally through tightly scoped epochs, keeping documentation, state, and UX in sync at every milestone.
 
 ---
 
-## 📅 Planned MVP Epochs
+## 📅 Epoch Timeline
+
+### ✅ Epoch 0001 — Canvas Columns and Layout
+**Status:** Completed.
+
+Established the four-column Canvas layout (Do Now / Do Later / Before I Graduate / After I Graduate), applied King’s branding and accessibility foundations, and delivered a responsive static prototype for review.
 
 ---
 
-### 🧱 **Epoch 0001 — Canvas Columns & Layout**
-**Goal:** Establish the static structure and visual layout of the Canvas interface.  
-**Focus Areas:**
-- Implement 4-column layout: **Do Now / Do Later / Before I Graduate / After I Graduate**  
-- Apply King’s brand palette, typography, and accessibility standards  
-- Create placeholder cards for future Intentions and Steps  
-- Ensure responsive layout (desktop-only)  
-**Deliverables:**
-- Branded, accessible Canvas layout (React + Tailwind)  
-- Static demo for internal review  
-**Exit Criteria:**
-- Approved visual layout and styling  
-- Accessibility checks passed (WCAG AA+)  
+### ✅ Epoch 0002 — Intentions, Steps and Swim Lanes
+**Status:** Completed.
+
+Added CRUD flows, drag-and-drop swim lanes, card styling, accessibility affordances, and feedback toasts so students can manage intentions and steps interactively.
 
 ---
 
-### ✅ Epoch 0002 — Intentions, Steps & Swim Lanes
-Completed November 2025.
-Delivered responsive Canvas with full CRUD, drag-and-drop, accessibility, and feedback toasts.
-Next epoch: 0004 — Persistence & Autosave.
+### ✅ Epoch 0003 — Authentication and Session Handling
+**Status:** Completed.
+
+Implemented Google OAuth via NextAuth, route guards, session UI, and local/preview bypasses to secure the Canvas while supporting rapid iteration.
 
 ---
 
-### ✅ Epoch 0003 — Authentication & Session Handling  
-Completed Nov 2025.  
-Delivered Google sign-in via NextAuth, session UI, route guards, API protection, and local/preview bypass.
+### ✅ Epoch 0004 — Persistence and Autosave
+**Status:** Completed.
 
-Next epoch: 0004 — Persistence & Autosave (MongoDB integration and background sync)
-
----
-
-### 🗄️ **Epoch 0004 — Persistence & Autosave**
-**Goal:** Implement MongoDB-backed persistence with autosave and background sync reliability.
-**Focus Areas:**
-- Define MongoDB schema and models (students, intentions, steps, opportunities)
-- Build CRUD API endpoints with authenticated session access
-- Introduce autosave flows for Canvas interactions with optimistic updates
-- Implement background sync workers to reconcile local/preview bypass data
-**Deliverables:**
-- Persistent Canvas data connected to MongoDB with autosave enabled
-- Background sync service ensuring session data consistency across environments
-**Exit Criteria:**
-- Canvas edits persist automatically without manual save actions
-- Background sync maintains data integrity between sessions and devices
+Connected the Canvas to MongoDB with autosave, background sync reliability, and debug instrumentation so edits persist automatically across sessions.
 
 ---
 
-### 🧠 **Epoch 0005 — LangGraph AI Step Suggestions**
-**Goal:** Enable AI-assisted Step generation using LangGraph workflows already stubbed in the repository.  
-**Focus Areas:**
-- Configure existing **LangGraph** workflow definitions for use with OpenAI or local LLM endpoints  
-- Implement workflow to suggest **Steps** based on Intentions’ titles, tags, and context  
-- Render AI-generated Steps in the UI for manual acceptance or rejection  
-- Capture feedback for iterative learning  
-**Deliverables:**
-- Operational LangGraph workflow for Step generation  
-- Front-end component for reviewing and applying AI suggestions  
-**Exit Criteria:**
-- Users can request and apply AI-suggested Steps  
-- Suggestions logged with accept/reject state  
+### ✅ Epoch 0005 — LangGraph AI Step Suggestions
+**Status:** Completed.
+
+Integrated LangGraph workflows to generate suggested steps, added prompt builder iterations, and refined the UX for reviewing, accepting, or rejecting AI-generated steps.
 
 ---
 
-### 🔍 **Epoch 0006 — RAG-Based Opportunity Relevance**
-**Goal:** Build a retrieval-augmented generation (RAG) layer for matching opportunities to Steps.  
-**Focus Areas:**
-- Index opportunities dataset (mock or real King’s Edge data) into a searchable vector store  
-- Use embedding similarity to identify relevant opportunities  
-- Integrate results with LangGraph workflows for contextual explanation (“why this?”)  
-- Store and display ranked matches in the UI  
-**Deliverables:**
-- RAG service pipeline (indexing + retrieval)  
-- Ranking and scoring output integrated into Opportunity Drawer  
-**Exit Criteria:**
-- Opportunities ranked meaningfully per Step  
-- Matches traceable and explainable through RAG context  
+### 🚧 Epoch 0006 — Roadmap and UX Refresh
+**Status:** In progress. ([PLAN](./EPOCHS/0006-roadmap-ux-refresh/PLAN.md))
+
+- Realign `/docs/STATE/CURRENT.yaml` and `/docs/ROADMAP/ROADMAP.md` so STATE accurately reflects the live roadmap.
+- Apply light UX and layout polish across the Canvas to incorporate feedback gathered during Epoch 0005.
+- Capture updated scope and status via `/docs/ROADMAP/EPOCHS/0006-roadmap-ux-refresh/STATUS.yaml`.
 
 ---
 
-### 🔁 **Epoch 0007 — Triggered Opportunity Matching**
-**Goal:** Automate event-driven matching that runs immediately after Step creation.  
-**Focus Areas:**
-- Trigger RAG-based matching whenever a Step is created or updated  
-- Update Step badge count in real time  
-- Store results in user’s opportunity collection  
-**Deliverables:**
-- Real-time matching trigger and badge update logic  
-- Event-driven architecture (e.g., hooks or web workers)  
-**Exit Criteria:**
-- Steps display accurate badge counts post-creation  
-- Matcher executes asynchronously without UI delay  
+### 🧩 Epoch 0007 — Opportunities Model and UI
+**Status:** Planned.
+
+Define the opportunities domain model, persist opportunities alongside intentions and steps, and surface an initial opportunities panel within the Canvas.
 
 ---
 
-### ⏰ **Epoch 0008 — Scheduled Refresh & Opportunity Drawer UI**
-**Goal:** Extend matching functionality with scheduled updates and an interactive interface.  
-**Focus Areas:**
-- Scheduled nightly refresh job for re-indexing opportunities  
-- Build **Opportunity Drawer UI** with add / dismiss / snooze actions  
-- Display AI “why this?” metadata using RAG context  
-**Deliverables:**
-- Background job scheduler  
-- Drawer component integrated with Step cards  
-**Exit Criteria:**
-- Scheduled refresh operational  
-- Opportunity Drawer functional with real data  
+### 🧠 Epoch 0008 — AI Simulated Edge Opportunities
+**Status:** Planned.
+
+Use simulated King’s Edge-style data with LangGraph and RAG techniques to generate, rank, and explain opportunity matches against student plans.
 
 ---
 
-### 💬 **Epoch 0009 — Chat UI & Framework**
-**Goal:** Implement the interface for conversational guidance.  
-**Focus Areas:**
-- Create right-hand drawer or modal chat interface  
-- Build message components, threading, and input logic  
-- Connect to placeholder AI endpoint for testing  
-**Deliverables:**
-- Chat UI with basic conversation flow  
-- Integrated drawer toggle from Canvas  
-**Exit Criteria:**
-- Functional chat interface in the app shell  
-- Supports message input/output loop  
+### 🌐 Epoch 0009 — Future Real Edge Integration
+**Status:** Planned (not yet scheduled).
 
----
-
-### 🎓 **Epoch 0010 — Coaching Prompts & AI Integration**
-**Goal:** Transform the chat interface into a reflective coaching tool.  
-**Focus Areas:**
-- Develop **coaching-style** dialogue flows that help students discover and articulate aspirations  
-- Integrate OpenAI GPT-4 or equivalent conversational model  
-- Use LangGraph + RAG pipeline for context-aware conversation  
-- Persist chat history securely in MongoDB  
-**Deliverables:**
-- Conversational coaching prompt library  
-- Secure chat data persistence  
-- Context-aware, personalised chat experience  
-**Exit Criteria:**
-- Students use chat to explore and refine goals  
-- Chat remembers context and references plan data accurately  
+Connect to real King’s Edge data sources, handle secure data exchange, and graduate the simulated opportunity experience into production-ready integrations.
 
 ---
 
 ## 🧩 Supporting Workstreams
 
-- **Brand & UX Alignment:** Ongoing review with King’s Brand and Marketing for consistency.  
-- **Accessibility (WCAG AA+):** Compliance review and testing each epoch.  
-- **Security & GDPR:** Data protection and privacy validation.  
-- **Documentation:** Continuous updates to `/docs/SPEC/` and `/docs/STATE/` during each epoch.  
+Ongoing parallel streams ensure each epoch ships responsibly:
+
+- **Brand & UX Alignment:** Continual collaboration with King’s Brand and Marketing for visual consistency.
+- **Accessibility (WCAG AA+):** Verification and remediation alongside each feature shipment.
+- **Security & GDPR:** Privacy and compliance reviews for authentication, data storage, and AI workflows.
+- **Documentation & Observability:** Keep `/docs/STATE/`, `/docs/ROADMAP/`, and debug tooling up to date as functionality evolves.
 
 ---
 
-## ✅ Completion Definition (MVP)
+## ✅ Definition of Done (MVP)
 
-The King’s Canvas project will be considered **MVP complete** when:  
-- Students can create and manage a personal Canvas with persistent, authenticated data.  
-- AI workflows (LangGraph + RAG) generate, match, and explain suggestions accurately.  
-- The Opportunity Drawer and Coaching Chat are both functional and brand-compliant.  
-- The app is deployed securely in production.  
-- Accessibility and compliance reviews are signed off.  
+The King’s Canvas MVP is complete when:
 
----
-
-*Next Steps:*  
-Once this roadmap is approved, create the first epoch folder at:  
-`/docs/ROADMAP/EPOCHS/epoch-0001-canvas-columns-layout/`  
-and initialise its `PLAN.md` and `STATUS.yaml` files.  
-
----
+1. Students can authenticate, create, and manage a persistent Canvas.
+2. AI workflows generate, match, and explain suggestions with actionable insights.
+3. Opportunity discovery and conversational coaching are available, brand-compliant, and accessible.
+4. The platform is production-ready, observability is in place, and compliance requirements are satisfied.
