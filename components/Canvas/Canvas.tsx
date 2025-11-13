@@ -63,6 +63,7 @@ export function Canvas() {
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
+  const addIntentionTriggerRef = useRef<HTMLElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(
     autosavePayload,
@@ -70,6 +71,8 @@ export function Canvas() {
     1500,
     3
   )
+  const debugUiEnabled =
+    process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
   const userEmail = user?.email ?? 'test@test.com'
   useEffect(() => {
     return () => {
@@ -143,34 +146,6 @@ export function Canvas() {
       ignore = true
     }
   }, [status])
-
-  const saveIntentionsManually = useCallback(async () => {
-    debug.trace('Canvas: manual save triggered', {
-      count: intentions.length,
-      time: new Date().toISOString()
-    })
-
-    try {
-      const res = await fetch('/api/intentions', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intentions })
-      })
-
-      debug.info('Canvas: manual save result', { status: res.status })
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}))
-        debug.error('Canvas: manual save failed', {
-          status: res.status,
-          response: data
-        })
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      debug.error('Canvas: manual save errored', { message })
-    }
-  }, [intentions])
 
   const triggerHighlight = useCallback((bucket: BucketId | null) => {
     if (highlightTimeoutRef.current) {
@@ -1389,12 +1364,6 @@ export function Canvas() {
         onDragCancel={handleDragCancel}
         collisionDetection={collisionDetection}
       >
-        <button
-          onClick={saveIntentionsManually}
-          style={{ position: 'fixed', bottom: 10, left: 10 }}
-        >
-          Save Now
-        </button>
         <a
           href="#main-canvas"
           className="sr-only focus:not-sr-only focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus:outline-none absolute top-2 left-2 bg-white border border-kings-red text-kings-red px-3 py-1 rounded"
@@ -1406,25 +1375,26 @@ export function Canvas() {
         </div>
         <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
           {/* HEADER GROUP */}
-          <header className="mb-8">
+          <header className="mb-12">
             {/* Title + Button Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-              <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
               <button
-                onClick={() => setModalOpen(true)}
-                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+                onClick={(event) => {
+                  addIntentionTriggerRef.current = event.currentTarget
+                  setModalOpen(true)
+                }}
+                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-end sm:ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
               >
                 ＋ Add Intention
               </button>
             </div>
 
             {/* Column Headers */}
-            <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
+            <div className="mt-6 grid grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-10 mb-2">
               {BUCKETS.map((b) => (
-                <div key={b.id} className="relative h-5 flex justify-center">
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
-                  >
+                <div key={b.id} className="flex justify-center">
+                  <span className="text-sm font-semibold uppercase tracking-[0.2em] text-kings-red/90 leading-tight text-center select-none">
                     {b.title}
                   </span>
                 </div>
@@ -1435,7 +1405,13 @@ export function Canvas() {
 
           <AddIntentionModal
             isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
+            onClose={() => {
+              setModalOpen(false)
+              if (addIntentionTriggerRef.current) {
+                addIntentionTriggerRef.current.focus()
+                addIntentionTriggerRef.current = null
+              }
+            }}
             onAdd={handleAddIntention}
           />
         </main>
@@ -1446,29 +1422,31 @@ export function Canvas() {
           retryCount={retryCount}
         />
       </DndContext>
-      <div
-        style={{
-          position: 'fixed',
-          bottom: '12px',
-          right: '12px',
-          zIndex: 9999
-        }}
-      >
-        <button
-          onClick={triggerAISuggestionTest}
+      {debugUiEnabled ? (
+        <div
           style={{
-            background: '#ffffff',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-            padding: '6px 10px',
-            fontSize: '12px',
-            cursor: 'pointer',
-            boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            position: 'fixed',
+            bottom: '12px',
+            right: '12px',
+            zIndex: 9999
           }}
         >
-          Test AI Suggestions
-        </button>
-      </div>
+          <button
+            onClick={triggerAISuggestionTest}
+            style={{
+              background: '#ffffff',
+              border: '1px solid #ddd',
+              borderRadius: '4px',
+              padding: '6px 10px',
+              fontSize: '12px',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+            }}
+          >
+            Test AI Suggestions
+          </button>
+        </div>
+      ) : null}
     </>
   )
 }
