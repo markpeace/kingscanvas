@@ -8,6 +8,24 @@ import { BUCKETS } from '@/lib/buckets'
 import type { BucketId } from '@/types/canvas'
 
 const VALID_BUCKETS = BUCKETS.filter((bucket) => bucket.id !== 'do-now')
+const DEFAULT_BUCKET_SELECTION = 'after_grad' as const
+
+function normaliseBucketSelection(value: string): BucketId {
+  switch (value) {
+    case 'after_grad':
+      return 'after-graduation'
+    case 'before_grad':
+      return 'before-graduation'
+    case 'do_now':
+      return 'do-now'
+    case 'do_soon':
+      return 'do-later'
+    default: {
+      const match = VALID_BUCKETS.find((option) => option.id === value)
+      return (match?.id ?? 'after-graduation') as BucketId
+    }
+  }
+}
 
 export function AddIntentionModal({
   isOpen,
@@ -16,24 +34,29 @@ export function AddIntentionModal({
 }: {
   isOpen: boolean
   onClose: () => void
-  onAdd: (title: string, description: string, bucket: BucketId) => void | Promise<void>
+  onAdd: (title: string, description: string, bucket?: BucketId) => void | Promise<void>
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [bucket, setBucket] = useState<BucketId>(VALID_BUCKETS[0].id)
+  const [bucket, setBucket] = useState<string>(DEFAULT_BUCKET_SELECTION)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     if (!title.trim()) return
-    if (bucket === 'do-now') {
+    const resolvedBucket = normaliseBucketSelection(bucket)
+    if (resolvedBucket === 'do-now') {
       toast.error('Intentions can’t be placed in Do Now')
       return
     }
-    void onAdd(title.trim(), description.trim(), bucket)
+    void onAdd(
+      title.trim(),
+      description.trim(),
+      bucket === DEFAULT_BUCKET_SELECTION ? undefined : resolvedBucket
+    )
     toast.success('Intention created')
     setTitle('')
     setDescription('')
-    setBucket(VALID_BUCKETS[0].id)
+    setBucket(DEFAULT_BUCKET_SELECTION)
     onClose()
   }
 
@@ -59,8 +82,8 @@ export function AddIntentionModal({
             rows={3}
           />
           <select
-            value={bucket}
-            onChange={(event) => setBucket(event.target.value as BucketId)}
+            value={normaliseBucketSelection(bucket)}
+            onChange={(event) => setBucket(event.target.value)}
             className="w-full border border-kings-grey-light rounded-md p-2 text-sm text-kings-black bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:border-kings-red"
           >
             {VALID_BUCKETS.map((option) => (
