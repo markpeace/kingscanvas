@@ -671,6 +671,7 @@ export function Canvas() {
         debug.info('Canvas: AI suggestions received', { count: suggestionEntries.length })
 
         const suggestionTimestamp = Date.now()
+        let generatedSteps: Step[] = []
 
         setIntentions((prev) =>
           prev.map((intention) => {
@@ -702,6 +703,8 @@ export function Canvas() {
               }
             })
 
+            generatedSteps = newSuggestions
+
             return {
               ...intention,
               steps: [...nonGhostSteps, ...newSuggestions]
@@ -721,9 +724,58 @@ export function Canvas() {
             body: JSON.stringify({ intentionId, steps: persistPayload })
           })
 
+          const persistData = await persistRes.json().catch(() => ({}))
+
           if (!persistRes.ok) {
-            const persistError = await persistRes.json().catch(() => ({}))
-            throw new Error(persistError?.error || 'Failed to persist suggestions')
+            throw new Error(persistData?.error || 'Failed to persist suggestions')
+          }
+
+          const insertedIdsRaw = Array.isArray(persistData?.insertedIds)
+            ? persistData.insertedIds
+            : persistData?.insertedIds && typeof persistData.insertedIds === 'object'
+            ? Object.values(persistData.insertedIds)
+            : []
+
+          const insertedIds = insertedIdsRaw
+            .map((value: unknown) => {
+              if (!value) return null
+              if (typeof value === 'string') return value
+              if (typeof value === 'object' && 'toString' in value && typeof value.toString === 'function') {
+                return value.toString()
+              }
+              return String(value)
+            })
+            .filter((value: string | null): value is string => Boolean(value))
+
+          if (insertedIds.length > 0 && generatedSteps.length > 0) {
+            const mapping = new Map<string, string>()
+            generatedSteps.forEach((stepItem, index) => {
+              const insertedId = insertedIds[index]
+              if (insertedId) {
+                mapping.set(stepItem.id, insertedId)
+              }
+            })
+
+            if (mapping.size > 0) {
+              setIntentions((prev) =>
+                prev.map((intention) => {
+                  if (intention.id !== intentionId) {
+                    return intention
+                  }
+
+                  return {
+                    ...intention,
+                    steps: intention.steps.map((stepItem) => {
+                      const assignedId = mapping.get(stepItem.id)
+                      if (assignedId) {
+                        return { ...stepItem, _id: assignedId }
+                      }
+                      return stepItem
+                    })
+                  }
+                })
+              )
+            }
           }
 
           debug.info('Canvas: suggested steps persisted', { count: persistPayload.length })
@@ -795,6 +847,116 @@ export function Canvas() {
     [announce]
   )
 
+  const handleAcceptSuggestion = useCallback(async (step: Step) => {
+    const stepIdentifier = step._id ?? step.id
+    debug.trace('Canvas: accept suggestion', { stepId: stepIdentifier })
+
+    setIntentions((prev) =>
+      prev.map((intention) => {
+        if (intention.id !== step.intentionId) {
+          return intention
+        }
+
+        return {
+          ...intention,
+          steps: intention.steps.map((existingStep) => {
+            if (
+              existingStep.id === step.id ||
+              (step._id && existingStep._id === step._id)
+            ) {
+              return { ...existingStep, status: 'accepted' }
+            }
+
+            return existingStep
+          })
+        }
+      })
+    )
+
+    if (!step._id) {
+      debug.warn('Canvas: accept suggestion missing persisted id', { stepId: stepIdentifier })
+      return
+    }
+
+    try {
+      const res = await fetch('/api/steps', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stepId: step._id, status: 'accepted' })
+      })
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}))
+        debug.error('Canvas: suggestion accept persist failed', {
+          stepId: step._id,
+          status: res.status,
+          response: errorBody
+        })
+        return
+      }
+
+      debug.info('Canvas: suggestion accepted and persisted', { stepId: step._id })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      debug.error('Canvas: suggestion accept persistence errored', {
+        stepId: step._id,
+        message
+      })
+    }
+  }, [])
+
+  const handleRejectSuggestion = useCallback(async (step: Step) => {
+    const stepIdentifier = step._id ?? step.id
+    debug.trace('Canvas: reject suggestion', { stepId: stepIdentifier })
+
+    setIntentions((prev) =>
+      prev.map((intention) => {
+        if (intention.id !== step.intentionId) {
+          return intention
+        }
+
+        return {
+          ...intention,
+          steps: intention.steps.filter(
+            (existingStep) =>
+              existingStep.id !== step.id && (!step._id || existingStep._id !== step._id)
+          )
+        }
+      })
+    )
+
+    if (!step._id) {
+      debug.warn('Canvas: reject suggestion missing persisted id', { stepId: stepIdentifier })
+      return
+    }
+
+    try {
+      const res = await fetch('/api/steps', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stepId: step._id, status: 'rejected' })
+      })
+
+      if (!res.ok) {
+        const errorBody = await res.json().catch(() => ({}))
+        debug.error('Canvas: suggestion reject persist failed', {
+          stepId: step._id,
+          status: res.status,
+          response: errorBody
+        })
+        return
+      }
+
+      debug.info('Canvas: suggestion rejected and persisted', { stepId: step._id })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      debug.error('Canvas: suggestion reject persistence errored', {
+        stepId: step._id,
+        message
+      })
+    }
+  }, [])
+
   const renderedIntentions = useMemo(
     () =>
       intentions.map((intention) => (
@@ -806,6 +968,8 @@ export function Canvas() {
           onDeleteIntention={handleDeleteIntention}
           onMoveStep={moveStepWithKeyboard}
           onMoveIntention={moveIntentionWithKeyboard}
+          onAcceptSuggestion={handleAcceptSuggestion}
+          onRejectSuggestion={handleRejectSuggestion}
           highlightBucket={highlightBucket}
           trashSuccessId={trashSuccessId}
           trashSuccessType={trashSuccessType}
@@ -815,6 +979,8 @@ export function Canvas() {
       handleAddStep,
       handleDeleteIntention,
       handleDeleteStep,
+      handleAcceptSuggestion,
+      handleRejectSuggestion,
       highlightBucket,
       intentions,
       moveIntentionWithKeyboard,

@@ -1,3 +1,6 @@
+import { ObjectId } from "mongodb";
+import type { Document, InsertManyResult } from "mongodb";
+
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
 
@@ -65,7 +68,11 @@ export async function saveUserStep(email: string, step: any) {
   });
 }
 
-export async function createSuggestedSteps(user: string, intentionId: string, suggestions: any[]) {
+export async function createSuggestedSteps(
+  user: string,
+  intentionId: string,
+  suggestions: any[]
+): Promise<InsertManyResult<Document> | null> {
   const col = await getCollection("steps");
   const docs = suggestions.map((s) => ({
     user,
@@ -80,7 +87,7 @@ export async function createSuggestedSteps(user: string, intentionId: string, su
 
   if (!docs.length) {
     debug.warn("Mongo: createSuggestedSteps called with empty suggestions", { intentionId });
-    return [];
+    return null;
   }
 
   debug.trace("Mongo: inserting suggested steps", { user, intentionId, count: docs.length });
@@ -91,9 +98,27 @@ export async function createSuggestedSteps(user: string, intentionId: string, su
 
 export async function updateStepStatus(user: string, stepId: any, status: string) {
   const col = await getCollection("steps");
-  debug.trace("Mongo: updating step status", { stepId, status });
+  let lookupId = stepId;
+
+  if (typeof stepId === "string") {
+    try {
+      lookupId = new ObjectId(stepId);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      debug.error("Mongo: invalid step id for status update", { stepId, message });
+      return {
+        acknowledged: false,
+        matchedCount: 0,
+        modifiedCount: 0,
+        upsertedCount: 0,
+        upsertedId: null,
+      } as any;
+    }
+  }
+
+  debug.trace("Mongo: updating step status", { stepId: lookupId, status });
   const result = await col.updateOne(
-    { _id: stepId, user },
+    { _id: lookupId, user },
     { $set: { status, updatedAt: new Date() } }
   );
   debug.info("Mongo: step status updated", { matched: result.matchedCount });
