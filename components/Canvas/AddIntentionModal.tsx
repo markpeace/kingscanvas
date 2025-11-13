@@ -20,7 +20,8 @@ export function AddIntentionModal({
 }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [bucket, setBucket] = useState<BucketId>(VALID_BUCKETS[0].id)
+  const DEFAULT_BUCKET: BucketId = 'after-graduation'
+  const [bucket, setBucket] = useState<BucketId>(DEFAULT_BUCKET)
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
@@ -33,7 +34,7 @@ export function AddIntentionModal({
     toast.success('Intention created')
     setTitle('')
     setDescription('')
-    setBucket(VALID_BUCKETS[0].id)
+    setBucket(DEFAULT_BUCKET)
     onClose()
   }
 

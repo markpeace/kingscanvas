@@ -78,7 +78,31 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       model: process.env.OPENAI_MODEL || "gpt-4o-mini"
     })
     const response = await llm.invoke(prompt)
-    const text = (response || "").toString().trim()
+    let rawContent = ""
+
+    const content = response?.content
+
+    if (typeof content === "string") {
+      rawContent = content
+    } else if (Array.isArray(content)) {
+      rawContent = content
+        .map((part) => {
+          if (typeof part === "string") {
+            return part
+          }
+
+          if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+            return part.text
+          }
+
+          return ""
+        })
+        .join("")
+    } else if (content != null) {
+      rawContent = String(content)
+    }
+
+    const text = rawContent.trim()
 
     debug.info("AI: model response (prompt v5)", {
       bucket: payload.intentionBucket ?? bucket,
