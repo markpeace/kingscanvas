@@ -63,6 +63,7 @@ export function Canvas() {
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
+  const addIntentionTriggerRef = useRef<HTMLElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(
     autosavePayload,
@@ -1411,7 +1412,10 @@ export function Canvas() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
               <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
               <button
-                onClick={() => setModalOpen(true)}
+                onClick={(event) => {
+                  addIntentionTriggerRef.current = event.currentTarget
+                  setModalOpen(true)
+                }}
                 className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
               >
                 ＋ Add Intention
@@ -1435,7 +1439,13 @@ export function Canvas() {
 
           <AddIntentionModal
             isOpen={modalOpen}
-            onClose={() => setModalOpen(false)}
+            onClose={() => {
+              setModalOpen(false)
+              if (addIntentionTriggerRef.current) {
+                addIntentionTriggerRef.current.focus()
+                addIntentionTriggerRef.current = null
+              }
+            }}
             onAdd={handleAddIntention}
           />
         </main>

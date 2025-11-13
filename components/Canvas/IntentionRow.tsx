@@ -1,7 +1,7 @@
 'use client';
 
 import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useState, type CSSProperties } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent } from 'react';
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal';
 import { IntentionCard } from '@/components/Canvas/IntentionCard';
@@ -43,7 +43,7 @@ type BucketColumnProps = {
   highlightBucket: Step['bucket'] | null;
   onDeleteStep: (step: Step) => void;
   onDeleteIntention: (intentionId: string) => void;
-  onAddStepClick: () => void;
+  onAddStepClick: (event: MouseEvent<HTMLButtonElement>) => void;
   onAddAIStepClick: () => void;
   onMoveStep: (step: Step, direction: 'forward' | 'backward') => void;
   onMoveIntention: (direction: 'forward' | 'backward') => void;
@@ -130,7 +130,7 @@ function BucketColumn({
         <div className="flex flex-row items-center gap-2 mb-2 mt-auto">
           <button
             className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-            onClick={onAddStepClick}
+            onClick={(event) => onAddStepClick(event)}
             type="button"
           >
             + Add Step
@@ -176,6 +176,15 @@ export function IntentionRow({
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
   const isDragging = Boolean(active);
+  const lastAddStepTriggerRef = useRef<HTMLElement | null>(null);
+
+  const handleCloseModal = () => {
+    setModalBucket(null);
+    if (lastAddStepTriggerRef.current) {
+      lastAddStepTriggerRef.current.focus();
+      lastAddStepTriggerRef.current = null;
+    }
+  };
 
   return (
     <>
@@ -205,7 +214,10 @@ export function IntentionRow({
                 highlightBucket={highlightBucket}
                 onDeleteStep={onDeleteStep}
                 onDeleteIntention={onDeleteIntention}
-                onAddStepClick={() => setModalBucket(colBucket)}
+                onAddStepClick={(event) => {
+                  lastAddStepTriggerRef.current = event.currentTarget;
+                  setModalBucket(colBucket);
+                }}
                 onAddAIStepClick={() => onAddAIStep(colBucket)}
                 onMoveStep={(step, direction) => onMoveStep(intention, step, direction)}
                 onMoveIntention={(direction) => onMoveIntention(intention, direction)}
@@ -228,7 +240,7 @@ export function IntentionRow({
 
       <AddStepModal
         isOpen={!!modalBucket}
-        onClose={() => setModalBucket(null)}
+        onClose={handleCloseModal}
         onAdd={(title) => {
           if (modalBucket) onAddStep(modalBucket, title);
         }}
