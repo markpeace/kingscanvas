@@ -663,6 +663,9 @@ export function Canvas() {
       }
 
       let finalStepId: string | null = null
+      const failureToastMessage =
+        'We could not generate a suggestion just now. You can still add a step manually.'
+      let failureToastShown = false
 
       try {
         type SuggestionEntry = { _id?: string; text?: string }
@@ -683,6 +686,8 @@ export function Canvas() {
         const data = (await aiRes.json().catch(() => ({}))) as SuggestionResponse
 
         if (!aiRes.ok) {
+          toast.error(failureToastMessage)
+          failureToastShown = true
           throw new Error(data?.error || 'AI suggestion failed')
         }
 
@@ -798,6 +803,11 @@ export function Canvas() {
           intentionId: intention.id,
           message
         })
+
+        if (!failureToastShown) {
+          toast.error(failureToastMessage)
+          failureToastShown = true
+        }
 
         setIntentions((prev) =>
           prev.map((item) => {

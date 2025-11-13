@@ -57,8 +57,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
   const bucket = normaliseBucket(payload.intentionBucket)
   const promptBucket = mapBucketToPromptTarget(bucket)
   const intentionText = (payload.intentionText ?? "").trim() || "your intention"
-  const historyAccepted = sanitiseHistory(payload.historyAccepted)
-  const historyRejected = sanitiseHistory(payload.historyRejected)
+  const historyAccepted = sanitiseHistory(payload.historyAccepted).slice(-5)
+  const historyRejected = sanitiseHistory(payload.historyRejected).slice(-5)
 
   if (workflowName === "suggest-step") {
     const prompt = buildSuggestionPromptV5({
@@ -74,8 +74,35 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     })
 
     const llm = getChatModel()
+    debug.trace("AI: suggest-step using model", {
+      model: process.env.OPENAI_MODEL || "gpt-4o-mini"
+    })
     const response = await llm.invoke(prompt)
-    const text = (response || "").toString().trim()
+    let rawContent = ""
+
+    const content = response?.content
+
+    if (typeof content === "string") {
+      rawContent = content
+    } else if (Array.isArray(content)) {
+      rawContent = content
+        .map((part) => {
+          if (typeof part === "string") {
+            return part
+          }
+
+          if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+            return part.text
+          }
+
+          return ""
+        })
+        .join("")
+    } else if (content != null) {
+      rawContent = String(content)
+    }
+
+    const text = rawContent.trim()
 
     debug.info("AI: model response (prompt v5)", {
       bucket: payload.intentionBucket ?? bucket,
