@@ -23,3 +23,22 @@ export interface Intention {
   createdAt: string
   updatedAt: string
 }
+
+export type OpportunitySource = 'edge_simulated' | 'independent'
+export type OpportunityForm = 'intensive' | 'evergreen' | 'short_form' | 'sustained'
+export type OpportunityFocus = 'capability' | 'capital' | 'credibility'
+export type OpportunityStatus = 'suggested' | 'saved' | 'dismissed'
+
+export interface Opportunity {
+  _id?: string
+  id: string
+  stepId: string
+  title: string
+  summary: string
+  source: OpportunitySource
+  form: OpportunityForm
+  focus: OpportunityFocus[]
+  status: OpportunityStatus
+  createdAt?: string | Date
+  updatedAt?: string | Date
+}
