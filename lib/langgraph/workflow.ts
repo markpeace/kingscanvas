@@ -74,8 +74,21 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     })
 
     const llm = getChatModel()
+    const resolvedModel =
+      (typeof llm.model === "string" && llm.model.trim().length > 0
+        ? llm.model
+        : undefined) ??
+      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
+        ? llm.modelName
+        : undefined) ??
+      process.env.OPENAI_MODEL ??
+      "gpt-4o-mini"
+
     debug.trace("AI: suggest-step using model", {
-      model: process.env.OPENAI_MODEL || "gpt-4o-mini"
+      model: resolvedModel,
+      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
+      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
+      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
     })
     const response = await llm.invoke(prompt)
     let rawContent = ""
