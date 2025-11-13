@@ -192,7 +192,7 @@ export function IntentionRow({
         <section
           id={intention.id}
           aria-label={`Intention: ${intention.title}`}
-          className="scroll-mt-24 grid grid-cols-4 gap-x-4 sm:gap-x-6 lg:gap-x-8 gap-y-8 mb-12"
+          className="scroll-mt-24 grid grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-10 gap-y-8 mb-12"
           style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
         >
           {BUCKETS.map(({ id: colBucket }) => {
