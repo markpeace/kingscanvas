@@ -60,3 +60,19 @@ html { overscroll-behavior-y: none; }
     transform: translateY(0);
   }
 }
+
+@keyframes fadeInStep {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.step-card:not(.suggested):hover {
+  background: #fafafa;
+  transition: background 0.15s ease;
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useUser } from '@/context/UserContext'
 import {
   DndContext,
@@ -24,6 +24,22 @@ import useAutosave from '@/hooks/useAutosave'
 import SaveStatus from '@/components/Canvas/SaveStatus'
 
 const DEFAULT_BUCKET: BucketId = 'do-now'
+
+const ghostStyle: CSSProperties = {
+  opacity: 0.6,
+  background: '#f7f7f7',
+  border: '1px dashed #d0d0d0',
+  borderRadius: '8px',
+  padding: '12px',
+  height: '72px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#888',
+  fontSize: '12px',
+  pointerEvents: 'none',
+  transition: 'opacity 0.3s ease'
+}
 
 function determineBuckets(base: BucketId): BucketId[] {
   switch (base) {
@@ -703,8 +719,12 @@ export function Canvas() {
               return item
             }
 
-            const withoutGhost = item.steps.filter((step) => step.id !== ghostId)
-            const stepsInBucket = withoutGhost.filter((step) => step.bucket === bucket)
+            const ghostStep = item.steps.find((step) => step.id === ghostId)
+            const stepsInBucket = item.steps.filter(
+              (step) => step.bucket === bucket && step.id !== ghostId
+            )
+            const hasGhost = Boolean(ghostStep)
+
             const finalStep: Step = {
               id: finalStepId as string,
               _id: suggestionId,
@@ -712,14 +732,19 @@ export function Canvas() {
               title: suggestionText,
               text: suggestionText,
               bucket,
-              order: stepsInBucket.length + 1,
+              order: ghostStep?.order ?? stepsInBucket.length + 1,
               status: 'suggested',
               source: 'ai',
               user: userEmail,
               createdAt: new Date().toISOString()
             }
 
-            return { ...item, steps: [...withoutGhost, finalStep] }
+            return {
+              ...item,
+              steps: hasGhost
+                ? item.steps.map((step) => (step.id === ghostId ? finalStep : step))
+                : [...item.steps, finalStep]
+            }
           })
         )
 
@@ -1215,6 +1240,7 @@ export function Canvas() {
           highlightBucket={highlightBucket}
           trashSuccessId={trashSuccessId}
           trashSuccessType={trashSuccessType}
+          ghostStyle={ghostStyle}
         />
       )),
     [
