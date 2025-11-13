@@ -552,6 +552,25 @@ export function Canvas() {
     [announce, triggerHighlight]
   )
 
+  const getIntentionForBucket = useCallback(
+    (intentionId: string, bucket: BucketId) => {
+      const exactMatch = intentions.find((item) => item.id === intentionId)
+
+      if (exactMatch) {
+        return exactMatch
+      }
+
+      return intentions.find((item) => {
+        if (item.bucket === bucket) {
+          return true
+        }
+
+        return item.steps.some((step) => step.bucket === bucket)
+      })
+    },
+    [intentions]
+  )
+
   const handleAddStep = useCallback((intentionId: string, bucket: Step['bucket'], title: string) => {
     setIntentions((prev) =>
       prev.map((intention) => {
@@ -571,6 +590,228 @@ export function Canvas() {
       })
     )
   }, [])
+
+  const handleAddAIStep = useCallback(
+    async (intentionId: string, bucket: Step['bucket']) => {
+      debug.trace('Canvas: AI on-demand suggestion requested', { bucket, intentionId })
+
+      const intention = getIntentionForBucket(intentionId, bucket)
+
+      if (!intention) {
+        debug.error('Canvas: unable to resolve intention for bucket', { bucket, intentionId })
+        return
+      }
+
+      const userEmail = user?.email ?? 'test@test.com'
+      const ghostId = `ghost-${bucket}-${Date.now()}`
+      const ghostBase: Step = {
+        id: ghostId,
+        intentionId: intention.id,
+        title: 'Generating…',
+        text: 'Generating…',
+        bucket,
+        order: 0,
+        status: 'ghost',
+        source: 'ai',
+        user: userEmail
+      }
+
+      setIntentions((prev) =>
+        prev.map((item) => {
+          if (item.id !== intention.id) {
+            return item
+          }
+
+          const stepsInBucket = item.steps.filter((step) => step.bucket === bucket)
+          const ghostStep = { ...ghostBase, order: stepsInBucket.length + 1 }
+
+          return { ...item, steps: [...item.steps, ghostStep] }
+        })
+      )
+
+      debug.trace('Canvas: inserted on-demand ghost', { bucket, intentionId: intention.id })
+
+      let history: { accepted: string[]; rejected: string[] } = { accepted: [], rejected: [] }
+
+      try {
+        const historyRes = await fetch(
+          `/api/steps/history?intentionId=${encodeURIComponent(intention.id)}`
+        )
+
+        if (historyRes.ok) {
+          history = (await historyRes.json()) || history
+        } else {
+          const errorBody = await historyRes.json().catch(() => ({}))
+          debug.error('Canvas: on-demand history fetch failed', {
+            bucket,
+            intentionId: intention.id,
+            status: historyRes.status,
+            response: errorBody
+          })
+        }
+      } catch (historyError) {
+        const message = historyError instanceof Error ? historyError.message : 'Unknown error'
+        debug.error('Canvas: on-demand history fetch errored', {
+          bucket,
+          intentionId: intention.id,
+          message
+        })
+      }
+
+      let finalStepId: string | null = null
+
+      try {
+        type SuggestionEntry = { _id?: string; text?: string }
+        type SuggestionResponse = { suggestions?: SuggestionEntry[]; error?: string }
+
+        const aiRes = await fetch('/api/ai/suggest-steps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            intentionId: intention.id,
+            intentionText: intention.title,
+            intentionBucket: bucket,
+            historyAccepted: history.accepted,
+            historyRejected: history.rejected
+          })
+        })
+
+        const data = (await aiRes.json().catch(() => ({}))) as SuggestionResponse
+
+        if (!aiRes.ok) {
+          throw new Error(data?.error || 'AI suggestion failed')
+        }
+
+        const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : []
+        const suggestion = suggestions[0]
+
+        debug.info('Canvas: AI on-demand suggestion received', {
+          text: suggestion?.text || null
+        })
+
+        if (!suggestion || !suggestion.text) {
+          throw new Error('AI suggestion returned no text')
+        }
+
+        finalStepId = `ai-${bucket}-${Date.now()}`
+        const suggestionId = typeof suggestion._id === 'string' ? suggestion._id : undefined
+        const suggestionText = suggestion.text
+
+        setIntentions((prev) =>
+          prev.map((item) => {
+            if (item.id !== intention.id) {
+              return item
+            }
+
+            const withoutGhost = item.steps.filter((step) => step.id !== ghostId)
+            const stepsInBucket = withoutGhost.filter((step) => step.bucket === bucket)
+            const finalStep: Step = {
+              id: finalStepId as string,
+              _id: suggestionId,
+              intentionId: intention.id,
+              title: suggestionText,
+              text: suggestionText,
+              bucket,
+              order: stepsInBucket.length + 1,
+              status: 'suggested',
+              source: 'ai',
+              user: userEmail,
+              createdAt: new Date().toISOString()
+            }
+
+            return { ...item, steps: [...withoutGhost, finalStep] }
+          })
+        )
+
+        type PersistResponse = {
+          insertedIds?: string[] | Record<string, unknown>
+          error?: string
+        }
+
+        const persistRes = await fetch('/api/steps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ intentionId: intention.id, steps: [{ bucket, text: suggestionText }] })
+        })
+
+        const persistData = (await persistRes.json().catch(() => ({}))) as PersistResponse
+
+        if (!persistRes.ok) {
+          throw new Error(persistData?.error || 'Failed to persist suggestion')
+        }
+
+        const insertedIdsRaw = Array.isArray(persistData?.insertedIds)
+          ? persistData.insertedIds
+          : persistData?.insertedIds && typeof persistData.insertedIds === 'object'
+          ? Object.values(persistData.insertedIds)
+          : []
+
+        const insertedId = insertedIdsRaw
+          .map((value: unknown) => {
+            if (!value) return null
+            if (typeof value === 'string') return value
+            if (typeof value === 'object' && 'toString' in value && typeof value.toString === 'function') {
+              return value.toString()
+            }
+            return String(value)
+          })
+          .find((value): value is string => Boolean(value))
+
+        if (insertedId && finalStepId) {
+          setIntentions((prev) =>
+            prev.map((item) => {
+              if (item.id !== intention.id) {
+                return item
+              }
+
+              return {
+                ...item,
+                steps: item.steps.map((step) =>
+                  step.id === finalStepId ? { ...step, _id: insertedId } : step
+                )
+              }
+            })
+          )
+        }
+
+        debug.info('Canvas: on-demand suggestion persisted', {
+          bucket,
+          intentionId: intention.id
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        debug.error('Canvas: on-demand suggestion failed', {
+          bucket,
+          intentionId: intention.id,
+          message
+        })
+
+        setIntentions((prev) =>
+          prev.map((item) => {
+            if (item.id !== intention.id) {
+              return item
+            }
+
+            return {
+              ...item,
+              steps: item.steps.filter((step) => {
+                if (step.id === ghostId) {
+                  return false
+                }
+
+                if (finalStepId && step.id === finalStepId) {
+                  return false
+                }
+
+                return true
+              })
+            }
+          })
+        )
+      }
+    },
+    [getIntentionForBucket, user]
+  )
 
   const handleAddIntention = useCallback(
     async (title: string, description: string, bucket: BucketId) => {
@@ -964,6 +1205,7 @@ export function Canvas() {
           key={intention.id}
           intention={intention}
           onAddStep={(bucket, title) => handleAddStep(intention.id, bucket, title)}
+          onAddAIStep={(bucket) => handleAddAIStep(intention.id, bucket)}
           onDeleteStep={handleDeleteStep}
           onDeleteIntention={handleDeleteIntention}
           onMoveStep={moveStepWithKeyboard}
@@ -977,6 +1219,7 @@ export function Canvas() {
       )),
     [
       handleAddStep,
+      handleAddAIStep,
       handleDeleteIntention,
       handleDeleteStep,
       handleAcceptSuggestion,

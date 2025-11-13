@@ -11,6 +11,7 @@ export interface Step {
   status?: string
   source?: string
   user?: string
+  createdAt?: string | Date
 }
 
 export interface Intention {
