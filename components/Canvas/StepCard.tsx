@@ -14,7 +14,7 @@ import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
-import { useFakeOpportunities } from '@/hooks/useFakeOpportunities'
+import { useOpportunities } from '@/hooks/useOpportunities'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -55,7 +55,29 @@ export function StepCard({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isOpportunitiesOpen, setIsOpportunitiesOpen] = useState(false);
   const opportunitiesTriggerRef = useRef<HTMLButtonElement>(null);
-  const { opportunities, count: opportunitiesCount } = useFakeOpportunities(step.id);
+  const {
+    opportunities,
+    isLoading: opportunitiesLoading,
+    error: opportunitiesError,
+    refetch: refetchOpportunities,
+  } = useOpportunities(step.id, { enabled: !isGhost });
+  const opportunitiesCount = opportunities.length;
+
+  const badgeLabel = opportunitiesLoading
+    ? 'Loading opportunities for this step'
+    : opportunitiesError
+    ? 'Could not load opportunities for this step'
+    : opportunitiesCount === 1
+    ? 'View 1 opportunity for this step'
+    : `View ${opportunitiesCount} opportunities for this step`;
+
+  const badgeText = opportunitiesLoading
+    ? '...'
+    : opportunitiesError
+    ? '!'
+    : opportunitiesCount === 1
+    ? '1 opportunity'
+    : `${opportunitiesCount} opportunities`;
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -205,15 +227,10 @@ export function StepCard({
                     ? 'border-kings-red/40 bg-kings-red/10 text-kings-red hover:bg-kings-red/20'
                     : 'border-kings-grey-light bg-kings-grey-light/40 text-kings-grey-dark hover:bg-kings-grey-light/60'
                 }`}
-                aria-label={
-                  opportunitiesCount === 1
-                    ? 'View 1 opportunity for this step'
-                    : `View ${opportunitiesCount} opportunities for this step`
-                }
+                aria-label={badgeLabel}
+                title={opportunitiesError ? 'Could not load opportunities' : undefined}
               >
-                {opportunitiesCount === 1
-                  ? '1 opportunity'
-                  : `${opportunitiesCount} opportunities`}
+                {badgeText}
               </button>
             )}
           </div>
@@ -276,6 +293,11 @@ export function StepCard({
           }}
           stepTitle={displayText}
           opportunities={opportunities}
+          isLoading={opportunitiesLoading}
+          error={opportunitiesError}
+          onRetry={() => {
+            void refetchOpportunities();
+          }}
         />
       )}
     </>
