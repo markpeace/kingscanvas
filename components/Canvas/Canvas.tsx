@@ -1375,28 +1375,26 @@ export function Canvas() {
         </div>
         <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
           {/* HEADER GROUP */}
-          <header className="mb-8">
+          <header className="mb-12">
             {/* Title + Button Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
-              <h1 className="text-lg sm:text-xl font-semibold text-kings-red leading-tight">Your Intentions</h1>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
               <button
                 onClick={(event) => {
                   addIntentionTriggerRef.current = event.currentTarget
                   setModalOpen(true)
                 }}
-                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-end sm:ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
               >
                 ＋ Add Intention
               </button>
             </div>
 
             {/* Column Headers */}
-            <div className="grid grid-cols-4 gap-6 mt-1 mb-2">
+            <div className="mt-6 grid grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-10 mb-2">
               {BUCKETS.map((b) => (
-                <div key={b.id} className="relative h-5 flex justify-center">
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 text-kings-red/90 text-xs font-medium uppercase tracking-widest leading-none text-center select-none"
-                  >
+                <div key={b.id} className="flex justify-center">
+                  <span className="text-sm font-semibold uppercase tracking-[0.2em] text-kings-red/90 leading-tight text-center select-none">
                     {b.title}
                   </span>
                 </div>
