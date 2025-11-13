@@ -75,7 +75,32 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
 
     const llm = getChatModel()
     const response = await llm.invoke(prompt)
-    const text = (response || "").toString().trim()
+
+    // LangGraph sometimes returns { content: string } or { content: [{ type: "text", text: string }] }
+    let extracted = ""
+
+    // Case 1: direct string
+    if (typeof response === "string") {
+      extracted = response
+    }
+
+    // Case 2: AIMessage with .content as string
+    else if (response && typeof response.content === "string") {
+      extracted = response.content
+    }
+
+    // Case 3: AIMessage with .content as array of text blocks
+    else if (response && Array.isArray(response.content)) {
+      const textBlock = response.content.find((block: { type?: string; text?: string }) => block.type === "text")
+      extracted = textBlock ? textBlock.text ?? "" : ""
+    }
+
+    // Fallback
+    else {
+      extracted = JSON.stringify(response)
+    }
+
+    const text = extracted.trim()
 
     debug.info("AI: model response (prompt v5)", {
       bucket: payload.intentionBucket ?? bucket,

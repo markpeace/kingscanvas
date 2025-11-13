@@ -68,3 +68,4 @@ history:
   - PR 0009D: Upgraded Prompt Builder to v4 (high-level developmental guidance).
   - PR 0009E: Replaced Prompt Builder with v5 (developmental guidance only).
   - Hotfix: Default new intentions to "after_grad"
+  - Hotfix: Correct AIMessage extraction to prevent "[object AIMessage]" output.
