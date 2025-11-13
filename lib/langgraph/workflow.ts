@@ -12,7 +12,7 @@ type SuggestStepsInput = {
 
 type Suggestion = { bucket: BucketId; text: string }
 
-type WorkflowName = "suggest-steps"
+type WorkflowName = "suggest-step"
 
 type WorkflowResult = { suggestions: Suggestion[] }
 
@@ -49,78 +49,48 @@ function sanitiseHistory(history?: string[]): string[] {
   return history.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
 }
 
-function extractResponseText(response: unknown): string {
-  if (typeof response === "string") {
-    return response
+export async function runWorkflow(workflowName: WorkflowName, payload: SuggestStepsInput): Promise<WorkflowResult> {
+  if (workflowName !== "suggest-step") {
+    throw new Error(`Unknown workflow: ${workflowName}`)
   }
 
-  if (response && typeof response === "object") {
-    const message = response as { content?: unknown }
-    const { content } = message
-
-    if (typeof content === "string") {
-      return content
-    }
-
-    if (Array.isArray(content)) {
-      return content
-        .map((part) => {
-          if (typeof part === "string") {
-            return part
-          }
-
-          if (part && typeof part === "object" && typeof (part as { text?: unknown }).text === "string") {
-            return (part as { text: string }).text
-          }
-
-          return ""
-        })
-        .filter(Boolean)
-        .join("\n")
-    }
-  }
-
-  return String(response ?? "")
-}
-
-export async function runWorkflow(name: WorkflowName, input: SuggestStepsInput): Promise<WorkflowResult> {
-  if (name !== "suggest-steps") {
-    throw new Error(`Unknown workflow: ${name}`)
-  }
-
-  const bucket = normaliseBucket(input.intentionBucket)
+  const bucket = normaliseBucket(payload.intentionBucket)
   const promptBucket = mapBucketToPromptTarget(bucket)
-  const intentionText = (input.intentionText ?? "").trim() || "your intention"
-  const historyAccepted = sanitiseHistory(input.historyAccepted)
-  const historyRejected = sanitiseHistory(input.historyRejected)
+  const intentionText = (payload.intentionText ?? "").trim() || "your intention"
+  const historyAccepted = sanitiseHistory(payload.historyAccepted)
+  const historyRejected = sanitiseHistory(payload.historyRejected)
 
-  const prompt = buildSuggestionPromptV5({
-    intentionText,
-    targetBucket: promptBucket,
-    historyAccepted,
-    historyRejected
-  })
+  if (workflowName === "suggest-step") {
+    const prompt = buildSuggestionPromptV5({
+      intentionText,
+      targetBucket: promptBucket,
+      historyAccepted,
+      historyRejected
+    })
 
-  debug.trace("AI Prompt Builder v5: constructed prompt", {
-    bucket: input.intentionBucket ?? bucket,
-    intention: intentionText
-  })
+    debug.trace("AI Prompt Builder v5: constructed prompt", {
+      bucket: payload.intentionBucket ?? bucket,
+      intention: intentionText
+    })
 
-  const llm = getChatModel()
-  const response = await llm.invoke(prompt)
-  const responseText = extractResponseText(response).trim()
+    const llm = getChatModel()
+    const response = await llm.invoke(prompt)
+    const text = (response || "").toString().trim()
 
-  debug.info("AI: model response (prompt v5)", {
-    bucket: input.intentionBucket ?? bucket,
-    preview: responseText.slice(0, 120)
-  })
+    debug.info("AI: model response (prompt v5)", {
+      bucket: payload.intentionBucket ?? bucket,
+      preview: text.slice(0, 120)
+    })
 
-  return {
-    suggestions: [
-      {
-        bucket,
-        text: responseText
-      }
-    ]
+    return {
+      suggestions: [
+        {
+          bucket,
+          text
+        }
+      ]
+    }
   }
+
+  throw new Error(`Unhandled workflow: ${workflowName}`)
 }
