@@ -1,0 +1,25 @@
+status: "completed"
+updated_at: "2025-11-14"
+completed_at: "2025-11-14"
+branch: "feature/epoch-0007/opportunities-model-ui"
+summary: |
+  Introduced the Opportunity domain model with persistence and read-only APIs,
+  and surfaced badge plus modal UI across real steps. Ghost AI suggestions
+  remain unchanged pending Epoch 0008.
+tasks:
+  - id: "domain-model"
+    title: "Ship Opportunity model and storage"
+    status: "completed"
+    notes: "Persist opportunities per step including source, form, focus, and status metadata."
+  - id: "api-read"
+    title: "Expose read-only opportunities API"
+    status: "completed"
+    notes: "GET /api/steps/[stepId]/opportunities delivers stored opportunities for real steps."
+  - id: "ui-surface"
+    title: "Add opportunities UI for real steps"
+    status: "completed"
+    notes: "Badges highlight opportunity counts and the modal handles loading, empty, and populated states."
+  - id: "ghost-ai"
+    title: "Defer ghost suggestion UI"
+    status: "completed"
+    notes: "Ghost AI suggestions intentionally omit opportunities affordances until Epoch 0008."

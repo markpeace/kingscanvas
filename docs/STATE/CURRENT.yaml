@@ -1,19 +1,22 @@
-epoch_id: "0007-opportunities-model-ui"
-title: "Epoch 0007 — Opportunities Model & UI"
+epoch_id: "0008-opportunity-ai-simulation"
+title: "Epoch 0008 — Opportunity AI Simulation"
 status: "awaiting_kickoff"
 started_at: null
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
-last_completed_epoch: "0006-roadmap-ux-refresh"
-current_epoch: "0007-opportunities-model-ui"
+last_completed_epoch: "0007-opportunities-model-ui"
+current_epoch: "0008-opportunity-ai-simulation"
 epochs:
   - id: "0005-langgraph-ai-step-suggestions"
     status: "completed"
   - id: "0006-roadmap-ux-refresh"
     status: "completed"
   - id: "0007-opportunities-model-ui"
+    status: "completed"
+  - id: "0008-opportunity-ai-simulation"
     status: "up_next"
 summary: |
-  Epoch 0006 — Roadmap & UX Refresh is complete with documentation and UX
-  polish shipped. Preparing to kick off Epoch 0007 — Opportunities Model & UI,
-  which will introduce opportunity persistence and surface the initial UI.
+  Epoch 0007 — Opportunities Model & UI delivered the opportunity domain model,
+  persistence, read-only API, and real-step UI badge plus modal. Epoch 0008 —
+  Opportunity AI Simulation will build on that foundation with simulated data,
+  LangGraph ranking, and shuffle affordances.
 expected_prs: []

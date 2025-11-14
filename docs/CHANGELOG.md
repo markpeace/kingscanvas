@@ -1,5 +1,10 @@
 # Changelog
 
+### 2025-11-14 – Epoch 0007 "Opportunities Model and UI" completed
+- Introduced Opportunity model linked to steps with metadata for source, form, focus, and status.
+- Persisted opportunities and exposed `GET /api/steps/[stepId]/opportunities` for read-only access.
+- Added opportunity badges and modal UI (loading, empty, populated) for real steps while ghost AI suggestions remain unchanged.
+
 ### 2025-11-13 – Epoch 0006 "Roadmap and UX Refresh" completed
 - Synced `/docs/STATE/CURRENT.yaml`, roadmap artefacts, and STATUS records to archive Epoch 0006 and queue Epoch 0007.
 - Polished Canvas layout hierarchy, modal treatments, and saving indicator feedback informed by Epoch 0005 observations.
