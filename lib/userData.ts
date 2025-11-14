@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import type { Document, InsertManyResult, WithId } from "mongodb";
+import type { Document, Filter, InsertManyResult, WithId } from "mongodb";
 
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
@@ -21,6 +21,10 @@ type OpportunityDocument = {
 
 export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "createdAt" | "updatedAt">;
 
+type StepDocument = Document & {
+  _id: ObjectId | string;
+  user: string;
+};
 
 function toOpportunityId(value: WithId<OpportunityDocument>["_id"]): string {
   if (typeof value === "string") {
@@ -99,7 +103,7 @@ export async function getUserSteps(email: string) {
  * Save or update a step for a given user.
  */
 export async function saveUserStep(email: string, step: any): Promise<string | null> {
-  const col = await getCollection("steps");
+  const col = await getCollection<StepDocument>("steps");
   const now = new Date();
   const normalizedStep = { ...step };
 
@@ -147,11 +151,9 @@ export async function saveUserStep(email: string, step: any): Promise<string | n
     stepId: stepIdentifier,
   });
 
-  const result = await col.updateOne(
-    { _id: lookupId, user: email },
-    { $set: normalizedStep },
-    { upsert: true }
-  );
+  const filter: Filter<StepDocument> = { _id: lookupId, user: email };
+
+  const result = await col.updateOne(filter, { $set: normalizedStep }, { upsert: true });
 
   debug.info("MongoDB: step upsert result", {
     matched: result.matchedCount,
