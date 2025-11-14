@@ -59,17 +59,19 @@ drag-and-drop cues informed by Epoch 0005 learnings.
 
 ---
 
-### 🧩 Epoch 0007 — Opportunities Model and UI
-**Status:** Planned.
+### ✅ Epoch 0007 — Opportunities Model and UI
+**Status:** Completed. ([STATUS](./EPOCHS/0007-opportunities-model-ui/STATUS.yaml))
 
-Define the opportunities domain model, persist opportunities alongside intentions and steps, and surface an initial opportunities panel within the Canvas.
+- **Model:** Opportunity entity linked to steps with source, form, focus, and status metadata.
+- **Storage & API:** Persistence layer and `GET /api/steps/[stepId]/opportunities` endpoint for read-only access.
+- **UI:** Opportunity badges on real step cards and a modal with loading, empty, and populated states. Ghost AI suggestions intentionally omit opportunity UI.
 
 ---
 
 ### 🧠 Epoch 0008 — AI Simulated Edge Opportunities
 **Status:** Planned.
 
-Use simulated King’s Edge-style data with LangGraph and RAG techniques to generate, rank, and explain opportunity matches against student plans.
+Simulate King’s Edge data, use LangGraph plus retrieval workflows to generate and rank opportunity matches, and introduce shuffle/refresh controls for opportunity sets.
 
 ---
 
