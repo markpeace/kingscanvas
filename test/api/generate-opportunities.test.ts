@@ -91,7 +91,9 @@ describe("/api/steps/[stepId]/generate-opportunities", () => {
 
     await handler(req, res)
 
-    expect(mockGenerate).toHaveBeenCalledWith("test@test.com", "step-1")
+    expect(mockGenerate).toHaveBeenCalledWith("test@test.com", "step-1", {
+      origin: "api-manual-trigger",
+    })
     expect(getStatus()).toBe(200)
     expect(getJSON()).toEqual({
       opportunities: [

@@ -180,6 +180,14 @@ function parseOpportunityDrafts(rawContent: string): SimulatedOpportunityDraft[]
         }
       })
   } catch (error) {
+    const message =
+      error instanceof Error ? `Failed to parse AI response: ${error.message}` : "Failed to parse AI response"
+
+    debug.error("AI: simulate-opportunities parse failure", {
+      message,
+      preview: normalised.slice(0, 200)
+    })
+
     throw new Error(
       error instanceof Error
         ? `Failed to parse AI response: ${error.message}`
@@ -279,6 +287,11 @@ export async function runWorkflow(
       stepTitle: simPayload.stepTitle,
       stepBucket: simPayload.stepBucket,
       intentionTitle: simPayload.intentionTitle
+    })
+
+    debug.info("AI: simulate-opportunities prompt", {
+      preview: prompt.slice(0, 200),
+      length: prompt.length
     })
 
     const llm = getChatModel()

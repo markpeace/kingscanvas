@@ -28,7 +28,9 @@ function normaliseStepId(value: unknown): string | null {
   return null;
 }
 
-function scheduleOpportunityGeneration(user: string, stepIds: unknown[]) {
+type GenerationOrigin = "manual" | "ai-accepted"
+
+function scheduleOpportunityGeneration(user: string, stepIds: unknown[], origin: GenerationOrigin) {
   const uniqueIds = Array.from(
     new Set(
       stepIds
@@ -44,10 +46,12 @@ function scheduleOpportunityGeneration(user: string, stepIds: unknown[]) {
   uniqueIds.forEach((stepId) => {
     void (async () => {
       try {
-        const opportunities = await generateSimulatedOpportunitiesForStepIfNeeded(user, stepId);
+        const opportunities = await generateSimulatedOpportunitiesForStepIfNeeded(user, stepId, {
+          origin,
+        });
 
         if (!opportunities) {
-          debug.trace("Steps API: opportunity generation skipped", { user, stepId });
+          debug.trace("Steps API: opportunity generation skipped", { user, stepId, origin });
           return;
         }
 
@@ -55,12 +59,14 @@ function scheduleOpportunityGeneration(user: string, stepIds: unknown[]) {
           user,
           stepId,
           generated: opportunities.length,
+          origin,
         });
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         debug.error("Steps API: opportunity generation failed", {
           user,
           stepId,
+          origin,
           message,
         });
       }
@@ -109,7 +115,7 @@ export default async function handler(
 
       if (status === "accepted" && result.modifiedCount > 0) {
         // Accepted AI suggestion becomes a real step – queue opportunity generation.
-        scheduleOpportunityGeneration(email, [stepId]);
+        scheduleOpportunityGeneration(email, [stepId], "ai-accepted");
       }
 
       return res.status(200).json({ ok: true });
@@ -145,6 +151,14 @@ export default async function handler(
           count: steps.length,
         });
 
+        if (insertedIds.length > 0) {
+          // Ghost suggestions remain drafts until accepted; do not generate opportunities yet.
+          debug.info("Opportunities: skipping generation for ghost suggestion", {
+            user: email,
+            suggestionIds: insertedIds,
+          });
+        }
+
         return res.status(200).json({ ok: true, insertedIds });
       }
     }
@@ -161,7 +175,7 @@ export default async function handler(
       const finalStepId = bodyStepId ?? upsertedId;
 
       if (finalStepId && result.upsertedCount > 0) {
-        scheduleOpportunityGeneration(email, [finalStepId]);
+        scheduleOpportunityGeneration(email, [finalStepId], "manual");
       }
 
       debug.info("Steps API: write complete", {

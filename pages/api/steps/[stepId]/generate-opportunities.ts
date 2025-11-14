@@ -39,7 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const opportunities = await generateSimulatedOpportunitiesForStep(email, stepId)
+    const opportunities = await generateSimulatedOpportunitiesForStep(email, stepId, {
+      origin: "api-manual-trigger",
+    })
     debug.info("Opportunity generation API: completed", {
       user: email,
       stepId,

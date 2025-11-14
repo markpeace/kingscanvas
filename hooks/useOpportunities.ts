@@ -130,6 +130,14 @@ export function useOpportunities(stepId: string | null | undefined, options?: Us
     return () => window.clearTimeout(timer)
   }, [enabled, endpoint, error, isLoading, opportunities.length, refetch])
 
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') {
+      return
+    }
+
+    console.debug('useOpportunities', { stepId, count: opportunities.length })
+  }, [opportunities.length, stepId])
+
   return {
     opportunities,
     isLoading,

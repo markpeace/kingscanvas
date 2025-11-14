@@ -65,7 +65,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === "GET") {
       debug.trace("Opportunities API: GET", { user: email, stepId });
       const opportunities = await getOpportunitiesByStep(email, stepId);
-      debug.info("Opportunities API: GET complete", { count: opportunities.length });
+      debug.info("Opportunities API: GET complete", {
+        user: email,
+        stepId,
+        returnedCount: opportunities.length,
+        statuses: opportunities.reduce<Record<string, number>>((acc, item) => {
+          acc[item.status] = (acc[item.status] ?? 0) + 1;
+          return acc;
+        }, {}),
+        sources: opportunities.reduce<Record<string, number>>((acc, item) => {
+          acc[item.source] = (acc[item.source] ?? 0) + 1;
+          return acc;
+        }, {}),
+      });
       return res.status(200).json(opportunities);
     }
 

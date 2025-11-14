@@ -276,7 +276,11 @@ export async function getOpportunitiesByStep(user: string, stepId: string): Prom
   const col = await getCollection<OpportunityDocument>("opportunities");
   debug.trace("Mongo: fetching opportunities", { user, stepId });
   const docs = await col.find({ user, stepId }).toArray();
-  debug.info("Mongo: opportunities fetched", { count: docs.length });
+  debug.info("Opportunities: getOpportunitiesByStep", {
+    user,
+    stepId,
+    returnedCount: docs.length,
+  });
   return docs.map(mapOpportunityDocument);
 }
 
