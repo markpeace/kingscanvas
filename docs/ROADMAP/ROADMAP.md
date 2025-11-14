@@ -68,10 +68,19 @@ drag-and-drop cues informed by Epoch 0005 learnings.
 
 ---
 
-### 🧠 Epoch 0008 — AI Simulated Edge Opportunities
-**Status:** Planned.
+### 🧠 Epoch 0008 — Opportunity AI Simulation
+**Status:** In Progress. ([PLAN](./EPOCHS/0008-opportunity-ai-simulation/PLAN.md))
 
-Simulate King’s Edge data, use LangGraph plus retrieval workflows to generate and rank opportunity matches, and introduce shuffle/refresh controls for opportunity sets.
+- **Goal:** Add AI simulated opportunities for steps using the existing Opportunity model and UI.
+- **Scope:**
+  - Automatically generate a small set of fictional opportunities (two to three Edge style, one independent) whenever a student manually creates a step.
+  - Generate the same mix of opportunities when a student accepts an AI suggested step so it becomes a real step.
+  - Provide a “Shuffle opportunities” action on real steps that regenerates opportunities and refreshes the badge plus modal.
+  - Ensure ghost AI suggestions never produce opportunities or trigger generation workflows.
+- **Constraints:**
+  - Use fictional opportunities only, aligned with the King’s Edge ethos.
+  - Avoid real King’s Edge API integrations in this epoch.
+  - Respect token usage by generating opportunities solely for real steps and explicit shuffle requests.
 
 ---
 
