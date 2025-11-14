@@ -1,7 +1,8 @@
 import { ObjectId } from "mongodb";
-import type { Document, InsertManyResult } from "mongodb";
+import type { Document, InsertManyResult, UpdateResult } from "mongodb";
 
 import type {
+  BucketId,
   Opportunity,
   OpportunityFocus,
   OpportunityForm,
@@ -24,6 +25,17 @@ type OpportunityDocument = {
   status: OpportunityStatus;
   createdAt: Date;
   updatedAt: Date;
+};
+
+export type StepDocument = {
+  _id: ObjectId | string;
+  user: string;
+  intentionId?: string;
+  title?: string;
+  text?: string;
+  bucket?: BucketId;
+  tags?: string[];
+  [key: string]: unknown;
 };
 
 export type OpportunityUpsertInput = {
@@ -53,6 +65,21 @@ function parseOpportunityId(id: string): ObjectId | string {
       return new ObjectId(id);
     } catch (error) {
       debug.warn("Mongo: failed to parse opportunity id as ObjectId", {
+        id,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return id;
+}
+
+function parseStepId(id: string): ObjectId | string {
+  if (ObjectId.isValid(id)) {
+    try {
+      return new ObjectId(id);
+    } catch (error) {
+      debug.warn("Mongo: failed to parse step id as ObjectId", {
         id,
         message: error instanceof Error ? error.message : String(error),
       });
@@ -135,7 +162,7 @@ export async function getUserSteps(email: string) {
 /**
  * Save or update a step for a given user.
  */
-export async function saveUserStep(email: string, step: any) {
+export async function saveUserStep(email: string, step: any): Promise<UpdateResult<Document>> {
   const col = await getCollection("steps");
   debug.trace("MongoDB: upserting step", {
     user: email,
@@ -151,6 +178,23 @@ export async function saveUserStep(email: string, step: any) {
     modified: result.modifiedCount,
     upserted: result.upsertedId,
   });
+  return result;
+}
+
+export async function getStepById(user: string, stepId: string): Promise<StepDocument | null> {
+  const col = await getCollection<StepDocument>("steps");
+  const lookupId = parseStepId(stepId);
+
+  debug.trace("MongoDB: fetching step by id", { user, stepId });
+  const doc = await col.findOne({ _id: lookupId, user });
+
+  if (!doc) {
+    debug.info("MongoDB: step not found", { user, stepId });
+    return null;
+  }
+
+  debug.info("MongoDB: step fetched", { user, stepId });
+  return doc;
 }
 
 export async function createSuggestedSteps(
@@ -335,6 +379,68 @@ export async function upsertOpportunity(
   });
 
   return mapOpportunityDocument(finalDoc);
+}
+
+export async function createOpportunities(
+  user: string,
+  opportunities: OpportunityUpsertInput[],
+): Promise<Opportunity[]> {
+  if (!Array.isArray(opportunities) || opportunities.length === 0) {
+    debug.warn("Mongo: createOpportunities called with empty payload", { user });
+    return [];
+  }
+
+  const col = await getCollection<OpportunityDocument>("opportunities");
+  const now = new Date();
+
+  const docs: OpportunityDocument[] = opportunities.map((opportunity) => ({
+    _id: new ObjectId(),
+    user,
+    stepId: opportunity.stepId,
+    title: opportunity.title,
+    summary: opportunity.summary,
+    source: opportunity.source,
+    form: opportunity.form,
+    focus: normalizeFocusValue(opportunity.focus),
+    status: opportunity.status,
+    createdAt: now,
+    updatedAt: now,
+  }));
+
+  debug.trace("Mongo: inserting multiple opportunities", { user, count: docs.length });
+
+  const result = await col.insertMany(docs);
+  const insertedIds = Object.values(result.insertedIds ?? {}).map((value) => {
+    if (typeof value === "string") {
+      return value;
+    }
+
+    if (value instanceof ObjectId) {
+      return value;
+    }
+
+    return null;
+  });
+
+  const lookupIds = insertedIds.filter(
+    (value): value is string | ObjectId => value !== null && value !== undefined,
+  );
+
+  let stored = lookupIds.length
+    ? await col.find({ _id: { $in: lookupIds }, user }).toArray()
+    : [];
+
+  if (!stored.length) {
+    stored = docs;
+  }
+
+  debug.info("Mongo: inserted opportunities", {
+    user,
+    count: stored.length,
+    inserted: result.insertedCount,
+  });
+
+  return stored.map(mapOpportunityDocument);
 }
 
 export async function deleteOpportunity(user: string, opportunityId: string): Promise<void> {

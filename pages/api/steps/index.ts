@@ -9,6 +9,57 @@ import {
   saveUserStep,
   updateStepStatus,
 } from "@/lib/userData";
+import { generateSimulatedOpportunitiesForStep } from "@/lib/opportunities/generation";
+
+function normaliseStepId(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "object" && "toString" in value && typeof value.toString === "function") {
+    const serialised = value.toString();
+    return serialised && serialised !== "[object Object]" ? serialised : null;
+  }
+
+  return null;
+}
+
+function scheduleOpportunityGeneration(user: string, stepIds: unknown[]) {
+  const uniqueIds = Array.from(
+    new Set(
+      stepIds
+        .map((value) => normaliseStepId(value))
+        .filter((value): value is string => Boolean(value))
+    )
+  );
+
+  if (uniqueIds.length === 0) {
+    return;
+  }
+
+  uniqueIds.forEach((stepId) => {
+    void generateSimulatedOpportunitiesForStep(user, stepId)
+      .then((opportunities) => {
+        debug.trace("Steps API: opportunity generation finished", {
+          user,
+          stepId,
+          generated: opportunities.length,
+        });
+      })
+      .catch((error) => {
+        const message = error instanceof Error ? error.message : String(error);
+        debug.error("Steps API: opportunity generation failed", {
+          user,
+          stepId,
+          message,
+        });
+      });
+  });
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -67,9 +118,16 @@ export default async function handler(
 
         const result = await createSuggestedSteps(email, intentionId, steps);
 
-        const insertedIds = result?.insertedIds
-          ? Object.values(result.insertedIds).map((value) => value?.toString?.() ?? String(value))
+        const insertedIdsRaw = result?.insertedIds
+          ? Object.values(result.insertedIds)
           : [];
+        const insertedIds = insertedIdsRaw
+          .map((value) => normaliseStepId(value))
+          .filter((value): value is string => Boolean(value));
+
+        if (insertedIds.length) {
+          scheduleOpportunityGeneration(email, insertedIds);
+        }
 
         debug.info("Steps API: bulk suggestion write complete", {
           user: email,
@@ -85,9 +143,21 @@ export default async function handler(
         user: email,
         payloadKeys: Object.keys(req.body || {}),
       });
-      await saveUserStep(email, req.body);
-      debug.info("Steps API: write complete", { user: email });
-      return res.status(200).json({ ok: true });
+      const result = await saveUserStep(email, req.body);
+      const bodyStepId = normaliseStepId(req.body?._id ?? req.body?.id);
+      const upsertedId = normaliseStepId(result.upsertedId ?? null);
+      const finalStepId = bodyStepId ?? upsertedId;
+
+      if (finalStepId && result.upsertedCount > 0) {
+        scheduleOpportunityGeneration(email, [finalStepId]);
+      }
+
+      debug.info("Steps API: write complete", {
+        user: email,
+        stepId: finalStepId ?? null,
+      });
+
+      return res.status(200).json(finalStepId ? { ok: true, stepId: finalStepId } : { ok: true });
     }
 
     return res.status(405).json({ error: "Method not allowed" });
