@@ -98,22 +98,68 @@ export async function getUserSteps(email: string) {
 /**
  * Save or update a step for a given user.
  */
-export async function saveUserStep(email: string, step: any) {
+export async function saveUserStep(email: string, step: any): Promise<string | null> {
   const col = await getCollection("steps");
+  const now = new Date();
+  const normalizedStep = { ...step };
+
+  if (!normalizedStep.createdAt) {
+    normalizedStep.createdAt = now;
+  }
+
+  normalizedStep.updatedAt = now;
+  normalizedStep.user = email;
+
+  let lookupId: ObjectId | string | null = null;
+
+  if (normalizedStep._id instanceof ObjectId) {
+    lookupId = normalizedStep._id;
+  } else if (typeof normalizedStep._id === "string" && normalizedStep._id) {
+    lookupId = ObjectId.isValid(normalizedStep._id)
+      ? new ObjectId(normalizedStep._id)
+      : normalizedStep._id;
+  } else if (typeof normalizedStep.id === "string" && normalizedStep.id) {
+    lookupId = ObjectId.isValid(normalizedStep.id)
+      ? new ObjectId(normalizedStep.id)
+      : normalizedStep.id;
+  }
+
+  if (!lookupId) {
+    lookupId = new ObjectId();
+  }
+
+  if (lookupId instanceof ObjectId) {
+    normalizedStep._id = lookupId;
+    if (!normalizedStep.id) {
+      normalizedStep.id = lookupId.toHexString();
+    }
+  } else {
+    normalizedStep._id = lookupId;
+    if (!normalizedStep.id) {
+      normalizedStep.id = lookupId;
+    }
+  }
+
+  const stepIdentifier = lookupId instanceof ObjectId ? lookupId.toHexString() : String(lookupId);
+
   debug.trace("MongoDB: upserting step", {
     user: email,
-    stepId: step._id || "(new)",
+    stepId: stepIdentifier,
   });
+
   const result = await col.updateOne(
-    { _id: step._id, user: email },
-    { $set: { ...step, updatedAt: new Date() } },
+    { _id: lookupId, user: email },
+    { $set: normalizedStep },
     { upsert: true }
   );
+
   debug.info("MongoDB: step upsert result", {
     matched: result.matchedCount,
     modified: result.modifiedCount,
     upserted: result.upsertedId,
   });
+
+  return stepIdentifier;
 }
 
 export async function createSuggestedSteps(

@@ -9,6 +9,44 @@ import {
   saveUserStep,
   updateStepStatus,
 } from "@/lib/userData";
+import {
+  safelyGenerateOpportunitiesForStep,
+  stepHasOpportunities,
+} from "@/lib/opportunities/generation";
+
+function normaliseStepId(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "object") {
+    const hex = (value as { toHexString?: () => string }).toHexString?.();
+    if (typeof hex === "string" && hex) {
+      return hex;
+    }
+
+    const str = (value as { toString?: () => string }).toString?.();
+    if (typeof str === "string" && str) {
+      return str;
+    }
+  }
+
+  return null;
+}
+
+function resolveStepId(payload: Record<string, unknown>, persistedId?: string | null): string | null {
+  const candidate = payload as { _id?: unknown; id?: unknown };
+
+  return (
+    normaliseStepId(persistedId) ??
+    normaliseStepId(candidate?._id) ??
+    normaliseStepId(candidate?.id)
+  );
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -47,6 +85,29 @@ export default async function handler(
       debug.trace("Steps API: update status", { user: email, stepId, status });
       const result = await updateStepStatus(email, stepId, status);
       debug.info("Steps API: update status result", { matched: result.matchedCount });
+
+      if (status === "accepted" && result.matchedCount > 0 && result.modifiedCount > 0) {
+        const canonicalStepId = normaliseStepId(stepId);
+
+        if (canonicalStepId) {
+          const alreadyHas = await stepHasOpportunities(canonicalStepId);
+
+          if (!alreadyHas) {
+            await safelyGenerateOpportunitiesForStep(canonicalStepId, "ai-accepted");
+          } else {
+            debug.debug("Opportunities: auto generation skipped (existing)", {
+              stepId: canonicalStepId,
+              origin: "ai-accepted",
+            });
+          }
+        } else {
+          debug.warn("Steps API: unable to determine step id for acceptance", {
+            user: email,
+            provided: stepId,
+          });
+        }
+      }
+
       return res.status(200).json({ ok: true });
     }
 
@@ -85,9 +146,26 @@ export default async function handler(
         user: email,
         payloadKeys: Object.keys(req.body || {}),
       });
-      await saveUserStep(email, req.body);
+      const persistedId = await saveUserStep(email, req.body);
+      const canonicalStepId = resolveStepId(req.body || {}, persistedId);
+
+      if (canonicalStepId) {
+        const alreadyHas = await stepHasOpportunities(canonicalStepId);
+
+        if (!alreadyHas) {
+          await safelyGenerateOpportunitiesForStep(canonicalStepId, "manual");
+        } else {
+          debug.debug("Opportunities: auto generation skipped (existing)", {
+            stepId: canonicalStepId,
+            origin: "manual",
+          });
+        }
+      } else {
+        debug.warn("Steps API: unable to resolve step id for opportunities", { user: email });
+      }
+
       debug.info("Steps API: write complete", { user: email });
-      return res.status(200).json({ ok: true });
+      return res.status(200).json({ ok: true, stepId: canonicalStepId });
     }
 
     return res.status(405).json({ error: "Method not allowed" });

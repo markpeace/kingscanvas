@@ -3,7 +3,12 @@ import { ObjectId } from "mongodb"
 import { generateOpportunityDraftsForStep } from "@/lib/ai/opportunities"
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
-import { createOpportunitiesForStep, deleteOpportunitiesForStep, getUserIntentions } from "@/lib/userData"
+import {
+  createOpportunitiesForStep,
+  deleteOpportunitiesForStep,
+  getOpportunitiesByStep,
+  getUserIntentions
+} from "@/lib/userData"
 import type { Opportunity } from "@/types/canvas"
 import type { OpportunityDraft } from "@/lib/userData"
 
@@ -78,6 +83,72 @@ async function loadStep(stepId: string): Promise<StepDocument | null> {
   }
 
   return null
+}
+
+function normaliseStepIdentifier(value: unknown): string | null {
+  if (!value) {
+    return null
+  }
+
+  if (typeof value === "string") {
+    return value
+  }
+
+  if (value instanceof ObjectId) {
+    return value.toHexString()
+  }
+
+  if (typeof value === "object") {
+    const hex = (value as { toHexString?: () => string }).toHexString?.()
+    if (typeof hex === "string" && hex) {
+      return hex
+    }
+
+    const str = (value as { toString?: () => string }).toString?.()
+    if (typeof str === "string" && str) {
+      return str
+    }
+  }
+
+  return null
+}
+
+export async function stepHasOpportunities(stepId: string): Promise<boolean> {
+  try {
+    const step = await loadStep(stepId)
+
+    if (!step?.user) {
+      return false
+    }
+
+    const canonicalStepId = normaliseStepIdentifier(step._id ?? step.id)
+
+    if (!canonicalStepId) {
+      return false
+    }
+
+    const existing = await getOpportunitiesByStep(step.user, canonicalStepId)
+
+    return existing.length > 0
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error"
+    debug.warn("Opportunities: stepHasOpportunities failed", { stepId, message })
+    return false
+  }
+}
+
+export async function safelyGenerateOpportunitiesForStep(
+  stepId: string,
+  origin: OpportunityGenerationOrigin
+): Promise<void> {
+  debug.info("Opportunities: auto generation requested", { stepId, origin })
+
+  try {
+    await generateOpportunitiesForStep({ stepId, origin })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error"
+    debug.error("Opportunities: auto generation failed", { stepId, origin, message })
+  }
 }
 
 async function loadIntentionTitle(user: string, intentionId?: string): Promise<string | undefined> {
