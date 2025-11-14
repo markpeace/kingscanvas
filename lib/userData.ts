@@ -21,7 +21,6 @@ type OpportunityDocument = {
 
 export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "createdAt" | "updatedAt">;
 
-type OpportunityInsert = Omit<OpportunityDocument, "_id">;
 
 function toOpportunityId(value: WithId<OpportunityDocument>["_id"]): string {
   if (typeof value === "string") {
@@ -243,9 +242,10 @@ export async function createOpportunitiesForStep(
   const col = await getCollection<OpportunityDocument>("opportunities");
   const normalizedStepId = String(stepId);
 
-  const documents: OpportunityInsert[] = drafts.map((draft) => {
+  const documents: OpportunityDocument[] = drafts.map((draft) => {
     const timestamp = new Date();
     return {
+      _id: new ObjectId(),
       user,
       stepId: normalizedStepId,
       title: draft.title,
@@ -269,7 +269,7 @@ export async function createOpportunitiesForStep(
   const insertedIds = Object.values(result.insertedIds) as ObjectId[];
 
   const created = documents.map((doc, index) => {
-    const insertedId = insertedIds[index] ?? new ObjectId();
+    const insertedId = insertedIds[index] ?? doc._id;
     return mapOpportunity({ ...doc, _id: insertedId });
   });
 
