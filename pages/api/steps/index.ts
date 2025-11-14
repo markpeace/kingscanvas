@@ -9,7 +9,7 @@ import {
   saveUserStep,
   updateStepStatus,
 } from "@/lib/userData";
-import { generateSimulatedOpportunitiesForStep } from "@/lib/opportunities/generation";
+import { generateSimulatedOpportunitiesForStepIfNeeded } from "@/lib/opportunities/generation";
 
 function normaliseStepId(value: unknown): string | null {
   if (!value) {
@@ -42,22 +42,29 @@ function scheduleOpportunityGeneration(user: string, stepIds: unknown[]) {
   }
 
   uniqueIds.forEach((stepId) => {
-    void generateSimulatedOpportunitiesForStep(user, stepId)
-      .then((opportunities) => {
+    void (async () => {
+      try {
+        const opportunities = await generateSimulatedOpportunitiesForStepIfNeeded(user, stepId);
+
+        if (!opportunities) {
+          debug.trace("Steps API: opportunity generation skipped", { user, stepId });
+          return;
+        }
+
         debug.trace("Steps API: opportunity generation finished", {
           user,
           stepId,
           generated: opportunities.length,
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         debug.error("Steps API: opportunity generation failed", {
           user,
           stepId,
           message,
         });
-      });
+      }
+    })();
   });
 }
 
@@ -84,6 +91,7 @@ export default async function handler(
     }
 
     if (req.method === "PUT") {
+      // Handles accepting or rejecting previously suggested steps.
       const { stepId, status } = req.body || {};
 
       if (typeof stepId !== "string" || !stepId || typeof status !== "string") {
@@ -98,6 +106,12 @@ export default async function handler(
       debug.trace("Steps API: update status", { user: email, stepId, status });
       const result = await updateStepStatus(email, stepId, status);
       debug.info("Steps API: update status result", { matched: result.matchedCount });
+
+      if (status === "accepted" && result.modifiedCount > 0) {
+        // Accepted AI suggestion becomes a real step – queue opportunity generation.
+        scheduleOpportunityGeneration(email, [stepId]);
+      }
+
       return res.status(200).json({ ok: true });
     }
 
@@ -105,6 +119,7 @@ export default async function handler(
       const { intentionId, steps } = req.body || {};
 
       if (Array.isArray(steps)) {
+        // Persist AI-proposed steps as suggestions only; opportunities follow acceptance.
         if (typeof intentionId !== "string" || intentionId.length === 0) {
           debug.error("Steps API: bulk write missing intentionId", { user: email });
           return res.status(400).json({ error: "Missing intentionId" });
@@ -125,10 +140,6 @@ export default async function handler(
           .map((value) => normaliseStepId(value))
           .filter((value): value is string => Boolean(value));
 
-        if (insertedIds.length) {
-          scheduleOpportunityGeneration(email, insertedIds);
-        }
-
         debug.info("Steps API: bulk suggestion write complete", {
           user: email,
           count: steps.length,
@@ -139,6 +150,7 @@ export default async function handler(
     }
 
     if (req.method === "POST") {
+      // Manual authoring/updating of a concrete step persists directly to the canonical store.
       debug.trace("Steps API: write", {
         user: email,
         payloadKeys: Object.keys(req.body || {}),

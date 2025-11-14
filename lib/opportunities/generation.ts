@@ -154,6 +154,8 @@ export async function generateSimulatedOpportunitiesForStep(
   const tags = extractTags(step)
   const intentionId = typeof step.intentionId === "string" ? step.intentionId : null
 
+  debug.info("AI: simulate-opportunities invoked", { user, stepId, stepTitle })
+
   const intentionsDoc = (await getUserIntentions(user)) as IntentionsDocument | null
   const intentionTitle = resolveIntentionTitle(intentionsDoc, intentionId)
 
@@ -167,11 +169,21 @@ export async function generateSimulatedOpportunitiesForStep(
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown AI error"
-    debug.error("Opportunity generation: workflow failed", { user, stepId, message })
+    debug.error("Opportunity generation: workflow failed", {
+      user,
+      stepId,
+      message,
+    })
     throw new OpportunityGenerationError(message, 503)
   }
 
-  const drafts: OpportunityUpsertInput[] = buildOpportunityInputs(workflowResult.opportunities).map(
+  const rawPreview = workflowResult.rawText?.slice(0, 200) ?? ""
+  const preview = rawPreview || "(empty)"
+  debug.info("AI: simulate-opportunities raw response", { user, stepId, preview })
+
+  const drafts: OpportunityUpsertInput[] = buildOpportunityInputs(
+    workflowResult.opportunities,
+  ).map(
     (draft) => ({
       stepId,
       title: draft.title,
@@ -182,6 +194,12 @@ export async function generateSimulatedOpportunitiesForStep(
       status: "suggested",
     }),
   )
+
+  debug.info("AI: simulate-opportunities parsed opportunities", {
+    user,
+    stepId,
+    count: drafts.length,
+  })
 
   if (!drafts.some((item) => item.source === "independent")) {
     drafts.push({
@@ -204,6 +222,12 @@ export async function generateSimulatedOpportunitiesForStep(
 
   const limited = drafts.slice(0, MAX_OPPORTUNITIES)
 
+  debug.info("Opportunities: persisting generated items", {
+    user,
+    stepId,
+    count: limited.length,
+  })
+
   const col = await getCollection("opportunities")
   await col.deleteMany({
     user,
@@ -221,6 +245,24 @@ export async function generateSimulatedOpportunitiesForStep(
   })
 
   return stored
+}
+
+async function hasExistingOpportunitiesForStep(user: string, stepId: string): Promise<boolean> {
+  const col = await getCollection("opportunities")
+  const existing = await col.findOne({ user, stepId })
+  return Boolean(existing)
+}
+
+export async function generateSimulatedOpportunitiesForStepIfNeeded(
+  user: string,
+  stepId: string,
+): Promise<Opportunity[] | null> {
+  if (await hasExistingOpportunitiesForStep(user, stepId)) {
+    debug.trace("Opportunity generation: skipped existing entries", { user, stepId })
+    return null
+  }
+
+  return generateSimulatedOpportunitiesForStep(user, stepId)
 }
 
 export { OpportunityGenerationError }

@@ -31,7 +31,10 @@ type WorkflowName = "suggest-step" | "simulate-opportunities"
 
 type SuggestWorkflowResult = { suggestions: Suggestion[] }
 
-type SimulateOpportunitiesWorkflowResult = { opportunities: SimulatedOpportunityDraft[] }
+type SimulateOpportunitiesWorkflowResult = {
+  opportunities: SimulatedOpportunityDraft[]
+  rawText: string
+}
 
 type WorkflowResult = SuggestWorkflowResult | SimulateOpportunitiesWorkflowResult
 
@@ -320,7 +323,9 @@ export async function runWorkflow(
 
     const drafts = parseOpportunityDrafts(text)
 
-    return { opportunities: drafts }
+    debug.info("AI: simulate-opportunities parsed drafts", { count: drafts.length })
+
+    return { opportunities: drafts, rawText: text }
   }
 
   throw new Error(`Unhandled workflow: ${workflowName}`)
