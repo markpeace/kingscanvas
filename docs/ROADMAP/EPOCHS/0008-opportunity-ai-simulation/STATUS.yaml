@@ -1,0 +1,8 @@
+status: "in_progress"
+updated_at: "2025-11-14"
+start_date: "2025-11-14"
+branch: "feature/epoch-0008/opportunity-ai-simulation"
+plan: "./PLAN.md"
+notes: |-
+  Starting AI based opportunity generation and shuffle behaviour built on top
+  of the Epoch 0007 opportunity model and UI foundation.
