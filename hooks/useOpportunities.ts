@@ -25,6 +25,7 @@ export function useOpportunities(stepId: string | null | undefined, options?: Us
 
   const abortControllerRef = useRef<AbortController | null>(null)
   const isMountedRef = useRef(true)
+  const retryCountRef = useRef(0)
 
   useEffect(() => {
     return () => {
@@ -35,6 +36,10 @@ export function useOpportunities(stepId: string | null | undefined, options?: Us
 
   const enabled = Boolean(stepId) && options?.enabled !== false
   const endpoint = stepId ? `/api/steps/${encodeURIComponent(stepId)}/opportunities` : null
+
+  useEffect(() => {
+    retryCountRef.current = 0
+  }, [endpoint])
 
   const refetch = useCallback(async () => {
     if (!enabled || !endpoint) {
@@ -102,6 +107,28 @@ export function useOpportunities(stepId: string | null | undefined, options?: Us
       abortControllerRef.current?.abort()
     }
   }, [refetch])
+
+  useEffect(() => {
+    if (!enabled || isLoading || error || !endpoint) {
+      return
+    }
+
+    if (opportunities.length > 0) {
+      retryCountRef.current = 0
+      return
+    }
+
+    if (retryCountRef.current >= 3) {
+      return
+    }
+
+    const timer = window.setTimeout(() => {
+      retryCountRef.current += 1
+      void refetch()
+    }, 4000)
+
+    return () => window.clearTimeout(timer)
+  }, [enabled, endpoint, error, isLoading, opportunities.length, refetch])
 
   return {
     opportunities,

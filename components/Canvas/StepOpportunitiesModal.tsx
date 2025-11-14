@@ -16,6 +16,18 @@ function formatOpportunityLabel(value: string | undefined): string {
     .join(' ')
 }
 
+function getSourceLabel(source: Opportunity['source'] | undefined): string {
+  if (source === 'edge_simulated') {
+    return "Simulated King's Edge example"
+  }
+
+  if (source === 'independent') {
+    return 'Simulated independent idea'
+  }
+
+  return ''
+}
+
 type StepOpportunitiesModalProps = {
   isOpen: boolean
   onClose: () => void
@@ -44,6 +56,7 @@ export function StepOpportunitiesModal({
       focusLabels: Array.isArray(opportunity.focus)
         ? opportunity.focus.map((focusItem) => formatOpportunityLabel(focusItem))
         : [],
+      sourceLabel: getSourceLabel(opportunity.source),
     }))
   }, [opportunities])
 
@@ -120,41 +133,51 @@ export function StepOpportunitiesModal({
               )}
             </div>
           ) : formattedOpportunities.length > 0 ? (
-            <ul className="space-y-4">
-              {formattedOpportunities.map((opportunity) => (
-                <li
-                  key={opportunity.id}
-                  className="rounded-xl border border-kings-grey-light/70 bg-white p-4 shadow-sm"
-                >
-                  <h3 className="text-base font-semibold text-slate-900">
-                    {opportunity.title}
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-600">
-                    {opportunity.summary}
-                  </p>
-                  {(opportunity.formLabel || opportunity.focusLabels.length > 0) && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-                      {opportunity.formLabel && (
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
-                          {opportunity.formLabel}
-                        </span>
-                      )}
-                      {opportunity.focusLabels.map((focusLabel) => (
-                        <span
-                          key={`${opportunity.id}-${focusLabel}`}
-                          className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600"
-                        >
-                          {focusLabel}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+            <>
+              <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                These opportunities are simulated to spark ideas — they are not real listings.
+              </p>
+              <ul className="space-y-4">
+                {formattedOpportunities.map((opportunity) => (
+                  <li
+                    key={opportunity.id}
+                    className="rounded-xl border border-kings-grey-light/70 bg-white p-4 shadow-sm"
+                  >
+                    {opportunity.sourceLabel && (
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {opportunity.sourceLabel}
+                      </p>
+                    )}
+                    <h3 className="mt-1 text-base font-semibold text-slate-900">
+                      {opportunity.title}
+                    </h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                      {opportunity.summary}
+                    </p>
+                    {(opportunity.formLabel || opportunity.focusLabels.length > 0) && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
+                        {opportunity.formLabel && (
+                          <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+                            {opportunity.formLabel}
+                          </span>
+                        )}
+                        {opportunity.focusLabels.map((focusLabel) => (
+                          <span
+                            key={`${opportunity.id}-${focusLabel}`}
+                            className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600"
+                          >
+                            {focusLabel}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <div className="rounded-xl border border-dashed border-kings-grey-light/70 bg-kings-grey-light/10 p-6 text-center text-sm leading-relaxed text-slate-600">
-              There are no opportunities for this step yet.
+              We’re generating some example opportunities for this step. They will appear here shortly.
             </div>
           )}
         </div>
