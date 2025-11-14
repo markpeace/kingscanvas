@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+
 import { useOpportunities } from '@/hooks/useOpportunities'
 import type { Step } from '@/types/canvas'
 
@@ -29,6 +31,61 @@ type StepCardProps = {
 
 type DragBlockEvent = MouseEvent<HTMLElement> | TouchEvent<HTMLElement> | PointerEvent<HTMLElement>
 
+const PERSISTED_ID_PATTERN = /^[a-fA-F0-9]{24}$/
+
+function isLikelyPersistedId(value: string): boolean {
+  return PERSISTED_ID_PATTERN.test(value)
+}
+
+function normaliseId(candidate: unknown): string | null {
+  if (!candidate) {
+    return null
+  }
+
+  if (typeof candidate === 'string') {
+    return candidate
+  }
+
+  if (typeof candidate === 'object') {
+    const asRecord = candidate as { $oid?: unknown; toHexString?: () => unknown; toString?: () => string }
+
+    if (typeof asRecord.$oid === 'string' && asRecord.$oid) {
+      return asRecord.$oid
+    }
+
+    if (typeof asRecord.toHexString === 'function') {
+      const hex = asRecord.toHexString()
+      if (typeof hex === 'string' && hex) {
+        return hex
+      }
+    }
+
+    if (typeof asRecord.toString === 'function') {
+      const coerced = asRecord.toString()
+      if (typeof coerced === 'string' && isLikelyPersistedId(coerced)) {
+        return coerced
+      }
+    }
+  }
+
+  return null
+}
+
+function resolveCanonicalStepId(step: Step): string | null {
+  const persisted = normaliseId(step._id)
+  if (persisted) {
+    return persisted
+  }
+
+  const fallback = normaliseId(step.id)
+
+  if (fallback && isLikelyPersistedId(fallback)) {
+    return fallback
+  }
+
+  return null
+}
+
 function blockDrag(event: DragBlockEvent) {
   event.stopPropagation()
   event.preventDefault()
@@ -43,8 +100,9 @@ export function StepCard({
   onReject,
   ghostStyle
 }: StepCardProps) {
-  const isGhost = step.status === 'ghost';
-  const isSuggested = step.status === 'suggested';
+  const normalizedStatus = typeof step.status === 'string' ? step.status.toLowerCase() : undefined;
+  const isGhost = normalizedStatus === 'ghost';
+  const isSuggested = normalizedStatus === 'suggested';
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.id,
     data: { type: 'step', step },
@@ -55,12 +113,13 @@ export function StepCard({
   const [open, setOpen] = useState(false);
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const shouldShowOpportunities = !isGhost && !isSuggested;
+  const canonicalStepId = useMemo(() => resolveCanonicalStepId(step), [step]);
+  const shouldShowOpportunities = Boolean(canonicalStepId) && !isGhost && !isSuggested;
   const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
-  } = useOpportunities(shouldShowOpportunities ? step.id : null);
+  } = useOpportunities(shouldShowOpportunities ? canonicalStepId : null);
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -288,9 +347,9 @@ export function StepCard({
           onSave={handleSave}
         />
       )}
-      {shouldShowOpportunities && (
+      {shouldShowOpportunities && canonicalStepId && (
         <StepOpportunitiesModal
-          stepId={step.id}
+          stepId={canonicalStepId}
           stepTitle={displayText}
           isOpen={opportunitiesOpen}
           onClose={handleCloseOpportunities}
