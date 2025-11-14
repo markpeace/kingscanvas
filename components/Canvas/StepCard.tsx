@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useRef,
   useState,
   type CSSProperties,
   type KeyboardEvent,
@@ -12,6 +13,8 @@ import {
 import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
+import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+import { useOpportunities } from '@/hooks/useOpportunities'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -50,6 +53,14 @@ export function StepCard({
   const { active } = useDndContext();
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
+  const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
+  const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const shouldShowOpportunities = !isGhost && !isSuggested;
+  const {
+    opportunities,
+    isLoading: opportunitiesLoading,
+    error: opportunitiesError,
+  } = useOpportunities(shouldShowOpportunities ? step.id : null);
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -113,6 +124,14 @@ export function StepCard({
 
   const isDragging = active?.id === step.id;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
+  const opportunitiesCount = opportunities.length;
+  const badgeContent = opportunitiesLoading ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString();
+  const badgeLabel = opportunitiesLoading
+    ? 'Loading opportunities'
+    : opportunitiesError
+    ? 'Could not load opportunities'
+    : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`;
+  const badgeAriaLabel = `${badgeLabel} for ${displayText}`;
   const baseClasses =
     'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
   const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
@@ -148,6 +167,22 @@ export function StepCard({
     }
   }
 
+  const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    setOpportunitiesOpen(true)
+  }
+
+  const handleCloseOpportunities = () => {
+    setOpportunitiesOpen(false)
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        opportunitiesTriggerRef.current?.focus()
+      })
+    } else {
+      opportunitiesTriggerRef.current?.focus()
+    }
+  }
+
   return (
     <>
       <div
@@ -173,6 +208,31 @@ export function StepCard({
           }
         }}
       >
+        {shouldShowOpportunities && (
+          <div className="absolute right-3 top-3">
+            <button
+              ref={opportunitiesTriggerRef}
+              type="button"
+              className={`inline-flex min-w-[2.25rem] items-center justify-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+                opportunitiesError
+                  ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                  : 'border-kings-grey-light bg-kings-grey-light/30 text-kings-grey-dark hover:bg-kings-grey-light/50'
+              }`}
+              aria-label={badgeAriaLabel}
+              aria-haspopup="dialog"
+              aria-expanded={opportunitiesOpen}
+              aria-busy={opportunitiesLoading || undefined}
+              title={badgeLabel}
+              onClick={handleOpenOpportunities}
+              onMouseDown={blockDrag}
+              onTouchStart={blockDrag}
+              onPointerDown={blockDrag}
+            >
+              {badgeContent}
+            </button>
+          </div>
+        )}
+
         {isSuggested && (
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
             <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
@@ -226,6 +286,17 @@ export function StepCard({
           title="Edit Step"
           initialTitle={data.title ?? data.text ?? ''}
           onSave={handleSave}
+        />
+      )}
+      {shouldShowOpportunities && (
+        <StepOpportunitiesModal
+          stepId={step.id}
+          stepTitle={displayText}
+          isOpen={opportunitiesOpen}
+          onClose={handleCloseOpportunities}
+          opportunities={opportunities}
+          isLoading={opportunitiesLoading}
+          error={opportunitiesError}
         />
       )}
     </>
