@@ -31,3 +31,8 @@ export async function ensureStepIndexes() {
   await col.createIndex({ user: 1, intentionId: 1 });
   await col.createIndex({ user: 1, status: 1 });
 }
+
+export async function ensureOpportunityIndexes() {
+  const col = await getCollection("opportunities");
+  await col.createIndex({ user: 1, stepId: 1 });
+}
