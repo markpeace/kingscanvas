@@ -23,6 +23,7 @@ export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "crea
 
 type StepDocument = Document & {
   _id: ObjectId | string;
+  id?: string;
   user: string;
 };
 
@@ -97,6 +98,37 @@ export async function getUserSteps(email: string) {
   const docs = await col.find({ user: email }).toArray();
   debug.info("MongoDB: fetch complete", { count: docs.length });
   return docs;
+}
+
+export async function getStepById(stepId: string): Promise<StepDocument | null> {
+  const col = await getCollection<StepDocument>("steps");
+  debug.trace("MongoDB: fetching step by id", { stepId });
+
+  const queries: Array<Record<string, unknown>> = [];
+
+  if (ObjectId.isValid(stepId)) {
+    try {
+      queries.push({ _id: new ObjectId(stepId) });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      debug.warn("MongoDB: failed to coerce step id to ObjectId", { stepId, message });
+    }
+  }
+
+  queries.push({ _id: stepId });
+  queries.push({ id: stepId });
+
+  for (const query of queries) {
+    const doc = await col.findOne(query);
+
+    if (doc) {
+      debug.info("MongoDB: step found by id", { stepId });
+      return doc;
+    }
+  }
+
+  debug.warn("MongoDB: step not found by id", { stepId });
+  return null;
 }
 
 /**

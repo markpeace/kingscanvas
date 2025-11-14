@@ -12,13 +12,13 @@ jest.mock("next-auth", () => ({
 
 jest.mock("@/lib/userData", () => ({
   getOpportunitiesByStep: jest.fn(),
-  getStepForUser: jest.fn()
+  getStepById: jest.fn()
 }))
 
 const { getServerSession } = jest.requireMock("next-auth") as { getServerSession: jest.Mock }
-const { getOpportunitiesByStep, getStepForUser } = jest.requireMock("@/lib/userData") as {
+const { getOpportunitiesByStep, getStepById } = jest.requireMock("@/lib/userData") as {
   getOpportunitiesByStep: jest.Mock,
-  getStepForUser: jest.Mock
+  getStepById: jest.Mock
 }
 
 const makeObjectId = (() => {
@@ -68,7 +68,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
     jest.clearAllMocks()
     getServerSession.mockReset()
     getOpportunitiesByStep.mockReset()
-    getStepForUser.mockReset()
+    getStepById.mockReset()
   })
 
   it("returns 401 when unauthenticated", async () => {
@@ -84,16 +84,29 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
     expect(getJSON<{ ok: boolean; error: string }>()).toEqual({ ok: false, error: "Not authenticated" })
   })
 
-  it("returns 403 when the step does not belong to the user", async () => {
+  it("returns 404 when the step does not exist", async () => {
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    getStepForUser.mockResolvedValue(null)
+    getStepById.mockResolvedValue(null)
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: "step-1" })
     const handler = (await import("@/pages/api/steps/[stepId]/opportunities")).default
 
     await handler(req, res)
 
-    expect(getStepForUser).toHaveBeenCalledWith("owner@example.com", "step-1")
+    expect(getStepById).toHaveBeenCalledWith("step-1")
+    expect(getStatus()).toBe(404)
+    expect(getJSON<{ ok: boolean; error: string }>()).toEqual({ ok: false, error: "Step not found" })
+  })
+
+  it("returns 403 when the step belongs to a different user", async () => {
+    getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
+    getStepById.mockResolvedValue({ _id: "step-1", user: "another@example.com" })
+
+    const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: "step-1" })
+    const handler = (await import("@/pages/api/steps/[stepId]/opportunities")).default
+
+    await handler(req, res)
+
     expect(getStatus()).toBe(403)
     expect(getJSON<{ ok: boolean; error: string }>()).toEqual({ ok: false, error: "Forbidden" })
   })
@@ -101,7 +114,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns an empty array when no opportunities are stored", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    getStepForUser.mockResolvedValue({ _id: objectId })
+    getStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
     getOpportunitiesByStep.mockResolvedValue([])
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: objectId.toHexString() })
@@ -121,7 +134,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns stored opportunities for the step", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    getStepForUser.mockResolvedValue({ _id: objectId })
+    getStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
     getOpportunitiesByStep.mockResolvedValue([
       {
         id: "opp-1",
@@ -150,7 +163,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns 500 when fetching fails", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    getStepForUser.mockResolvedValue({ _id: objectId })
+    getStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
     getOpportunitiesByStep.mockRejectedValue(new Error("database offline"))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: objectId.toHexString() })

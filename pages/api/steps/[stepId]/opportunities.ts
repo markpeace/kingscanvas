@@ -3,8 +3,38 @@ import { getServerSession } from "next-auth"
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
-import { getOpportunitiesByStep, getStepForUser } from "@/lib/userData"
+import { getOpportunitiesByStep, getStepById } from "@/lib/userData"
 import type { Opportunity } from "@/types/canvas"
+
+type StepRecord = {
+  _id?: unknown
+  id?: unknown
+  user?: string
+}
+
+function normaliseStepIdentifier(value: unknown): string | null {
+  if (!value) {
+    return null
+  }
+
+  if (typeof value === "string") {
+    return value
+  }
+
+  if (typeof value === "object") {
+    const hex = (value as { toHexString?: () => string }).toHexString?.()
+    if (typeof hex === "string" && hex) {
+      return hex
+    }
+
+    const str = (value as { toString?: () => string }).toString?.()
+    if (typeof str === "string" && str) {
+      return str
+    }
+  }
+
+  return null
+}
 
 type OpportunitiesResponse =
   | { ok: true; stepId: string; opportunities: Opportunity[] }
@@ -34,23 +64,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   debug.trace("Opportunities API: fetch", { user: email, stepId: requestedStepId })
 
   try {
-    const step = await getStepForUser(email, requestedStepId)
+    const step = (await getStepById(requestedStepId)) as StepRecord | null
 
     if (!step) {
+      debug.warn("Opportunities API: step not found", { user: email, stepId: requestedStepId })
+      return res.status(404).json({ ok: false, error: "Step not found" })
+    }
+
+    const owner = typeof step.user === "string" && step.user ? step.user : null
+
+    if (!owner) {
+      debug.error("Opportunities API: step missing owner", { stepId: requestedStepId })
+      return res.status(500).json({ ok: false, error: "Server error" })
+    }
+
+    if (owner !== email) {
       debug.warn("Opportunities API: forbidden", { user: email, stepId: requestedStepId })
       return res.status(403).json({ ok: false, error: "Forbidden" })
     }
 
-    const rawStepId = (step as { _id?: unknown })._id
-    let canonicalStepId = requestedStepId
+    const canonicalStepId =
+      normaliseStepIdentifier(step._id ?? step.id) ?? requestedStepId
 
-    if (rawStepId && typeof rawStepId === "object" && "toHexString" in rawStepId && typeof rawStepId.toHexString === "function") {
-      canonicalStepId = rawStepId.toHexString()
-    } else if (typeof rawStepId === "string" && rawStepId) {
-      canonicalStepId = rawStepId
-    }
-
-    const opportunities = await getOpportunitiesByStep(email, canonicalStepId)
+    const opportunities = await getOpportunitiesByStep(owner, canonicalStepId)
 
     debug.info("Opportunities API: success", { user: email, stepId: canonicalStepId, count: opportunities.length })
 
