@@ -17,6 +17,10 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
   const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
+    debug.trace('Opportunities hook: init', { stepId })
+  }, [stepId])
+
+  useEffect(() => {
     let isActive = true
     const controller = new AbortController()
 
