@@ -39,6 +39,109 @@ type IntentionRecord = {
   }>
 }
 
+const VALID_SOURCES = new Set<PersistenceOpportunityDraft["source"]>(["edge_simulated", "independent"])
+const VALID_FORMS = new Set<PersistenceOpportunityDraft["form"]>([
+  "intensive",
+  "evergreen",
+  "short_form",
+  "sustained"
+])
+const VALID_FOCUS_VALUES = ["capability", "capital", "credibility"] as const
+const VALID_STATUSES: OpportunityStatus[] = ["suggested", "saved", "dismissed"]
+
+type ValidFocusValue = (typeof VALID_FOCUS_VALUES)[number]
+
+function sanitiseFocus(value: unknown): PersistenceOpportunityDraft["focus"] | null {
+  if (typeof value === "string") {
+    const normalised = value.trim().toLowerCase()
+
+    if (VALID_FOCUS_VALUES.includes(normalised as ValidFocusValue)) {
+      return normalised as PersistenceOpportunityDraft["focus"]
+    }
+
+    return null
+  }
+
+  if (Array.isArray(value)) {
+    const cleaned = Array.from(
+      new Set(
+        value
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim().toLowerCase())
+          .filter((item): item is ValidFocusValue => VALID_FOCUS_VALUES.includes(item as ValidFocusValue))
+      )
+    )
+
+    if (cleaned.length === 0) {
+      return null
+    }
+
+    if (cleaned.length === 1) {
+      return cleaned[0] as PersistenceOpportunityDraft["focus"]
+    }
+
+    return cleaned as unknown as PersistenceOpportunityDraft["focus"]
+  }
+
+  return null
+}
+
+function sanitiseDraft(
+  draft: unknown,
+  index: number,
+  metadata: { stepId: string; origin: OpportunityGenerationOrigin }
+): PersistenceOpportunityDraft | null {
+  if (!draft || typeof draft !== "object") {
+    debug.warn("Opportunities: skipping malformed draft", {
+      ...metadata,
+      index,
+      reason: "non-object"
+    })
+    return null
+  }
+
+  const candidate = draft as Partial<PersistenceOpportunityDraft> & { focus?: unknown }
+
+  const title = typeof candidate.title === "string" ? candidate.title.trim() : ""
+  const summary = typeof candidate.summary === "string" ? candidate.summary.trim() : ""
+  const source = typeof candidate.source === "string" ? candidate.source.trim().toLowerCase() : ""
+  const form = typeof candidate.form === "string" ? candidate.form.trim().toLowerCase() : ""
+  const focus = sanitiseFocus(candidate.focus)
+
+  const normalisedSource = source as PersistenceOpportunityDraft["source"]
+  const normalisedForm = form as PersistenceOpportunityDraft["form"]
+
+  if (!title || !summary || !focus || !VALID_SOURCES.has(normalisedSource) || !VALID_FORMS.has(normalisedForm)) {
+    debug.warn("Opportunities: dropping incomplete draft", {
+      ...metadata,
+      index,
+      hasTitle: Boolean(title),
+      hasSummary: Boolean(summary),
+      hasSource: VALID_SOURCES.has(normalisedSource),
+      hasForm: VALID_FORMS.has(normalisedForm),
+      hasFocus: Boolean(focus)
+    })
+    return null
+  }
+
+  let status: OpportunityStatus = "suggested"
+  if (typeof candidate.status === "string") {
+    const normalisedStatus = candidate.status.trim().toLowerCase() as OpportunityStatus
+    if (VALID_STATUSES.includes(normalisedStatus)) {
+      status = normalisedStatus
+    }
+  }
+
+  return {
+    title,
+    summary,
+    source: normalisedSource,
+    form: normalisedForm,
+    focus,
+    status
+  }
+}
+
 function resolveCanonicalStepId(step: StepRecord, fallback: string): string {
   const rawId = step._id
 
@@ -176,16 +279,20 @@ export async function generateOpportunitiesForStep(params: {
       bucketId
     })
 
-    const records: PersistenceOpportunityDraft[] = drafts.map((draft) => ({
-      title: draft.title,
-      summary: draft.summary,
-      source: draft.source,
-      form: draft.form,
-      focus: draft.focus,
-      status: (draft.status ?? "suggested") as OpportunityStatus
-    }))
+    const records = drafts
+      .map((draft, index) => sanitiseDraft(draft, index, { stepId: canonicalStepId, origin }))
+      .filter((draft): draft is PersistenceOpportunityDraft => Boolean(draft))
+
+    if (records.length === 0) {
+      debug.warn("Opportunities: no valid drafts returned", { stepId: canonicalStepId, origin })
+    }
 
     await deleteOpportunitiesForStep(step.user, canonicalStepId)
+
+    if (records.length === 0) {
+      return []
+    }
+
     const created = await createOpportunitiesForStep(step.user, canonicalStepId, records)
 
     debug.info("Opportunities: generateOpportunitiesForStep success", {

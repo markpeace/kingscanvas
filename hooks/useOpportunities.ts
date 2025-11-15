@@ -42,6 +42,17 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
           signal: controller.signal
         })
 
+        if (response.status === 404) {
+          if (!isActive) {
+            return
+          }
+
+          debug.debug('Opportunities hook: no opportunities yet', { stepId })
+          setError(null)
+          setOpportunities([])
+          return
+        }
+
         if (!response.ok) {
           throw new Error(`Failed to load opportunities (${response.status})`)
         }

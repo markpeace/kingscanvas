@@ -55,12 +55,31 @@ export function StepCard({
   const [open, setOpen] = useState(false);
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const canonicalStepId = (() => {
+    if (typeof step._id === 'string' && step._id.trim().length > 0) {
+      return step._id.trim();
+    }
+
+    if (typeof step.id === 'string' && step.id.trim().length > 0) {
+      const trimmed = step.id.trim();
+      const ephemeralPrefixes = ['step-', 'ghost-', 'ai-'];
+
+      if (ephemeralPrefixes.some((prefix) => trimmed.startsWith(prefix))) {
+        return null;
+      }
+
+      return trimmed;
+    }
+
+    return null;
+  })();
+
   const shouldShowOpportunities = !isGhost && !isSuggested;
   const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
-  } = useOpportunities(shouldShowOpportunities ? step.id : null);
+  } = useOpportunities(shouldShowOpportunities ? canonicalStepId : null);
 
   const handleSave = (title: string) => {
     setData((prev) => ({
