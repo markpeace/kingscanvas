@@ -54,12 +54,44 @@ function normaliseBucketId(bucket?: string): BucketId {
   return (match?.id ?? DEFAULT_BUCKET) as BucketId
 }
 
+function coerceStepIdentifier(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : undefined
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+
+  if (value && typeof value === 'object') {
+    const maybeObject = value as { toHexString?: () => unknown; toString?: () => unknown }
+
+    if (typeof maybeObject.toHexString === 'function') {
+      const hex = maybeObject.toHexString()
+      if (typeof hex === 'string' && hex.trim().length > 0) {
+        return hex.trim()
+      }
+    }
+
+    if (typeof maybeObject.toString === 'function') {
+      const str = maybeObject.toString()
+      if (typeof str === 'string' && str.trim().length > 0) {
+        return str.trim()
+      }
+    }
+  }
+
+  return undefined
+}
+
 function resolvePersistedStepId(step: RawStep): string | undefined {
   const candidates = [step.persistedId, step._id, step.id]
 
   for (const candidate of candidates) {
-    if (typeof candidate === 'string' && candidate.trim().length > 0) {
-      return candidate.trim()
+    const resolved = coerceStepIdentifier(candidate)
+    if (resolved) {
+      return resolved
     }
   }
 
@@ -68,6 +100,7 @@ function resolvePersistedStepId(step: RawStep): string | undefined {
 
 function normaliseStepFromApi(step: RawStep, fallbackPrefix: string, index: number): Step {
   const persistedId = resolvePersistedStepId(step)
+  const rawBackendId = coerceStepIdentifier(step._id)
   const fallbackClientId = `${fallbackPrefix}-step-${index + 1}`
   const clientId =
     typeof step.id === 'string' && step.id.trim().length > 0
@@ -88,7 +121,7 @@ function normaliseStepFromApi(step: RawStep, fallbackPrefix: string, index: numb
     text: step.text,
     title: step.title,
     user: step.user,
-    _id: typeof step._id === 'string' && step._id.trim().length > 0 ? step._id.trim() : persistedId,
+    _id: rawBackendId ?? persistedId,
   }
 }
 

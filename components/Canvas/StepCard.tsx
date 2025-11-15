@@ -130,6 +130,8 @@ export function StepCard({
   const apiStepId =
     typeof step._id === 'string' && step._id.trim().length > 0
       ? step._id.trim()
+      : typeof step.persistedId === 'string' && step.persistedId.trim().length > 0
+      ? step.persistedId.trim()
       : step.id;
   const hasApiStepId = typeof apiStepId === 'string' && apiStepId.length > 0;
 

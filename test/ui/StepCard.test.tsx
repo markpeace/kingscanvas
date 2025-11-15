@@ -83,4 +83,27 @@ describe('StepCard opportunities integration', () => {
     expect(useOpportunitiesMock).toHaveBeenCalled()
     expect(useOpportunitiesMock.mock.calls[0][0]).toBe('step-local')
   })
+
+  it('uses persistedId when _id is missing but persistedId is present', () => {
+    const step: Step = {
+      id: 'step-temp',
+      persistedId: 'backend-123',
+      intentionId: 'int-1',
+      bucket: 'do-now',
+      order: 1,
+      title: 'Persisted via autosave'
+    }
+
+    render(
+      <StepCard
+        step={step}
+        onDelete={noop}
+        onMoveForward={noop}
+        onMoveBackward={noop}
+      />
+    )
+
+    expect(useOpportunitiesMock).toHaveBeenCalled()
+    expect(useOpportunitiesMock.mock.calls[0][0]).toBe('backend-123')
+  })
 })

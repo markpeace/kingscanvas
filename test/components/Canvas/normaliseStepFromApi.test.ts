@@ -35,4 +35,25 @@ describe('normaliseStepFromApi', () => {
     expect(result._id).toBe('xyz789')
     expect(result.id).toBe('step-xyz789')
   })
+
+  it('coerces object id values to strings', () => {
+    const fakeObjectId = {
+      toString: () => '507f1f77bcf86cd799439011'
+    }
+
+    const result = normaliseStepFromApi(
+      {
+        _id: fakeObjectId as any,
+        intentionId: 'int-3',
+        bucket: 'do-now',
+        order: 2,
+        title: 'Object id step'
+      },
+      'int-3',
+      2
+    )
+
+    expect(result._id).toBe('507f1f77bcf86cd799439011')
+    expect(result.persistedId).toBe('507f1f77bcf86cd799439011')
+  })
 })
