@@ -114,6 +114,7 @@ export function StepCard({
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null);
   const canonicalStepId = useMemo(() => resolveCanonicalStepId(step), [step]);
+  const shouldShowSuggestedLabel = isGhost || isSuggested;
   const shouldShowOpportunities = Boolean(canonicalStepId) && !isGhost && !isSuggested;
   const {
     opportunities,
@@ -292,7 +293,7 @@ export function StepCard({
           </div>
         )}
 
-        {isSuggested && (
+        {shouldShowSuggestedLabel && (
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
             <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
               Suggested

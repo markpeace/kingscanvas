@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react"
+import { render, screen } from "@testing-library/react"
 
 import StepCard from "@/components/Canvas/StepCard"
 import type { Step } from "@/types/canvas"
@@ -71,6 +71,19 @@ describe("StepCard opportunities integration", () => {
     mockUseOpportunities.mockReset()
   })
 
+  it("shows the Suggested label for ghost AI placeholders", () => {
+    const step: Step = {
+      ...baseStep,
+      status: "ghost"
+    }
+
+    renderStep(step)
+
+    expect(mockUseOpportunities).toHaveBeenCalledWith(null)
+    expect(stepOpportunitiesModalSpy).not.toHaveBeenCalled()
+    expect(screen.getByText("Suggested")).toBeInTheDocument()
+  })
+
   it("skips opportunities for suggested steps even when a persisted id exists", () => {
     const step: Step = {
       ...baseStep,
@@ -82,6 +95,7 @@ describe("StepCard opportunities integration", () => {
 
     expect(mockUseOpportunities).toHaveBeenCalledWith(null)
     expect(stepOpportunitiesModalSpy).not.toHaveBeenCalled()
+    expect(screen.getByText("Suggested")).toBeInTheDocument()
   })
 
   it("uses the persisted id when rendering real steps", () => {
@@ -110,5 +124,6 @@ describe("StepCard opportunities integration", () => {
 
     expect(mockUseOpportunities).toHaveBeenCalledWith(null)
     expect(stepOpportunitiesModalSpy).not.toHaveBeenCalled()
+    expect(screen.queryByText("Suggested")).not.toBeInTheDocument()
   })
 })
