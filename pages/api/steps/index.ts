@@ -9,6 +9,10 @@ import {
   saveUserStep,
   updateStepStatus,
 } from "@/lib/userData";
+import {
+  safelyGenerateOpportunitiesForStep,
+  stepHasOpportunities,
+} from "@/lib/opportunities/generation";
 
 export default async function handler(
   req: NextApiRequest,
@@ -47,6 +51,27 @@ export default async function handler(
       debug.trace("Steps API: update status", { user: email, stepId, status });
       const result = await updateStepStatus(email, stepId, status);
       debug.info("Steps API: update status result", { matched: result.matchedCount });
+
+      if (status === "accepted" && typeof stepId === "string" && stepId.trim().length > 0) {
+        const canonicalStepId = stepId.trim();
+
+        try {
+          const alreadyHasOpportunities = await stepHasOpportunities(canonicalStepId);
+
+          if (!alreadyHasOpportunities) {
+            await safelyGenerateOpportunitiesForStep(canonicalStepId, "ai-accepted");
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          debug.error("Opportunities: auto generation failed to complete", {
+            stepId: canonicalStepId,
+            origin: "ai-accepted",
+            message,
+            error,
+          });
+        }
+      }
+
       return res.status(200).json({ ok: true });
     }
 
@@ -54,6 +79,7 @@ export default async function handler(
       const { intentionId, steps } = req.body || {};
 
       if (Array.isArray(steps)) {
+        // Persisting AI ghost suggestions must never trigger opportunity generation.
         if (typeof intentionId !== "string" || intentionId.length === 0) {
           debug.error("Steps API: bulk write missing intentionId", { user: email });
           return res.status(400).json({ error: "Missing intentionId" });
@@ -85,8 +111,36 @@ export default async function handler(
         user: email,
         payloadKeys: Object.keys(req.body || {}),
       });
-      await saveUserStep(email, req.body);
+      const saveResult = await saveUserStep(email, req.body);
       debug.info("Steps API: write complete", { user: email });
+
+      const persistedStepId =
+        typeof saveResult?.stepId === "string" && saveResult.stepId.trim().length > 0
+          ? saveResult.stepId.trim()
+          : typeof req.body?._id === "string" && req.body._id.trim().length > 0
+          ? req.body._id.trim()
+          : typeof req.body?.id === "string" && req.body.id.trim().length > 0
+          ? req.body.id.trim()
+          : null;
+
+      if (persistedStepId) {
+        try {
+          const alreadyHasOpportunities = await stepHasOpportunities(persistedStepId);
+
+          if (!alreadyHasOpportunities) {
+            await safelyGenerateOpportunitiesForStep(persistedStepId, "manual");
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          debug.error("Opportunities: auto generation failed to complete", {
+            stepId: persistedStepId,
+            origin: "manual",
+            message,
+            error,
+          });
+        }
+      }
+
       return res.status(200).json({ ok: true });
     }
 

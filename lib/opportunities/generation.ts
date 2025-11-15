@@ -6,6 +6,7 @@ import { generateOpportunityDraftsForStep } from "@/lib/opportunities/simulation
 import {
   createOpportunitiesForStep,
   deleteOpportunitiesForStep,
+  getOpportunitiesByStep,
   type OpportunityDraft as PersistenceOpportunityDraft
 } from "@/lib/userData"
 import type { Opportunity, OpportunityStatus } from "@/types/canvas"
@@ -131,6 +132,21 @@ export async function findStepById(stepId: string): Promise<StepRecord | null> {
   return null
 }
 
+// Automatic generation should only happen once per step. If opportunities
+// already exist we leave regeneration to the explicit shuffle endpoint.
+export async function stepHasOpportunities(stepId: string): Promise<boolean> {
+  const step = await findStepById(stepId)
+
+  if (!step || typeof step.user !== "string" || step.user.trim().length === 0) {
+    return false
+  }
+
+  const canonicalStepId = resolveCanonicalStepId(step, stepId)
+  const opportunities = await getOpportunitiesByStep(step.user, canonicalStepId)
+
+  return opportunities.length > 0
+}
+
 export async function generateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
@@ -187,5 +203,24 @@ export async function generateOpportunitiesForStep(params: {
       message
     })
     throw error
+  }
+}
+
+export async function safelyGenerateOpportunitiesForStep(
+  stepId: string,
+  origin: OpportunityGenerationOrigin
+): Promise<void> {
+  debug.info("Opportunities: auto generation requested", { stepId, origin })
+
+  try {
+    await generateOpportunitiesForStep({ stepId, origin })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    debug.error("Opportunities: auto generation failed", {
+      stepId,
+      origin,
+      message,
+      error
+    })
   }
 }
