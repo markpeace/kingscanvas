@@ -1532,4 +1532,6 @@ export function Canvas() {
   )
 }
 
+export { normaliseIntentionsFromApi, normaliseStepFromApi }
+
 export default Canvas

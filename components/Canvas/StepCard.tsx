@@ -127,7 +127,11 @@ export function StepCard({
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
   const shouldShowOpportunities = !isGhost && !isSuggested;
-  const hasStepId = typeof step.id === 'string' && step.id.trim().length > 0;
+  const apiStepId =
+    typeof step._id === 'string' && step._id.trim().length > 0
+      ? step._id.trim()
+      : step.id;
+  const hasApiStepId = typeof apiStepId === 'string' && apiStepId.length > 0;
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -251,8 +255,8 @@ export function StepCard({
           }
         }}
       >
-        {shouldShowOpportunities && hasStepId && (
-          <StepOpportunitiesSection stepId={step.id} stepTitle={displayText} />
+        {shouldShowOpportunities && hasApiStepId && (
+          <StepOpportunitiesSection stepId={apiStepId} stepTitle={displayText} />
         )}
 
         {isSuggested && (
