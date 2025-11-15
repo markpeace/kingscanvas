@@ -1,7 +1,7 @@
 epoch_id: "0008-opportunity-ai-simulation"
 title: "Epoch 0008 — Opportunity AI Simulation"
-status: "awaiting_kickoff"
-started_at: null
+status: "in_progress"
+started_at: "2025-11-15T00:00:00Z"
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
 last_completed_epoch: "0007-opportunities-model-ui"
 current_epoch: "0008-opportunity-ai-simulation"
@@ -13,10 +13,12 @@ epochs:
   - id: "0007-opportunities-model-ui"
     status: "completed"
   - id: "0008-opportunity-ai-simulation"
-    status: "up_next"
+    status: "in_progress"
 summary: |
   Epoch 0007 — Opportunities Model & UI delivered the opportunity domain model,
-  persistence, read-only API, and real-step UI badge plus modal. Epoch 0008 —
-  Opportunity AI Simulation will build on that foundation with simulated data,
-  LangGraph ranking, and shuffle affordances.
+  persistence, read-only API, and real-step UI badge plus modal for real steps.
+  Epoch 0008 — Opportunity AI Simulation is now underway to generate fictional
+  King’s Edge style opportunities whenever real steps are created or accepted
+  from AI suggestions, add shuffle controls, and keep ghost suggestions free of
+  opportunities.
 expected_prs: []

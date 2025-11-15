@@ -1,0 +1,21 @@
+status: "in_progress"
+epoch: "0008-opportunity-ai-simulation"
+plan: "PLAN.md"
+start_date: "2025-11-15"
+updated_at: "2025-11-15"
+notes: |
+  Starting AI-based opportunity generation and shuffle behaviour for real steps,
+  building on the model and UI delivered in Epoch 0007.
+tasks:
+  - id: "auto-generate"
+    title: "Generate simulated opportunities for real steps"
+    status: "not_started"
+    notes: "Trigger on manual step creation and acceptance of AI suggestions."
+  - id: "shuffle-control"
+    title: "Add shuffle opportunities workflow"
+    status: "not_started"
+    notes: "Expose backend helper and UI affordance to regenerate opportunities."
+  - id: "ghost-guardrails"
+    title: "Maintain ghost suggestion exclusions"
+    status: "not_started"
+    notes: "Ensure AI-only ghost steps never produce or display opportunities."

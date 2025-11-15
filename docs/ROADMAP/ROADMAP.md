@@ -68,10 +68,16 @@ drag-and-drop cues informed by Epoch 0005 learnings.
 
 ---
 
-### 🧠 Epoch 0008 — AI Simulated Edge Opportunities
-**Status:** Planned.
+### 🧠 Epoch 0008 — Opportunity AI Simulation
+**Status:** In progress. ([PLAN](./EPOCHS/0008-opportunity-ai-simulation/PLAN.md))
 
-Simulate King’s Edge data, use LangGraph plus retrieval workflows to generate and rank opportunity matches, and introduce shuffle/refresh controls for opportunity sets.
+- Builds on the Opportunity model, storage, and UI introduced in Epoch 0007.
+- Automatically generates fictional King’s Edge style opportunities for real steps when:
+  - Students create steps manually.
+  - Students accept AI suggested steps and they become real.
+- Adds a “Shuffle opportunities” action so real steps can regenerate their opportunity sets.
+- Ensures ghost AI suggestions never trigger generation or display opportunities UI.
+- Relies solely on fictional opportunities aligned with the King’s Edge ethos—no live King’s Edge API integrations are in scope.
 
 ---
 
