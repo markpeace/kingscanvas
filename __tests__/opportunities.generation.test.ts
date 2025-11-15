@@ -158,7 +158,7 @@ const { generateOpportunityDraftsForStep } = jest.requireMock("@/lib/opportuniti
   >>
 }
 const { debug } = jest.requireMock("@/lib/debug") as {
-  debug: { info: jest.Mock; error: jest.Mock }
+  debug: { info: jest.Mock; error: jest.Mock; warn: jest.Mock }
 }
 
 describe("generateOpportunitiesForStep", () => {
@@ -167,6 +167,7 @@ describe("generateOpportunitiesForStep", () => {
     generateOpportunityDraftsForStep.mockReset()
     debug.info.mockReset()
     debug.error.mockReset()
+    debug.warn.mockReset()
   })
 
   it("generates and replaces opportunities for a step", async () => {
@@ -256,6 +257,56 @@ describe("generateOpportunitiesForStep", () => {
       "Shadow a portfolio review",
       "Join creative showcase"
     ])
+  })
+
+  it("skips malformed drafts without throwing", async () => {
+    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
+    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
+
+    const stepObjectId = new ObjectId()
+    const canonicalStepId = stepObjectId.toHexString()
+
+    const stepsCol = await getCollection("steps")
+    await stepsCol.insertMany([
+      {
+        _id: stepObjectId,
+        user: "owner@example.com",
+        intentionId: "int-456",
+        title: "Draft portfolio",
+        bucket: "do-now"
+      }
+    ])
+
+    generateOpportunityDraftsForStep.mockResolvedValue([
+      undefined as any,
+      {
+        title: "Attend mentor clinic",
+        summary: "Book a slot at the creative careers mentor clinic.",
+        source: "edge_simulated",
+        form: "evergreen",
+        focus: "capability",
+        status: "suggested"
+      },
+      {
+        title: "",
+        summary: "",
+        source: "edge_simulated",
+        form: "evergreen",
+        focus: "capability"
+      } as any
+    ])
+
+    const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
+    const { getOpportunitiesByStep } = await import("@/lib/userData")
+
+    const created = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "manual" })
+
+    expect(created).toHaveLength(1)
+    expect(debug.warn).toHaveBeenCalled()
+
+    const stored = await getOpportunitiesByStep("owner@example.com", canonicalStepId)
+    expect(stored).toHaveLength(1)
+    expect(stored[0]?.title).toBe("Attend mentor clinic")
   })
 
   it("throws StepNotFoundError when the step does not exist", async () => {

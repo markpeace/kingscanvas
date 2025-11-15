@@ -98,7 +98,46 @@ export async function getUserSteps(email: string) {
 /**
  * Save or update a step for a given user.
  */
-export async function saveUserStep(email: string, step: any) {
+function normalizeStepId(value: unknown): string | null {
+  if (!value) {
+    return null;
+  }
+
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value;
+  }
+
+  if (value instanceof ObjectId) {
+    return value.toHexString();
+  }
+
+  if (typeof value === "object") {
+    const candidate = value as { toHexString?: () => string; toString?: () => string };
+
+    if (candidate && typeof candidate.toHexString === "function") {
+      try {
+        const hex = candidate.toHexString();
+        if (typeof hex === "string" && hex.trim().length > 0) {
+          return hex;
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        debug.warn("Mongo: failed to normalise step id", { message });
+      }
+    }
+
+    if (candidate && typeof candidate.toString === "function") {
+      const asString = candidate.toString();
+      if (typeof asString === "string" && asString.trim().length > 0) {
+        return asString;
+      }
+    }
+  }
+
+  return null;
+}
+
+export async function saveUserStep(email: string, step: any): Promise<{ stepId: string | null }> {
   const col = await getCollection("steps");
   debug.trace("MongoDB: upserting step", {
     user: email,
@@ -114,6 +153,32 @@ export async function saveUserStep(email: string, step: any) {
     modified: result.modifiedCount,
     upserted: result.upsertedId,
   });
+
+  const upsertedId =
+    result?.upsertedId && "_id" in result.upsertedId ? result.upsertedId._id : result?.upsertedId;
+  let persistedId = normalizeStepId(upsertedId);
+
+  if (!persistedId) {
+    persistedId = normalizeStepId(step?._id) ?? normalizeStepId(step?.id);
+  }
+
+  if (!persistedId && step?._id) {
+    try {
+      const lookupId = normalizeStepId(step._id);
+
+      if (lookupId) {
+        const persisted = await col.findOne({ _id: new ObjectId(lookupId), user: email }, { projection: { _id: 1 } });
+        if (persisted?._id) {
+          persistedId = normalizeStepId(persisted._id);
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      debug.warn("Mongo: failed to resolve persisted step id", { message });
+    }
+  }
+
+  return { stepId: persistedId };
 }
 
 export async function createSuggestedSteps(
