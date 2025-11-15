@@ -56,11 +56,18 @@ export function StepCard({
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null);
   const shouldShowOpportunities = !isGhost && !isSuggested;
+  const persistedStepId =
+    typeof step.persistedId === 'string' && step.persistedId.trim().length > 0
+      ? step.persistedId
+      : typeof step._id === 'string' && step._id.trim().length > 0
+      ? step._id
+      : null;
+  const showOpportunitiesUI = shouldShowOpportunities && Boolean(persistedStepId);
   const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
-  } = useOpportunities(shouldShowOpportunities ? step.id : null);
+  } = useOpportunities(showOpportunitiesUI ? persistedStepId : null);
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -208,7 +215,7 @@ export function StepCard({
           }
         }}
       >
-        {shouldShowOpportunities && (
+        {showOpportunitiesUI && (
           <div className="absolute right-3 top-3">
             <button
               ref={opportunitiesTriggerRef}
@@ -288,9 +295,9 @@ export function StepCard({
           onSave={handleSave}
         />
       )}
-      {shouldShowOpportunities && (
+      {showOpportunitiesUI && (
         <StepOpportunitiesModal
-          stepId={step.id}
+          stepId={persistedStepId ?? step.id}
           stepTitle={displayText}
           isOpen={opportunitiesOpen}
           onClose={handleCloseOpportunities}

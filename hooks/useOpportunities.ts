@@ -42,20 +42,37 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
           signal: controller.signal
         })
 
+        let payload: { ok?: boolean; opportunities?: Opportunity[]; error?: string } | null = null
+
+        try {
+          payload = await response.json()
+        } catch (parseError) {
+          debug.warn('Opportunities hook: response parse failed', {
+            stepId,
+            message: parseError instanceof Error ? parseError.message : String(parseError)
+          })
+        }
+
+        if (response.status === 404) {
+          if (!isActive) return
+          setOpportunities([])
+          setError(null)
+          debug.debug('Opportunities hook: no opportunities yet (404)', { stepId })
+          return
+        }
+
         if (!response.ok) {
-          throw new Error(`Failed to load opportunities (${response.status})`)
+          const message = payload?.error || `Failed to load opportunities (${response.status})`
+          throw new Error(message)
         }
 
-        const payload: { ok: boolean; opportunities?: Opportunity[]; error?: string } = await response.json()
-
-        if (!payload.ok || !Array.isArray(payload.opportunities)) {
-          throw new Error(payload.error || 'Unexpected response when loading opportunities')
-        }
+        const items = Array.isArray(payload?.opportunities) ? payload?.opportunities : []
 
         if (!isActive) return
 
-        setOpportunities(payload.opportunities)
-        debug.debug('Opportunities hook: fetched', { stepId, count: payload.opportunities.length })
+        setOpportunities(items ?? [])
+        setError(null)
+        debug.debug('Opportunities hook: fetched', { stepId, count: items?.length ?? 0 })
       } catch (err) {
         if (!isActive || controller.signal.aborted) {
           return

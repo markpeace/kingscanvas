@@ -3,6 +3,7 @@ export type BucketId = 'do-now' | 'do-later' | 'before-graduation' | 'after-grad
 export interface Step {
   _id?: string
   id: string
+  persistedId?: string
   intentionId: string
   title?: string
   text?: string
