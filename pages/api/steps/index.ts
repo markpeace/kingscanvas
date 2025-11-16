@@ -56,7 +56,7 @@ export default async function handler(
           userId: email,
         });
 
-        void safelyGenerateOpportunitiesForStep({ stepId, origin: "ai-accepted" });
+        await safelyGenerateOpportunitiesForStep({ stepId, origin: "ai-accepted" });
       }
       return res.status(200).json({ ok: true });
     }
@@ -111,7 +111,7 @@ export default async function handler(
         intentionId: manualIntentionId,
       });
 
-      void safelyGenerateOpportunitiesForStep({ stepId: result.stepId, origin: "manual" });
+      await safelyGenerateOpportunitiesForStep({ stepId: result.stepId, origin: "manual" });
 
       return res.status(200).json({ ok: true, stepId: result.stepId });
     }
