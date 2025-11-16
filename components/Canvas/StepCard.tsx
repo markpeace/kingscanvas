@@ -16,7 +16,7 @@ import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { debug } from '@/lib/debug'
-import type { Step } from '@/types/canvas'
+import type { Opportunity, Step } from '@/types/canvas'
 
 type StepCardProps = {
   step: Step
@@ -40,10 +40,19 @@ type StepOpportunitiesSectionProps = {
   stepTitle: string
 }
 
+type ShuffleResponse = { ok?: boolean; opportunities?: Opportunity[]; error?: string }
+
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
-  const { opportunities, isLoading: opportunitiesLoading, error: opportunitiesError } = useOpportunities(stepId)
+  const {
+    opportunities,
+    isLoading: opportunitiesLoading,
+    error: opportunitiesError,
+    replace: replaceOpportunities
+  } = useOpportunities(stepId)
+  const [isShuffling, setIsShuffling] = useState(false)
+  const [shuffleError, setShuffleError] = useState<string | null>(null)
 
   const opportunitiesCount = opportunities.length
   const badgeContent = opportunitiesLoading ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString()
@@ -67,6 +76,49 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       })
     } else {
       opportunitiesTriggerRef.current?.focus()
+    }
+    setShuffleError(null)
+  }
+
+  const handleShuffle = async () => {
+    if (!stepId || isShuffling) {
+      return
+    }
+
+    setIsShuffling(true)
+    setShuffleError(null)
+    debug.info('Opportunities: shuffle requested', { stepId })
+
+    try {
+      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/shuffle-opportunities`, {
+        method: 'POST'
+      })
+
+      let payload: ShuffleResponse | null = null
+
+      try {
+        payload = await response.json()
+      } catch (parseError) {
+        debug.warn('Opportunities: shuffle parse failed', {
+          stepId,
+          message: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+      }
+
+      if (!response.ok || !payload?.ok) {
+        const message = payload?.error || `Failed to shuffle suggestions (${response.status})`
+        throw new Error(message)
+      }
+
+      const items = Array.isArray(payload.opportunities) ? payload.opportunities : []
+      replaceOpportunities(items)
+      debug.info('Opportunities: shuffle completed', { stepId, count: items.length })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      setShuffleError('Could not shuffle suggestions. Please try again.')
+      debug.error('Opportunities: shuffle failed', { stepId, message })
+    } finally {
+      setIsShuffling(false)
     }
   }
 
@@ -103,6 +155,9 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
         opportunities={opportunities}
         isLoading={opportunitiesLoading}
         error={opportunitiesError}
+        onShuffle={handleShuffle}
+        isShuffling={isShuffling}
+        shuffleError={shuffleError}
       />
     </>
   )

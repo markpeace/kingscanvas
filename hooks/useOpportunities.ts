@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { debug } from '@/lib/debug'
 import type { Opportunity } from '@/types/canvas'
@@ -9,12 +9,15 @@ type UseOpportunitiesResult = {
   opportunities: Opportunity[]
   isLoading: boolean
   error: Error | null
+  refresh: () => void
+  replace: (items: Opportunity[]) => void
 }
 
 export function useOpportunities(stepId?: string | null): UseOpportunitiesResult {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [refreshToken, setRefreshToken] = useState(0)
 
   useEffect(() => {
     debug.trace('Opportunities hook: init', { stepId })
@@ -99,9 +102,18 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
       isActive = false
       controller.abort()
     }
-  }, [stepId])
+  }, [stepId, refreshToken])
 
-  return { opportunities, isLoading, error }
+  const refresh = useCallback(() => {
+    setRefreshToken((token) => token + 1)
+  }, [])
+
+  const replace = useCallback((items: Opportunity[]) => {
+    setOpportunities(items)
+    setError(null)
+  }, [])
+
+  return { opportunities, isLoading, error, refresh, replace }
 }
 
 export default useOpportunities

@@ -31,7 +31,9 @@ describe('StepCard opportunities integration', () => {
     useOpportunitiesMock.mockReturnValue({
       opportunities: [],
       isLoading: false,
-      error: null
+      error: null,
+      refresh: jest.fn(),
+      replace: jest.fn()
     })
   })
 

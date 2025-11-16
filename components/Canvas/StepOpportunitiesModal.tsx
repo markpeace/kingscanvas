@@ -13,6 +13,9 @@ type StepOpportunitiesModalProps = {
   opportunities: Opportunity[]
   isLoading: boolean
   error: Error | null
+  onShuffle?: () => Promise<void> | void
+  isShuffling?: boolean
+  shuffleError?: string | null
 }
 
 export function StepOpportunitiesModal({
@@ -22,7 +25,10 @@ export function StepOpportunitiesModal({
   onClose,
   opportunities,
   isLoading,
-  error
+  error,
+  onShuffle,
+  isShuffling = false,
+  shuffleError = null
 }: StepOpportunitiesModalProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -61,6 +67,34 @@ export function StepOpportunitiesModal({
     return null
   }
 
+  const renderOpportunityPill = (source: Opportunity['source']) => {
+    const isIndependent = source === 'independent'
+    const label = isIndependent ? 'Independent' : 'Edge-style'
+    const baseClasses =
+      'inline-flex items-center rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide'
+    const variantClasses = isIndependent
+      ? 'border-slate-200 bg-slate-50 text-slate-600'
+      : 'border-kings-red/30 bg-kings-red/5 text-kings-red'
+
+    return <span className={`${baseClasses} ${variantClasses}`}>{label}</span>
+  }
+
+  const renderOpportunityList = (items: Opportunity[]) => (
+    <ul className="mt-3 space-y-3" role="list">
+      {items.map((opportunity) => (
+        <li key={opportunity.id} className="rounded-lg border border-kings-grey-light/70 bg-white p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-semibold text-kings-black">{opportunity.title}</h3>
+            {renderOpportunityPill(opportunity.source)}
+          </div>
+          {opportunity.summary ? (
+            <p className="mt-2 text-sm leading-relaxed text-kings-grey-dark">{opportunity.summary}</p>
+          ) : null}
+        </li>
+      ))}
+    </ul>
+  )
+
   const renderBody = () => {
     if (isLoading) {
       return (
@@ -86,24 +120,27 @@ export function StepOpportunitiesModal({
       )
     }
 
+    const edgeOpportunities = opportunities.filter((item) => item.source !== 'independent')
+    const independentOpportunities = opportunities.filter((item) => item.source === 'independent')
+
     return (
-      <ul
-        id={descriptionId}
-        className="mt-4 space-y-4"
-        role="list"
-      >
-        {opportunities.map((opportunity) => (
-          <li
-            key={opportunity.id}
-            className="rounded-lg border border-kings-grey-light/70 bg-white p-4 shadow-sm"
-          >
-            <h3 className="text-sm font-semibold text-kings-black">{opportunity.title}</h3>
-            {opportunity.summary ? (
-              <p className="mt-2 text-sm leading-relaxed text-kings-grey-dark">{opportunity.summary}</p>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <div id={descriptionId} className="mt-4 space-y-6">
+        {edgeOpportunities.length ? (
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-wide text-kings-grey-dark">
+              King's Edge style suggestions
+            </p>
+            {renderOpportunityList(edgeOpportunities)}
+          </section>
+        ) : null}
+
+        {independentOpportunities.length ? (
+          <section>
+            <p className="text-xs font-semibold uppercase tracking-wide text-kings-grey-dark">Independent idea</p>
+            {renderOpportunityList(independentOpportunities)}
+          </section>
+        ) : null}
+      </div>
     )
   }
 
@@ -125,25 +162,46 @@ export function StepOpportunitiesModal({
         className="w-full max-w-[560px] rounded-2xl border border-kings-grey-light/70 bg-kings-white p-6 shadow-2xl focus:outline-none"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4">
-          <h2
-            id={headingId}
-            ref={headingRef}
-            tabIndex={-1}
-            className="text-xl font-semibold text-kings-red focus:outline-none"
-          >
-            Opportunities for “{stepTitle}”
-          </h2>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
-          >
-            Close
-          </button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-col gap-2">
+              <h2
+                id={headingId}
+                ref={headingRef}
+                tabIndex={-1}
+                className="text-xl font-semibold text-kings-red focus:outline-none"
+              >
+                Opportunities for “{stepTitle}”
+              </h2>
+              {shuffleError ? (
+                <p className="text-sm text-red-600">{shuffleError}</p>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {onShuffle ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void onShuffle()
+                  }}
+                  disabled={isShuffling || isLoading}
+                  className="inline-flex items-center rounded-md border border-kings-grey-light bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark shadow-sm transition hover:border-kings-grey hover:text-kings-red disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
+                </button>
+              ) : null}
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          <div className="text-left text-sm text-kings-black">{renderBody()}</div>
         </div>
-        <div className="mt-4 text-left text-sm text-kings-black">{renderBody()}</div>
       </div>
     </div>,
     document.body
