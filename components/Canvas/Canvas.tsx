@@ -42,6 +42,21 @@ const ghostStyle: CSSProperties = {
   transition: 'opacity 0.3s ease'
 }
 
+type RawStep = Partial<Omit<Step, 'clientId' | 'id'>> & {
+  _id?: unknown
+  id?: unknown
+  clientId?: unknown
+  persistedId?: unknown
+}
+type RawIntention = Partial<Intention> & { steps?: RawStep[] }
+type ManualStepDraft = {
+  clientId: string
+  intentionId: string
+  bucket: Step['bucket']
+  title: string
+  order: number
+}
+
 function normaliseBucketId(bucket?: string): BucketId {
   if (!bucket) {
     return DEFAULT_BUCKET
@@ -49,6 +64,121 @@ function normaliseBucketId(bucket?: string): BucketId {
 
   const match = BUCKETS.find((candidate) => candidate.id === bucket)
   return (match?.id ?? DEFAULT_BUCKET) as BucketId
+}
+
+function coerceStepIdentifier(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    return trimmed.length > 0 ? trimmed : undefined
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value)
+  }
+
+  if (value && typeof value === 'object') {
+    const maybeObject = value as { toHexString?: () => unknown; toString?: () => unknown }
+
+    if (typeof maybeObject.toHexString === 'function') {
+      const hex = maybeObject.toHexString()
+      if (typeof hex === 'string' && hex.trim().length > 0) {
+        return hex.trim()
+      }
+    }
+
+    if (typeof maybeObject.toString === 'function') {
+      const str = maybeObject.toString()
+      if (typeof str === 'string' && str.trim().length > 0) {
+        return str.trim()
+      }
+    }
+  }
+
+  return undefined
+}
+
+function isClientGeneratedId(value: string): boolean {
+  return value.startsWith('step-') || value.startsWith('ghost-') || value.startsWith('ai-')
+}
+
+function resolveBackendStepId(step: RawStep): string | undefined {
+  const candidates = [step._id, step.persistedId, step.id]
+
+  for (const candidate of candidates) {
+    const resolved = coerceStepIdentifier(candidate)
+    if (resolved && !isClientGeneratedId(resolved)) {
+      return resolved
+    }
+  }
+
+  return undefined
+}
+
+function resolveClientStepId(
+  step: RawStep,
+  backendId: string | undefined,
+  fallbackPrefix: string,
+  index: number
+): string {
+  const fallbackClientId = `${fallbackPrefix}-step-${index + 1}`
+  const explicitClientId = coerceStepIdentifier(step.clientId)
+
+  if (explicitClientId) {
+    return explicitClientId
+  }
+
+  const idCandidate = coerceStepIdentifier(step.id)
+  if (idCandidate && isClientGeneratedId(idCandidate)) {
+    return idCandidate
+  }
+
+  if (backendId) {
+    return `step-${backendId}`
+  }
+
+  return fallbackClientId
+}
+
+function normaliseStepFromApi(step: RawStep, fallbackPrefix: string, index: number): Step {
+  const backendId = resolveBackendStepId(step)
+  const clientId = resolveClientStepId(step, backendId, fallbackPrefix, index)
+
+  return {
+    bucket: normaliseBucketId(step.bucket ?? (step as { bucketId?: string }).bucketId),
+    clientId,
+    createdAt: step.createdAt,
+    id: backendId ?? '',
+    intentionId: step.intentionId ?? fallbackPrefix,
+    order: typeof step.order === 'number' ? step.order : index + 1,
+    source: step.source,
+    status: step.status,
+    text: step.text,
+    title: step.title,
+    user: step.user,
+  }
+}
+
+function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
+  return intentions.map((intention, intentionIndex) => {
+    const fallbackId =
+      typeof intention.id === 'string' && intention.id.trim().length > 0
+        ? intention.id
+        : `intention-${intentionIndex + 1}`
+
+    const steps = Array.isArray(intention.steps)
+      ? intention.steps.map((step, stepIndex) => normaliseStepFromApi(step, fallbackId, stepIndex))
+      : []
+
+    return {
+      bucket: normaliseBucketId(intention.bucket),
+      createdAt: intention.createdAt ?? new Date().toISOString(),
+      description: intention.description,
+      id: fallbackId,
+      steps,
+      title: intention.title ?? 'Untitled intention',
+      updatedAt: intention.updatedAt ?? new Date().toISOString(),
+    }
+  })
 }
 
 export function Canvas() {
@@ -110,7 +240,7 @@ export function Canvas() {
 
       try {
         const res = await fetch('/api/intentions')
-        const data: { intentions?: Intention[]; error?: string } = await res.json()
+        const data: { intentions?: RawIntention[]; error?: string } = await res.json()
 
         if (!res.ok) {
           throw new Error(data.error || 'Failed to load')
@@ -124,7 +254,7 @@ export function Canvas() {
         } else {
           debug.info('Canvas: loaded intentions', { count: data.intentions.length })
           if (!ignore) {
-            setIntentions(data.intentions)
+            setIntentions(normaliseIntentionsFromApi(data.intentions))
           }
         }
       } catch (err) {
@@ -232,7 +362,9 @@ export function Canvas() {
             prev.map((intention) => {
               if (intention.id !== draggedStep.intentionId) return intention
 
-              const remainingSteps = intention.steps.filter((step) => step.id !== draggedStep.id)
+              const remainingSteps = intention.steps.filter(
+                (step) => step.clientId !== draggedStep.clientId
+              )
               if (remainingSteps.length === intention.steps.length) {
                 return intention
               }
@@ -307,13 +439,13 @@ export function Canvas() {
             }
 
             const stepsInTarget = intention.steps.filter(
-              (step) => step.bucket === newBucket && step.id !== draggedStep.id
+              (step) => step.bucket === newBucket && step.clientId !== draggedStep.clientId
             )
 
             stepMoved = true
 
             const updatedSteps = intention.steps.map((step) =>
-              step.id === draggedStep.id
+              step.clientId === draggedStep.clientId
                 ? { ...step, bucket: newBucket, order: stepsInTarget.length + 1 }
                 : step
             )
@@ -434,11 +566,12 @@ export function Canvas() {
           if (currentIntention.id !== intention.id) return currentIntention
 
           const stepsInTarget = currentIntention.steps.filter(
-            (existingStep) => existingStep.bucket === targetBucket && existingStep.id !== step.id
+            (existingStep) =>
+              existingStep.bucket === targetBucket && existingStep.clientId !== step.clientId
           )
 
           const updatedSteps = currentIntention.steps.map((existingStep) => {
-            if (existingStep.id !== step.id) {
+            if (existingStep.clientId !== step.clientId) {
               return existingStep
             }
 
@@ -531,6 +664,79 @@ export function Canvas() {
     [announce, triggerHighlight]
   )
 
+  const persistManualStep = useCallback(
+    async (draft: ManualStepDraft) => {
+      try {
+        debug.trace('Canvas: persisting manual step', {
+          clientId: draft.clientId,
+          intentionId: draft.intentionId,
+          bucket: draft.bucket,
+          order: draft.order
+        })
+
+        const res = await fetch('/api/steps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId: draft.clientId,
+            intentionId: draft.intentionId,
+            bucket: draft.bucket,
+            order: draft.order,
+            title: draft.title,
+            text: draft.title,
+            source: 'manual',
+            status: 'active'
+          })
+        })
+
+        const payload: { ok?: boolean; stepId?: string; error?: string } = await res.json().catch(() => ({}))
+
+        if (!res.ok) {
+          throw new Error(payload?.error || 'Failed to persist step')
+        }
+
+        const persistedId = typeof payload?.stepId === 'string' ? payload.stepId.trim() : ''
+
+        if (!persistedId) {
+          debug.warn('Canvas: manual step persistence missing id', {
+            clientId: draft.clientId,
+            intentionId: draft.intentionId
+          })
+          return
+        }
+
+        setIntentions((prev) =>
+          prev.map((intention) => {
+            if (intention.id !== draft.intentionId) {
+              return intention
+            }
+
+            return {
+              ...intention,
+              steps: intention.steps.map((step) =>
+                step.clientId === draft.clientId ? { ...step, id: persistedId } : step
+              )
+            }
+          })
+        )
+
+        debug.info('Canvas: manual step persisted', {
+          stepId: persistedId,
+          clientId: draft.clientId,
+          intentionId: draft.intentionId
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        debug.error('Canvas: manual step persistence failed', {
+          clientId: draft.clientId,
+          intentionId: draft.intentionId,
+          message
+        })
+      }
+    },
+    [setIntentions]
+  )
+
   const getIntentionForBucket = useCallback(
     (intentionId: string, bucket: BucketId) => {
       const exactMatch = intentions.find((item) => item.id === intentionId)
@@ -550,25 +756,47 @@ export function Canvas() {
     [intentions]
   )
 
-  const handleAddStep = useCallback((intentionId: string, bucket: Step['bucket'], title: string) => {
-    setIntentions((prev) =>
-      prev.map((intention) => {
-        if (intention.id !== intentionId) return intention
+  const handleAddStep = useCallback(
+    (intentionId: string, bucket: Step['bucket'], title: string) => {
+      const clientId = `step-${Date.now()}`
+      let created = false
+      let orderForPersistence = 1
 
-        const stepsInBucket = intention.steps.filter((step) => step.bucket === bucket)
+      setIntentions((prev) =>
+        prev.map((intention) => {
+          if (intention.id !== intentionId) {
+            return intention
+          }
 
-        const newStep: Step = {
-          id: `step-${Date.now()}`,
+          created = true
+          const stepsInBucket = intention.steps.filter((step) => step.bucket === bucket)
+          orderForPersistence = stepsInBucket.length + 1
+
+          const newStep: Step = {
+            id: '',
+            clientId,
+            intentionId,
+            title,
+            bucket,
+            order: orderForPersistence
+          }
+
+          return { ...intention, steps: [...intention.steps, newStep] }
+        })
+      )
+
+      if (created) {
+        void persistManualStep({
+          clientId,
           intentionId,
-          title,
           bucket,
-          order: stepsInBucket.length + 1
-        }
-
-        return { ...intention, steps: [...intention.steps, newStep] }
-      })
-    )
-  }, [])
+          title,
+          order: orderForPersistence
+        })
+      }
+    },
+    [persistManualStep]
+  )
 
   const handleAddAIStep = useCallback(
     async (intentionId: string, bucket: Step['bucket']) => {
@@ -584,7 +812,8 @@ export function Canvas() {
       const userEmail = user?.email ?? 'test@test.com'
       const ghostId = `ghost-${bucket}-${Date.now()}`
       const ghostBase: Step = {
-        id: ghostId,
+        id: '',
+        clientId: ghostId,
         intentionId: intention.id,
         title: 'Generating…',
         text: 'Generating…',
@@ -687,15 +916,15 @@ export function Canvas() {
               return item
             }
 
-            const ghostStep = item.steps.find((step) => step.id === ghostId)
-            const stepsInBucket = item.steps.filter(
-              (step) => step.bucket === bucket && step.id !== ghostId
-            )
+        const ghostStep = item.steps.find((step) => step.clientId === ghostId)
+        const stepsInBucket = item.steps.filter(
+          (step) => step.bucket === bucket && step.clientId !== ghostId
+        )
             const hasGhost = Boolean(ghostStep)
 
             const finalStep: Step = {
-              id: finalStepId as string,
-              _id: suggestionId,
+              id: suggestionId ?? '',
+              clientId: finalStepId as string,
               intentionId: intention.id,
               title: suggestionText,
               text: suggestionText,
@@ -710,7 +939,7 @@ export function Canvas() {
             return {
               ...item,
               steps: hasGhost
-                ? item.steps.map((step) => (step.id === ghostId ? finalStep : step))
+                ? item.steps.map((step) => (step.clientId === ghostId ? finalStep : step))
                 : [...item.steps, finalStep]
             }
           })
@@ -760,7 +989,7 @@ export function Canvas() {
               return {
                 ...item,
                 steps: item.steps.map((step) =>
-                  step.id === finalStepId ? { ...step, _id: insertedId } : step
+                  step.clientId === finalStepId ? { ...step, id: insertedId } : step
                 )
               }
             })
@@ -793,11 +1022,11 @@ export function Canvas() {
             return {
               ...item,
               steps: item.steps.filter((step) => {
-                if (step.id === ghostId) {
+                if (step.clientId === ghostId) {
                   return false
                 }
 
-                if (finalStepId && step.id === finalStepId) {
+                if (finalStepId && step.clientId === finalStepId) {
                   return false
                 }
 
@@ -873,7 +1102,8 @@ export function Canvas() {
               assignedOrder = stepsInBucket.length + 1
 
               const ghostStep: Step = {
-                id: ghostId,
+                id: '',
+                clientId: ghostId,
                 intentionId: intention.id,
                 title: 'Generating…',
                 text: 'Generating…',
@@ -942,7 +1172,7 @@ export function Canvas() {
 
                 return {
                   ...candidate,
-                  steps: candidate.steps.filter((step) => step.id !== ghostId)
+                  steps: candidate.steps.filter((step) => step.clientId !== ghostId)
                 }
               })
             )
@@ -956,8 +1186,8 @@ export function Canvas() {
           const finalCreatedAt = new Date().toISOString()
 
           const finalStep: Step = {
-            id: finalStepId,
-            _id: suggestionId,
+            id: suggestionId ?? '',
+            clientId: finalStepId,
             intentionId: intention.id,
             title: suggestionText,
             text: suggestionText,
@@ -977,7 +1207,7 @@ export function Canvas() {
 
               return {
                 ...candidate,
-                steps: candidate.steps.map((step) => (step.id === ghostId ? finalStep : step))
+                steps: candidate.steps.map((step) => (step.clientId === ghostId ? finalStep : step))
               }
             })
           )
@@ -1030,12 +1260,7 @@ export function Canvas() {
                   return {
                     ...candidate,
                     steps: candidate.steps.map((step) =>
-                      step.id === finalStepId
-                        ? {
-                            ...step,
-                            _id: insertedId
-                          }
-                        : step
+                      step.clientId === finalStepId ? { ...step, id: insertedId } : step
                     )
                   }
                 })
@@ -1100,7 +1325,9 @@ export function Canvas() {
         prev.map((intention) => {
           if (intention.id !== step.intentionId) return intention
 
-          const remainingSteps = intention.steps.filter((existingStep) => existingStep.id !== step.id)
+          const remainingSteps = intention.steps.filter(
+            (existingStep) => existingStep.clientId !== step.clientId
+          )
           if (remainingSteps.length === intention.steps.length) {
             return intention
           }
@@ -1141,7 +1368,8 @@ export function Canvas() {
   )
 
   const handleAcceptSuggestion = useCallback(async (step: Step) => {
-    const stepIdentifier = step._id ?? step.id
+    const backendStepId = typeof step.id === 'string' && step.id.trim().length > 0 ? step.id.trim() : ''
+    const stepIdentifier = backendStepId || step.clientId
     debug.trace('Canvas: accept suggestion', { stepId: stepIdentifier })
 
     setIntentions((prev) =>
@@ -1153,10 +1381,10 @@ export function Canvas() {
         return {
           ...intention,
           steps: intention.steps.map((existingStep) => {
-            if (
-              existingStep.id === step.id ||
-              (step._id && existingStep._id === step._id)
-            ) {
+            const matchesBackend = backendStepId && existingStep.id === backendStepId
+            const matchesClient = existingStep.clientId === step.clientId
+
+            if (matchesBackend || matchesClient) {
               return { ...existingStep, status: 'accepted' }
             }
 
@@ -1166,8 +1394,8 @@ export function Canvas() {
       })
     )
 
-    if (!step._id) {
-      debug.warn('Canvas: accept suggestion missing persisted id', { stepId: stepIdentifier })
+    if (!backendStepId) {
+      debug.warn('Canvas: accept suggestion missing backend id', { stepId: stepIdentifier })
       return
     }
 
@@ -1175,31 +1403,32 @@ export function Canvas() {
       const res = await fetch('/api/steps', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepId: step._id, status: 'accepted' })
+        body: JSON.stringify({ stepId: backendStepId, status: 'accepted' })
       })
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}))
         debug.error('Canvas: suggestion accept persist failed', {
-          stepId: step._id,
+          stepId: backendStepId,
           status: res.status,
           response: errorBody
         })
         return
       }
 
-      debug.info('Canvas: suggestion accepted and persisted', { stepId: step._id })
+      debug.info('Canvas: suggestion accepted and persisted', { stepId: backendStepId })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       debug.error('Canvas: suggestion accept persistence errored', {
-        stepId: step._id,
+        stepId: backendStepId,
         message
       })
     }
   }, [])
 
   const handleRejectSuggestion = useCallback(async (step: Step) => {
-    const stepIdentifier = step._id ?? step.id
+    const backendStepId = typeof step.id === 'string' && step.id.trim().length > 0 ? step.id.trim() : ''
+    const stepIdentifier = backendStepId || step.clientId
     debug.trace('Canvas: reject suggestion', { stepId: stepIdentifier })
 
     setIntentions((prev) =>
@@ -1210,16 +1439,23 @@ export function Canvas() {
 
         return {
           ...intention,
-          steps: intention.steps.filter(
-            (existingStep) =>
-              existingStep.id !== step.id && (!step._id || existingStep._id !== step._id)
-          )
+          steps: intention.steps.filter((existingStep) => {
+            if (existingStep.clientId === step.clientId) {
+              return false
+            }
+
+            if (backendStepId && existingStep.id === backendStepId) {
+              return false
+            }
+
+            return true
+          })
         }
       })
     )
 
-    if (!step._id) {
-      debug.warn('Canvas: reject suggestion missing persisted id', { stepId: stepIdentifier })
+    if (!backendStepId) {
+      debug.warn('Canvas: reject suggestion missing backend id', { stepId: stepIdentifier })
       return
     }
 
@@ -1227,24 +1463,24 @@ export function Canvas() {
       const res = await fetch('/api/steps', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stepId: step._id, status: 'rejected' })
+        body: JSON.stringify({ stepId: backendStepId, status: 'rejected' })
       })
 
       if (!res.ok) {
         const errorBody = await res.json().catch(() => ({}))
         debug.error('Canvas: suggestion reject persist failed', {
-          stepId: step._id,
+          stepId: backendStepId,
           status: res.status,
           response: errorBody
         })
         return
       }
 
-      debug.info('Canvas: suggestion rejected and persisted', { stepId: step._id })
+      debug.info('Canvas: suggestion rejected and persisted', { stepId: backendStepId })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
       debug.error('Canvas: suggestion reject persistence errored', {
-        stepId: step._id,
+        stepId: backendStepId,
         message
       })
     }
@@ -1450,5 +1686,7 @@ export function Canvas() {
     </>
   )
 }
+
+export { normaliseIntentionsFromApi, normaliseStepFromApi }
 
 export default Canvas

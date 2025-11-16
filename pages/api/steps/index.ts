@@ -78,16 +78,17 @@ export default async function handler(
 
         return res.status(200).json({ ok: true, insertedIds });
       }
-    }
 
-    if (req.method === "POST") {
       debug.trace("Steps API: write", {
         user: email,
         payloadKeys: Object.keys(req.body || {}),
       });
-      await saveUserStep(email, req.body);
-      debug.info("Steps API: write complete", { user: email });
-      return res.status(200).json({ ok: true });
+
+      const result = await saveUserStep(email, req.body);
+
+      debug.info("Steps API: write complete", { user: email, stepId: result.stepId });
+
+      return res.status(200).json({ ok: true, stepId: result.stepId });
     }
 
     return res.status(405).json({ error: "Method not allowed" });

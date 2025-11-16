@@ -106,7 +106,7 @@ function BucketColumn({
         <div className="flex flex-col gap-3">
           {steps.map((step) => (
             <StepCard
-              key={step.id}
+              key={step.clientId || step.id}
               step={step}
               onDelete={() => onDeleteStep(step)}
               onMoveForward={() => onMoveStep(step, 'forward')}

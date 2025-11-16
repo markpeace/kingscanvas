@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
+import { debug } from '@/lib/debug'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -34,6 +35,79 @@ function blockDrag(event: DragBlockEvent) {
   event.preventDefault()
 }
 
+type StepOpportunitiesSectionProps = {
+  stepId: string
+  stepTitle: string
+}
+
+function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
+  const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
+  const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const { opportunities, isLoading: opportunitiesLoading, error: opportunitiesError } = useOpportunities(stepId)
+
+  const opportunitiesCount = opportunities.length
+  const badgeContent = opportunitiesLoading ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString()
+  const badgeLabel = opportunitiesLoading
+    ? 'Loading opportunities'
+    : opportunitiesError
+    ? 'Could not load opportunities'
+    : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
+  const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
+
+  const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    setOpportunitiesOpen(true)
+  }
+
+  const handleCloseOpportunities = () => {
+    setOpportunitiesOpen(false)
+    if (typeof window !== 'undefined') {
+      window.requestAnimationFrame(() => {
+        opportunitiesTriggerRef.current?.focus()
+      })
+    } else {
+      opportunitiesTriggerRef.current?.focus()
+    }
+  }
+
+  return (
+    <>
+      <div className="absolute right-3 top-3">
+        <button
+          ref={opportunitiesTriggerRef}
+          type="button"
+          className={`inline-flex min-w-[2.25rem] items-center justify-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+            opportunitiesError
+              ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+              : 'border-kings-grey-light bg-kings-grey-light/30 text-kings-grey-dark hover:bg-kings-grey-light/50'
+          }`}
+          aria-label={badgeAriaLabel}
+          aria-haspopup="dialog"
+          aria-expanded={opportunitiesOpen}
+          aria-busy={opportunitiesLoading || undefined}
+          title={badgeLabel}
+          onClick={handleOpenOpportunities}
+          onMouseDown={blockDrag}
+          onTouchStart={blockDrag}
+          onPointerDown={blockDrag}
+        >
+          {badgeContent}
+        </button>
+      </div>
+
+      <StepOpportunitiesModal
+        stepId={stepId}
+        stepTitle={stepTitle}
+        isOpen={opportunitiesOpen}
+        onClose={handleCloseOpportunities}
+        opportunities={opportunities}
+        isLoading={opportunitiesLoading}
+        error={opportunitiesError}
+      />
+    </>
+  )
+}
+
 export function StepCard({
   step,
   onDelete,
@@ -45,23 +119,37 @@ export function StepCard({
 }: StepCardProps) {
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
+  const trimmedStepId = typeof step.id === 'string' ? step.id.trim() : '';
+  const hasStepId = trimmedStepId.length > 0;
+  const shouldShowOpportunities = !isGhost && !isSuggested;
+  const shouldRenderOpportunities = shouldShowOpportunities && hasStepId;
+
+  debug.trace('StepCard: render', {
+    stepId: trimmedStepId,
+    clientId: step.clientId,
+    status: step.status,
+    source: step.source,
+    isGhost,
+    isSuggested,
+  });
+
+  debug.trace('StepCard: opportunities eligibility', {
+    stepId: trimmedStepId,
+    clientId: step.clientId,
+    isGhost,
+    isSuggested,
+    hasStepId,
+    shouldShowOpportunities,
+    shouldRenderOpportunities,
+  });
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: step.id,
+    id: step.clientId,
     data: { type: 'step', step },
     disabled: isGhost,
   });
   const { active } = useDndContext();
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
-  const [opportunitiesOpen, setOpportunitiesOpen] = useState(false);
-  const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null);
-  const shouldShowOpportunities = !isGhost && !isSuggested;
-  const {
-    opportunities,
-    isLoading: opportunitiesLoading,
-    error: opportunitiesError,
-  } = useOpportunities(shouldShowOpportunities ? step.id : null);
-
   const handleSave = (title: string) => {
     setData((prev) => ({
       ...prev,
@@ -122,16 +210,8 @@ export function StepCard({
     }
   };
 
-  const isDragging = active?.id === step.id;
+  const isDragging = active?.id === step.clientId;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
-  const opportunitiesCount = opportunities.length;
-  const badgeContent = opportunitiesLoading ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString();
-  const badgeLabel = opportunitiesLoading
-    ? 'Loading opportunities'
-    : opportunitiesError
-    ? 'Could not load opportunities'
-    : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`;
-  const badgeAriaLabel = `${badgeLabel} for ${displayText}`;
   const baseClasses =
     'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
   const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
@@ -167,22 +247,6 @@ export function StepCard({
     }
   }
 
-  const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation()
-    setOpportunitiesOpen(true)
-  }
-
-  const handleCloseOpportunities = () => {
-    setOpportunitiesOpen(false)
-    if (typeof window !== 'undefined') {
-      window.requestAnimationFrame(() => {
-        opportunitiesTriggerRef.current?.focus()
-      })
-    } else {
-      opportunitiesTriggerRef.current?.focus()
-    }
-  }
-
   return (
     <>
       <div
@@ -208,29 +272,8 @@ export function StepCard({
           }
         }}
       >
-        {shouldShowOpportunities && (
-          <div className="absolute right-3 top-3">
-            <button
-              ref={opportunitiesTriggerRef}
-              type="button"
-              className={`inline-flex min-w-[2.25rem] items-center justify-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
-                opportunitiesError
-                  ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
-                  : 'border-kings-grey-light bg-kings-grey-light/30 text-kings-grey-dark hover:bg-kings-grey-light/50'
-              }`}
-              aria-label={badgeAriaLabel}
-              aria-haspopup="dialog"
-              aria-expanded={opportunitiesOpen}
-              aria-busy={opportunitiesLoading || undefined}
-              title={badgeLabel}
-              onClick={handleOpenOpportunities}
-              onMouseDown={blockDrag}
-              onTouchStart={blockDrag}
-              onPointerDown={blockDrag}
-            >
-              {badgeContent}
-            </button>
-          </div>
+        {shouldRenderOpportunities && (
+          <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
         )}
 
         {isSuggested && (
@@ -286,17 +329,6 @@ export function StepCard({
           title="Edit Step"
           initialTitle={data.title ?? data.text ?? ''}
           onSave={handleSave}
-        />
-      )}
-      {shouldShowOpportunities && (
-        <StepOpportunitiesModal
-          stepId={step.id}
-          stepTitle={displayText}
-          isOpen={opportunitiesOpen}
-          onClose={handleCloseOpportunities}
-          opportunities={opportunities}
-          isLoading={opportunitiesLoading}
-          error={opportunitiesError}
         />
       )}
     </>
