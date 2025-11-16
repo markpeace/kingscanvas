@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
-import { findStepById } from "@/lib/opportunities/generation"
+import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
 import { getOpportunitiesByStep } from "@/lib/userData"
 import type { Opportunity } from "@/types/canvas"
 
@@ -71,15 +71,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const opportunities = await getOpportunitiesByStep(email, canonicalStepId)
 
-    debug.info("Opportunities: list for step", {
+    if (opportunities.length > 0) {
+      debug.info("Opportunities API: returning existing opportunities", {
+        stepId: canonicalStepId,
+        count: opportunities.length,
+        ownerUserId: email
+      })
+
+      return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
+    }
+
+    debug.info("Opportunities API: no existing opportunities, attempting lazy generation", {
       stepId: canonicalStepId,
-      count: opportunities.length,
       ownerUserId: email
     })
 
-    debug.info("Opportunities API: success", { user: email, stepId: canonicalStepId, count: opportunities.length })
+    let generated: Opportunity[] = []
 
-    return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
+    try {
+      generated = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "lazy-fetch" })
+
+      debug.info("Opportunities API: lazy generation complete", {
+        stepId: canonicalStepId,
+        createdCount: generated.length,
+        ownerUserId: email
+      })
+    } catch (error) {
+      debug.error("Opportunities API: lazy generation failed", {
+        stepId: canonicalStepId,
+        ownerUserId: email,
+        errorName: error instanceof Error && typeof error.name === "string" ? error.name : "Error",
+        errorMessage: error instanceof Error ? error.message : String(error)
+      })
+      generated = []
+    }
+
+    return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities: generated })
   } catch (error) {
     debug.error("Opportunities API: failure", {
       user: email,

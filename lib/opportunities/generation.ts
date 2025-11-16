@@ -10,7 +10,7 @@ import {
 } from "@/lib/userData"
 import type { Opportunity, OpportunityStatus } from "@/types/canvas"
 
-export type OpportunityGenerationOrigin = "manual" | "ai-accepted" | "shuffle"
+export type OpportunityGenerationOrigin = "manual" | "ai-accepted" | "shuffle" | "lazy-fetch"
 
 export class StepNotFoundError extends Error {
   constructor(stepId: string) {
@@ -209,7 +209,9 @@ export async function generateOpportunitiesForStep(params: {
     const intentionTitle = await findIntentionTitle(step.user, step.intentionId)
     const bucketId = resolveBucketId(step)
 
-    if (origin !== "shuffle" && (await stepHasOpportunities(step.user, canonicalStepId))) {
+    const shouldSkipAutoGeneration = origin !== "shuffle" && origin !== "lazy-fetch"
+
+    if (shouldSkipAutoGeneration && (await stepHasOpportunities(step.user, canonicalStepId))) {
       debug.info("Opportunities: already has opportunities; skipping auto generation", {
         stepId: canonicalStepId,
         origin
