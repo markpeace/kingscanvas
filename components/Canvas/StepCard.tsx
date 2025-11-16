@@ -119,7 +119,7 @@ export function StepCard({
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
-    id: step.id,
+    id: step.clientId,
     data: { type: 'step', step },
     disabled: isGhost,
   });
@@ -127,13 +127,8 @@ export function StepCard({
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
   const shouldShowOpportunities = !isGhost && !isSuggested;
-  const apiStepId =
-    typeof step._id === 'string' && step._id.trim().length > 0
-      ? step._id.trim()
-      : typeof step.persistedId === 'string' && step.persistedId.trim().length > 0
-      ? step.persistedId.trim()
-      : step.id;
-  const hasApiStepId = typeof apiStepId === 'string' && apiStepId.length > 0;
+  const apiStepId = typeof step.id === 'string' ? step.id.trim() : '';
+  const hasApiStepId = apiStepId.length > 0;
 
   const handleSave = (title: string) => {
     setData((prev) => ({
@@ -195,7 +190,7 @@ export function StepCard({
     }
   };
 
-  const isDragging = active?.id === step.id;
+  const isDragging = active?.id === step.clientId;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
     'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'

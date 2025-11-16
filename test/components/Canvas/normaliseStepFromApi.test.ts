@@ -15,8 +15,8 @@ describe('normaliseStepFromApi', () => {
       0
     )
 
-    expect(result._id).toBe('abc123')
-    expect(result.id).toBe('step-temp')
+    expect(result.id).toBe('abc123')
+    expect(result.clientId).toBe('step-temp')
   })
 
   it('falls back to a generated client id when none provided', () => {
@@ -32,8 +32,8 @@ describe('normaliseStepFromApi', () => {
       1
     )
 
-    expect(result._id).toBe('xyz789')
-    expect(result.id).toBe('step-xyz789')
+    expect(result.id).toBe('xyz789')
+    expect(result.clientId).toBe('step-xyz789')
   })
 
   it('coerces object id values to strings', () => {
@@ -53,7 +53,7 @@ describe('normaliseStepFromApi', () => {
       2
     )
 
-    expect(result._id).toBe('507f1f77bcf86cd799439011')
-    expect(result.persistedId).toBe('507f1f77bcf86cd799439011')
+    expect(result.id).toBe('507f1f77bcf86cd799439011')
+    expect(result.clientId).toBe('step-507f1f77bcf86cd799439011')
   })
 })

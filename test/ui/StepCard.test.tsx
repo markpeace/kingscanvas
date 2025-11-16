@@ -41,8 +41,8 @@ describe('StepCard opportunities integration', () => {
 
   it('calls useOpportunities with the backend id when available', () => {
     const step: Step = {
-      _id: 'abc123',
-      id: 'step-temp',
+      id: 'abc123',
+      clientId: 'step-temp',
       intentionId: 'int-1',
       bucket: 'do-now',
       order: 1,
@@ -62,9 +62,10 @@ describe('StepCard opportunities integration', () => {
     expect(useOpportunitiesMock.mock.calls[0][0]).toBe('abc123')
   })
 
-  it('falls back to the client id when no backend id exists', () => {
+  it('does not call useOpportunities when no backend id exists', () => {
     const step: Step = {
-      id: 'step-local',
+      id: '',
+      clientId: 'step-local',
       intentionId: 'int-1',
       bucket: 'do-now',
       order: 1,
@@ -80,30 +81,6 @@ describe('StepCard opportunities integration', () => {
       />
     )
 
-    expect(useOpportunitiesMock).toHaveBeenCalled()
-    expect(useOpportunitiesMock.mock.calls[0][0]).toBe('step-local')
-  })
-
-  it('uses persistedId when _id is missing but persistedId is present', () => {
-    const step: Step = {
-      id: 'step-temp',
-      persistedId: 'backend-123',
-      intentionId: 'int-1',
-      bucket: 'do-now',
-      order: 1,
-      title: 'Persisted via autosave'
-    }
-
-    render(
-      <StepCard
-        step={step}
-        onDelete={noop}
-        onMoveForward={noop}
-        onMoveBackward={noop}
-      />
-    )
-
-    expect(useOpportunitiesMock).toHaveBeenCalled()
-    expect(useOpportunitiesMock.mock.calls[0][0]).toBe('backend-123')
+    expect(useOpportunitiesMock).not.toHaveBeenCalled()
   })
 })
