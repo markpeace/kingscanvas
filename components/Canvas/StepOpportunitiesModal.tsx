@@ -128,7 +128,7 @@ export function StepOpportunitiesModal({
         {edgeOpportunities.length ? (
           <section>
             <p className="text-xs font-semibold uppercase tracking-wide text-kings-grey-dark">
-              King's Edge style suggestions
+              King&apos;s Edge style suggestions
             </p>
             {renderOpportunityList(edgeOpportunities)}
           </section>
