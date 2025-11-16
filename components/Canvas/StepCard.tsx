@@ -90,7 +90,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     debug.info('Opportunities: shuffle requested', { stepId })
 
     try {
-      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/shuffle-opportunities`, {
+      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/opportunities/shuffle`, {
         method: 'POST'
       })
 
