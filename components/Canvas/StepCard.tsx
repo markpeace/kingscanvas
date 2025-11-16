@@ -72,7 +72,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   return (
     <>
-      <div className="pointer-events-none absolute right-3 top-3 z-10 flex items-start justify-end">
+      <div className="pointer-events-none absolute -top-1 -right-1 z-10 flex items-start justify-end transform translate-x-2 -translate-y-2">
         <button
           ref={opportunitiesTriggerRef}
           type="button"
@@ -276,7 +276,7 @@ export function StepCard({
           <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
         )}
 
-        <div className="flex flex-col gap-3 text-left pr-12">
+        <div className="flex flex-col gap-3 text-left">
           {isSuggested && (
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
               <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
