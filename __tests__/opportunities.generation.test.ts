@@ -1,3 +1,5 @@
+import type { OpportunityFocus, OpportunityForm, OpportunitySource, OpportunityStatus } from "@/types/canvas"
+
 jest.mock("mongodb", () => {
   let counter = 0
 
@@ -151,10 +153,10 @@ const { generateOpportunityDraftsForStep } = jest.requireMock("@/lib/opportuniti
     Array<{
       title: string
       summary: string
-      source: "edge_simulated" | "independent"
-      form: "intensive" | "evergreen" | "short_form" | "sustained"
-      focus: any
-      status?: "suggested" | "saved" | "dismissed"
+      source: OpportunitySource
+      form: OpportunityForm
+      focus: OpportunityFocus
+      status?: OpportunityStatus
     }>
   >>
 }
@@ -206,9 +208,9 @@ describe("generateOpportunitiesForStep", () => {
       {
         title: "Old opportunity",
         summary: "Legacy summary",
-        source: "edge_simulated",
-        form: "evergreen",
-        focus: "capability",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "experience",
         status: "suggested"
       }
     ])
@@ -217,25 +219,25 @@ describe("generateOpportunitiesForStep", () => {
       {
         title: "Attend industry breakfast",
         summary: "Meet alumni working in creative agencies.",
-        source: "edge_simulated",
-        form: "short_form",
-        focus: "credibility",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "community",
         status: "suggested"
       },
       {
         title: "Shadow a portfolio review",
         summary: "Observe how mentors critique a professional portfolio.",
-        source: "edge_simulated",
-        form: "intensive",
-        focus: ["capability", "credibility"],
+        source: "kings-edge-simulated",
+        form: "mentoring",
+        focus: "skills",
         status: "suggested"
       },
       {
         title: "Join creative showcase",
         summary: "Apply to present work at the student showcase in March.",
         source: "independent",
-        form: "sustained",
-        focus: "capital",
+        form: "independent-action",
+        focus: "experience",
         status: "saved"
       }
     ])
@@ -325,9 +327,9 @@ describe("generateOpportunitiesForStep", () => {
       {
         title: "Keep existing",
         summary: "Old record should stay if skip happens.",
-        source: "edge_simulated",
-        form: "evergreen",
-        focus: "capability",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "skills",
         status: "suggested"
       }
     ])
@@ -336,9 +338,9 @@ describe("generateOpportunitiesForStep", () => {
       {
         title: "New item",
         summary: "Should not be created.",
-        source: "edge_simulated",
-        form: "short_form",
-        focus: "credibility",
+        source: "kings-edge-simulated",
+        form: "short-course",
+        focus: "reflection",
         status: "suggested"
       }
     ])

@@ -35,7 +35,7 @@ ghost AI suggestions.
 ## 📦 Scope
 
 - Add an AI workflow that produces 3–4 structured opportunities per step
-  (targeting 2–3 `edge_simulated` and 1 `independent`).
+  (targeting 3 `kings-edge-simulated` and 1 `independent`).
 - Implement backend helper logic plus an endpoint to generate or shuffle
   opportunities for a given step.
 - Trigger automatic opportunity generation from:

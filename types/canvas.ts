@@ -24,15 +24,11 @@ export interface Intention {
   updatedAt: string
 }
 
-export type OpportunitySource = "edge_simulated" | "independent"
+export type OpportunitySource = "kings-edge-simulated" | "independent"
 
-export type OpportunityForm = "intensive" | "evergreen" | "short_form" | "sustained"
+export type OpportunityForm = "workshop" | "mentoring" | "short-course" | "coaching" | "independent-action"
 
-export type OpportunityFocus =
-  | "capability"
-  | "capital"
-  | "credibility"
-  | Array<"capability" | "capital" | "credibility">
+export type OpportunityFocus = "experience" | "skills" | "community" | "reflection"
 
 export type OpportunityStatus = "suggested" | "saved" | "dismissed"
 

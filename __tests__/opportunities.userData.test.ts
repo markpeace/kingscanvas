@@ -128,17 +128,17 @@ describe("userData opportunities helpers", () => {
       {
         title: "Attend networking breakfast",
         summary: "Join the monthly careers club breakfast to meet alumni.",
-        source: "edge_simulated" as const,
-        form: "short_form" as const,
-        focus: "credibility" as const,
+        source: "kings-edge-simulated" as const,
+        form: "short-course" as const,
+        focus: "community" as const,
         status: "suggested" as const
       },
       {
         title: "Schedule mentor call",
         summary: "Set up a 30 minute catch-up with your assigned mentor.",
         source: "independent" as const,
-        form: "sustained" as const,
-        focus: ["capability", "capital"] as const,
+        form: "independent-action" as const,
+        focus: "experience" as const,
         status: "saved" as const
       }
     ]
@@ -160,9 +160,9 @@ describe("userData opportunities helpers", () => {
       {
         title: "Mock interview",
         summary: "Run a mock interview with a friend to prepare.",
-        source: "edge_simulated",
-        form: "intensive",
-        focus: "capability",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "skills",
         status: "suggested"
       }
     ])
@@ -172,8 +172,8 @@ describe("userData opportunities helpers", () => {
         title: "Portfolio review",
         summary: "Share your portfolio with the creative careers team.",
         source: "independent",
-        form: "evergreen",
-        focus: "credibility",
+        form: "independent-action",
+        focus: "reflection",
         status: "suggested"
       }
     ])

@@ -1,5 +1,3 @@
-import { getChatModel } from "@/lib/ai/client"
-import { debug } from "@/lib/debug"
 import type {
   BucketId,
   OpportunityFocus,
@@ -8,7 +6,7 @@ import type {
   OpportunityStatus
 } from "@/types/canvas"
 
-export type OpportunityDraft = {
+export interface OpportunityDraft {
   title: string
   summary: string
   source: OpportunitySource
@@ -17,221 +15,171 @@ export type OpportunityDraft = {
   status?: OpportunityStatus
 }
 
-const VALID_SOURCES: OpportunitySource[] = ["edge_simulated", "independent"]
-const VALID_FORMS: OpportunityForm[] = ["intensive", "evergreen", "short_form", "sustained"]
-const VALID_FOCUS_VALUES = ["capability", "capital", "credibility"] as const
-const VALID_STATUSES: OpportunityStatus[] = ["suggested", "saved", "dismissed"]
-const DEFAULT_STATUS: OpportunityStatus = "suggested"
-
-type SimulateOpportunitiesInput = {
+type DraftContext = {
   stepTitle: string
   intentionTitle?: string
-  bucketId?: BucketId | string
+  bucket?: string
+  context: string
 }
 
-function buildPrompt({ stepTitle, intentionTitle, bucketId }: SimulateOpportunitiesInput): string {
-  const contextLines = [
-    "You are assisting a King's College London student in discovering opportunities that align with their plan.",
-    `Step title: "${stepTitle.trim()}"`
-  ]
+type DraftFactory = (context: DraftContext) => OpportunityDraft
 
-  if (intentionTitle && intentionTitle.trim().length > 0) {
-    contextLines.push(`Intention: "${intentionTitle.trim()}"`)
-  }
+type ThemeId = "education" | "research" | "general"
 
-  if (bucketId && `${bucketId}`.trim().length > 0) {
-    contextLines.push(`Time horizon: "${`${bucketId}`.trim()}"`)
-  }
+const EDGE_SOURCE: OpportunitySource = "kings-edge-simulated"
+const INDEPENDENT_SOURCE: OpportunitySource = "independent"
 
-  const requirements = [
-    "Return 3 or 4 opportunity drafts as a JSON array.",
-    "Include 2 or 3 items with \"source\": \"edge_simulated\" and 1 item with \"source\": \"independent\".",
-    "Every object must include the fields: title, summary, source, form, focus, status (optional).",
-    "Use one of these values for form: intensive, evergreen, short_form, sustained.",
-    "Use one or more of these values for focus: capability, capital, credibility.",
-    "Respond with ONLY valid JSON. No narration or explanation."
-  ]
+const EDGE_FORMS: OpportunityForm[] = ["workshop", "mentoring", "short-course", "coaching"]
+const INDEPENDENT_FORM: OpportunityForm = "independent-action"
 
-  return `${contextLines.join("\n")}\n\nRequirements:\n- ${requirements.join("\n- ")}`
-}
-
-function extractTextFromResponse(response: unknown): string {
-  if (!response || typeof response !== "object") {
-    return ""
-  }
-
-  const content = (response as { content?: unknown }).content
-
-  if (typeof content === "string") {
-    return content.trim()
-  }
-
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => {
-        if (typeof part === "string") {
-          return part
-        }
-
-        if (part && typeof part === "object" && "text" in part && typeof (part as any).text === "string") {
-          return (part as { text: string }).text
-        }
-
-        return ""
+const THEMES: Record<ThemeId, { edge: DraftFactory[]; independent: DraftFactory }> = {
+  education: {
+    edge: [
+      (ctx) => ({
+        title: "Attend a King's Edge workshop on classroom experience",
+        summary: `Join a simulated King's Edge workshop that introduces routes into teaching and practical steps to build classroom experience while focusing on ${ctx.context}.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[0],
+        focus: "skills"
+      }),
+      (ctx) => ({
+        title: "Shadow a student ambassador during a school outreach activity",
+        summary: `Take part in a simulated King's Edge outreach activity where you observe or support current student ambassadors working with local schools connected to ${ctx.context}.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[1],
+        focus: "experience"
+      }),
+      (ctx) => ({
+        title: "Book a King's Edge one to one planning session",
+        summary: `Use a simulated King's Edge one to one to map how your modules, part time work and volunteering can contribute to ${ctx.context}.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[3],
+        focus: "reflection"
       })
-      .join("")
-      .trim()
-  }
-
-  if (content != null) {
-    return String(content).trim()
-  }
-
-  return ""
-}
-
-type FocusValue = (typeof VALID_FOCUS_VALUES)[number]
-
-type RawDraft = Partial<OpportunityDraft> & Record<string, unknown>
-
-function parseFocus(value: unknown): OpportunityFocus | null {
-  if (typeof value === "string") {
-    const normalised = value.trim().toLowerCase()
-    if (VALID_FOCUS_VALUES.includes(normalised as FocusValue)) {
-      return normalised as OpportunityFocus
-    }
-
-    return null
-  }
-
-  if (Array.isArray(value)) {
-    const unique = Array.from(
-      new Set(
-        value
-          .filter((item): item is string => typeof item === "string")
-          .map((item) => item.trim().toLowerCase())
-          .filter((item): item is FocusValue => VALID_FOCUS_VALUES.includes(item as FocusValue))
-      )
-    )
-
-    if (unique.length === 0) {
-      return null
-    }
-
-    return unique as OpportunityFocus
-  }
-
-  return null
-}
-
-function parseDraft(raw: RawDraft): OpportunityDraft | null {
-  const title = typeof raw.title === "string" ? raw.title.trim() : ""
-  const summary = typeof raw.summary === "string" ? raw.summary.trim() : ""
-  const source =
-    typeof raw.source === "string" ? (raw.source.trim().toLowerCase() as OpportunitySource) : undefined
-  const form = typeof raw.form === "string" ? (raw.form.trim().toLowerCase() as OpportunityForm) : undefined
-  const focus = parseFocus(raw.focus)
-
-  if (!title || !summary || !source || !form || !focus) {
-    return null
-  }
-
-  if (!VALID_SOURCES.includes(source) || !VALID_FORMS.includes(form)) {
-    return null
-  }
-
-  let status: OpportunityStatus = DEFAULT_STATUS
-  if (typeof raw.status === "string") {
-    const normalised = raw.status.trim().toLowerCase() as OpportunityStatus
-    if (VALID_STATUSES.includes(normalised)) {
-      status = normalised
-    }
-  }
-
-  return {
-    title,
-    summary,
-    source,
-    form,
-    focus,
-    status
-  }
-}
-
-function safeParseDrafts(json: string): OpportunityDraft[] {
-  let parsed: unknown
-
-  try {
-    parsed = JSON.parse(json)
-  } catch (error) {
-    debug.error("AI: failed to parse simulate-opportunities response", {
-      preview: json.slice(0, 200)
+    ],
+    independent: (ctx) => ({
+      title: "Volunteer independently in a local school or youth club",
+      summary: `Identify a local school, homework club or youth organisation and offer to support a regular session that reinforces ${ctx.context}.`,
+      source: INDEPENDENT_SOURCE,
+      form: INDEPENDENT_FORM,
+      focus: "experience"
     })
-    throw new Error("Failed to parse simulate-opportunities response")
+  },
+  research: {
+    edge: [
+      (ctx) => ({
+        title: "Attend a King's Edge research briefing",
+        summary: `Join a simulated briefing on how King's Edge students turn ${ctx.context} into portfolio-ready research experience.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[0],
+        focus: "skills"
+      }),
+      (ctx) => ({
+        title: "Book a peer research mentoring session",
+        summary: `Speak with a simulated King's Edge mentor who has led small lab projects and can help you frame ${ctx.context} into a focused plan.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[1],
+        focus: "reflection"
+      }),
+      (ctx) => ({
+        title: "Join a short course on communicating research",
+        summary: `Complete a short King's Edge course on presenting findings so you can explain the purpose of ${ctx.context} with confidence.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[2],
+        focus: "community"
+      })
+    ],
+    independent: (ctx) => ({
+      title: "Design an independent mini-study",
+      summary: `Define a small piece of research, gather two or three insights and publish a short reflection that links directly to ${ctx.context}.`,
+      source: INDEPENDENT_SOURCE,
+      form: INDEPENDENT_FORM,
+      focus: "experience"
+    })
+  },
+  general: {
+    edge: [
+      (ctx) => ({
+        title: "Attend a King's Edge professional storytelling workshop",
+        summary: `Practice explaining ${ctx.context} in a workshop that shows how to translate experiences into compelling professional stories.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[0],
+        focus: "skills"
+      }),
+      (ctx) => ({
+        title: "Connect with a King's Edge mentor",
+        summary: `Use a mentoring slot to map networks, societies and activities that strengthen ${ctx.context}.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[1],
+        focus: "community"
+      }),
+      (ctx) => ({
+        title: "Complete a short course on project planning",
+        summary: `Work through a self-paced King's Edge short course that helps you break ${ctx.context} into achievable actions.`,
+        source: EDGE_SOURCE,
+        form: EDGE_FORMS[2],
+        focus: "reflection"
+      })
+    ],
+    independent: (ctx) => ({
+      title: "Plan an independent action sprint",
+      summary: `Choose one concrete action related to ${ctx.context}, schedule time this week and capture what you learned in a quick journal.`,
+      source: INDEPENDENT_SOURCE,
+      form: INDEPENDENT_FORM,
+      focus: "experience"
+    })
   }
-
-  if (!Array.isArray(parsed)) {
-    debug.error("AI: simulate-opportunities response was not an array", { parsedType: typeof parsed })
-    return []
-  }
-
-  const drafts: OpportunityDraft[] = []
-
-  for (const item of parsed) {
-    if (item && typeof item === "object") {
-      const draft = parseDraft(item as RawDraft)
-      if (draft) {
-        drafts.push(draft)
-      }
-    }
-  }
-
-  return drafts
 }
 
-export async function runSimulateOpportunitiesWorkflow(
-  input: SimulateOpportunitiesInput
-): Promise<OpportunityDraft[]> {
-  const { stepTitle } = input
-  if (!stepTitle || stepTitle.trim().length === 0) {
+const SCHOOL_KEYWORDS = ["school", "teach", "classroom", "teacher", "education"]
+const RESEARCH_KEYWORDS = ["research", "lab", "study", "dissertation", "project"]
+
+function detectTheme(stepTitle: string, intentionTitle?: string, bucket?: string): ThemeId {
+  const haystack = `${stepTitle} ${intentionTitle ?? ""} ${bucket ?? ""}`.toLowerCase()
+
+  if (SCHOOL_KEYWORDS.some((keyword) => haystack.includes(keyword))) {
+    return "education"
+  }
+
+  if (RESEARCH_KEYWORDS.some((keyword) => haystack.includes(keyword))) {
+    return "research"
+  }
+
+  return "general"
+}
+
+function buildContext(stepTitle: string, intentionTitle?: string): string {
+  return intentionTitle && intentionTitle.trim().length > 0
+    ? `${stepTitle} in the context of ${intentionTitle}`
+    : stepTitle
+}
+
+export function createSimulatedOpportunityDrafts(args: {
+  stepTitle: string
+  intentionTitle?: string
+  bucket?: string
+}): OpportunityDraft[] {
+  const stepTitle = args.stepTitle?.trim()
+
+  if (!stepTitle) {
     throw new Error("stepTitle is required to simulate opportunities")
   }
 
-  const prompt = buildPrompt(input)
+  const intentionTitle = args.intentionTitle?.trim() || undefined
+  const bucket = args.bucket?.trim() || undefined
+  const context = buildContext(stepTitle, intentionTitle)
+  const theme = detectTheme(stepTitle, intentionTitle, bucket)
+  const draftContext: DraftContext = { stepTitle, intentionTitle, bucket, context }
+  const templates = THEMES[theme]
 
-  debug.trace("AI: simulate-opportunities prompt", {
-    stepTitle: stepTitle.trim(),
-    ...(input.intentionTitle ? { intentionTitle: input.intentionTitle.trim() } : {}),
-    ...(input.bucketId ? { bucketId: `${input.bucketId}`.trim() } : {})
-  })
-
-  const model = getChatModel()
-  const response = await model.invoke(prompt)
-  const text = extractTextFromResponse(response)
-
-  if (!text) {
-    debug.error("AI: simulate-opportunities returned empty response")
-    return []
-  }
-
-  return safeParseDrafts(text)
+  return [...templates.edge.map((factory) => factory(draftContext)), templates.independent(draftContext)]
 }
 
-export async function generateOpportunityDraftsForStep(
-  input: SimulateOpportunitiesInput
-): Promise<OpportunityDraft[]> {
-  try {
-    return await runSimulateOpportunitiesWorkflow(input)
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("Failed to parse simulate-opportunities response")) {
-      throw error
-    }
-
-    const message =
-      error instanceof Error && error.message
-        ? `Failed to generate opportunity drafts: ${error.message}`
-        : "Failed to generate opportunity drafts"
-
-    throw new Error(message)
-  }
+export async function generateOpportunityDraftsForStep(params: {
+  stepTitle: string
+  intentionTitle?: string
+  bucketId?: BucketId | string
+}): Promise<OpportunityDraft[]> {
+  const { stepTitle, intentionTitle, bucketId } = params
+  return createSimulatedOpportunityDrafts({ stepTitle, intentionTitle, bucket: bucketId ? String(bucketId) : undefined })
 }

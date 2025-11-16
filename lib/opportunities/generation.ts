@@ -140,9 +140,15 @@ export async function findStepById(stepId: string): Promise<StepRecord | null> {
   return null
 }
 
-const VALID_SOURCES: Opportunity["source"][] = ["edge_simulated", "independent"]
-const VALID_FORMS: Opportunity["form"][] = ["intensive", "evergreen", "short_form", "sustained"]
-const VALID_FOCUS_VALUES = ["capability", "capital", "credibility"] as const
+const VALID_SOURCES: Opportunity["source"][] = ["kings-edge-simulated", "independent"]
+const VALID_FORMS: Opportunity["form"][] = [
+  "workshop",
+  "mentoring",
+  "short-course",
+  "coaching",
+  "independent-action"
+]
+const VALID_FOCUS_VALUES = ["experience", "skills", "community", "reflection"] as const
 const VALID_STATUSES: OpportunityStatus[] = ["suggested", "saved", "dismissed"]
 
 function isNonEmptyString(value: unknown): value is string {
@@ -158,20 +164,7 @@ function isValidForm(value: unknown): value is Opportunity["form"] {
 }
 
 function isValidFocus(value: unknown): value is Opportunity["focus"] {
-  if (typeof value === "string") {
-    return VALID_FOCUS_VALUES.includes(value as (typeof VALID_FOCUS_VALUES)[number])
-  }
-
-  if (Array.isArray(value)) {
-    return (
-      value.length > 0 &&
-      value.every(
-        (item) => typeof item === "string" && VALID_FOCUS_VALUES.includes(item as (typeof VALID_FOCUS_VALUES)[number])
-      )
-    )
-  }
-
-  return false
+  return typeof value === "string" && VALID_FOCUS_VALUES.includes(value as (typeof VALID_FOCUS_VALUES)[number])
 }
 
 function sanitizeStatus(value: unknown): OpportunityStatus {
@@ -253,7 +246,7 @@ export async function generateOpportunitiesForStep(params: {
       summary: draft.summary.trim(),
       source: draft.source,
       form: draft.form,
-      focus: isValidFocus(draft.focus) ? draft.focus : "capability",
+      focus: isValidFocus(draft.focus) ? draft.focus : "skills",
       status: sanitizeStatus(draft.status)
     }))
 

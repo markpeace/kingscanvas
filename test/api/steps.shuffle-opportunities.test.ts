@@ -110,9 +110,9 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
         stepId: "step-123",
         title: "First",
         summary: "One",
-        source: "edge_simulated",
-        form: "short_form",
-        focus: "credibility",
+        source: "kings-edge-simulated",
+        form: "short-course",
+        focus: "reflection",
         status: "suggested"
       },
       {
@@ -121,8 +121,8 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
         title: "Second",
         summary: "Two",
         source: "independent",
-        form: "sustained",
-        focus: ["capability"],
+        form: "independent-action",
+        focus: "experience",
         status: "saved"
       }
     ])
