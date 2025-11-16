@@ -5,6 +5,7 @@ jest.mock("@/lib/ai/client", () => ({
 jest.mock("@/lib/debug", () => ({
   debug: {
     trace: jest.fn(),
+    debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn()

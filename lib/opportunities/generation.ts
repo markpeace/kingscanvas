@@ -136,56 +136,96 @@ export async function generateOpportunitiesForStep(params: {
   origin: OpportunityGenerationOrigin
 }): Promise<Opportunity[]> {
   const { stepId, origin } = params
+
+  debug.info("Opportunities: generateOpportunitiesForStep start", {
+    stepId,
+    origin
+  })
+
   const step = await findStepById(stepId)
 
   if (!step || typeof step.user !== "string" || step.user.trim().length === 0) {
+    debug.warn("Opportunities: step not found for generation", {
+      stepId,
+      origin
+    })
     throw new StepNotFoundError(stepId)
   }
 
   const canonicalStepId = resolveCanonicalStepId(step, stepId)
+  const stepTitle = resolveStepTitle(step, canonicalStepId)
+  const intentionTitle = await findIntentionTitle(step.user, step.intentionId)
+  const bucketId = resolveBucketId(step)
 
-  debug.info("Opportunities: generateOpportunitiesForStep start", {
+  const drafts = await generateOpportunityDraftsForStep({
+    stepTitle,
+    intentionTitle,
+    bucketId
+  })
+
+  const draftCount = drafts.length
+
+  debug.info("Opportunities: drafts generated", {
     stepId: canonicalStepId,
+    origin,
+    draftCount
+  })
+
+  const records: PersistenceOpportunityDraft[] = drafts.map((draft) => ({
+    title: draft.title,
+    summary: draft.summary,
+    source: draft.source,
+    form: draft.form,
+    focus: draft.focus,
+    status: (draft.status ?? "suggested") as OpportunityStatus
+  }))
+  const validRecordsCount = records.length
+
+  debug.info("Opportunities: drafts mapped to records", {
+    stepId: canonicalStepId,
+    origin,
+    draftCount,
+    validRecordsCount
+  })
+
+  await deleteOpportunitiesForStep(step.user, canonicalStepId)
+  const created = await createOpportunitiesForStep(step.user, canonicalStepId, records)
+
+  debug.info("Opportunities: generateOpportunitiesForStep success", {
+    stepId: canonicalStepId,
+    origin,
+    createdCount: created.length
+  })
+
+  return created
+}
+
+export async function safelyGenerateOpportunitiesForStep(params: {
+  stepId: string
+  origin: OpportunityGenerationOrigin
+}): Promise<Opportunity[] | null> {
+  const { stepId, origin } = params
+
+  debug.trace("Opportunities: safelyGenerateOpportunitiesForStep", {
+    stepId,
     origin
   })
 
   try {
-    const stepTitle = resolveStepTitle(step, canonicalStepId)
-    const intentionTitle = await findIntentionTitle(step.user, step.intentionId)
-    const bucketId = resolveBucketId(step)
-
-    const drafts = await generateOpportunityDraftsForStep({
-      stepTitle,
-      intentionTitle,
-      bucketId
-    })
-
-    const records: PersistenceOpportunityDraft[] = drafts.map((draft) => ({
-      title: draft.title,
-      summary: draft.summary,
-      source: draft.source,
-      form: draft.form,
-      focus: draft.focus,
-      status: (draft.status ?? "suggested") as OpportunityStatus
-    }))
-
-    await deleteOpportunitiesForStep(step.user, canonicalStepId)
-    const created = await createOpportunitiesForStep(step.user, canonicalStepId, records)
-
-    debug.info("Opportunities: generateOpportunitiesForStep success", {
-      stepId: canonicalStepId,
-      origin,
-      count: created.length
-    })
-
-    return created
+    return await generateOpportunitiesForStep(params)
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    debug.error("Opportunities: generateOpportunitiesForStep failure", {
-      stepId: canonicalStepId,
+    const errorName = error instanceof Error && typeof error.name === "string" ? error.name : "Error"
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const stackLine = error instanceof Error && typeof error.stack === "string" ? error.stack.split("\n")[0] : undefined
+
+    debug.error("Opportunities: auto generation failed", {
+      stepId,
       origin,
-      message
+      errorName,
+      errorMessage,
+      stack: stackLine
     })
-    throw error
+
+    return null
   }
 }
