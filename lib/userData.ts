@@ -21,6 +21,12 @@ type OpportunityDocument = {
 
 export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "createdAt" | "updatedAt">;
 
+type StepDocument = Document & {
+  _id?: string | ObjectId;
+  id?: string;
+  user: string;
+};
+
 
 function toOpportunityId(value: WithId<OpportunityDocument>["_id"]): string {
   if (typeof value === "string") {
@@ -88,7 +94,7 @@ export async function saveUserIntentions(email: string, data: any) {
  * Fetch steps for a given user.
  */
 export async function getUserSteps(email: string) {
-  const col = await getCollection("steps");
+  const col = await getCollection<StepDocument>("steps");
   debug.trace("MongoDB: fetching steps", { user: email });
   const docs = await col.find({ user: email }).toArray();
   debug.info("MongoDB: fetch complete", { count: docs.length });
@@ -131,7 +137,7 @@ function resolveCanonicalStepId(step: any): CanonicalStepId {
 }
 
 export async function saveUserStep(email: string, step: any) {
-  const col = await getCollection("steps")
+  const col = await getCollection<StepDocument>("steps")
   const canonicalId = resolveCanonicalStepId(step)
   const timestamp = new Date()
 
@@ -169,7 +175,7 @@ export async function createSuggestedSteps(
   intentionId: string,
   suggestions: any[]
 ): Promise<InsertManyResult<Document> | null> {
-  const col = await getCollection("steps");
+  const col = await getCollection<StepDocument>("steps");
   const docs = suggestions.map((s) => ({
     user,
     intentionId,
@@ -193,7 +199,7 @@ export async function createSuggestedSteps(
 }
 
 export async function updateStepStatus(user: string, stepId: any, status: string) {
-  const col = await getCollection("steps");
+  const col = await getCollection<StepDocument>("steps");
   let lookupId = stepId;
 
   if (typeof stepId === "string") {
@@ -222,7 +228,7 @@ export async function updateStepStatus(user: string, stepId: any, status: string
 }
 
 export async function getStepForUser(user: string, stepId: string) {
-  const col = await getCollection("steps");
+  const col = await getCollection<StepDocument>("steps");
   debug.trace("Mongo: fetching step for user", { user, stepId });
 
   const queries: Array<Record<string, unknown>> = [];
@@ -340,7 +346,7 @@ export async function deleteOpportunitiesForStep(user: string, stepId: string): 
 }
 
 export async function listRecentHistory(user: string, intentionId: string, limit = 25) {
-  const col = await getCollection("steps");
+  const col = await getCollection<StepDocument>("steps");
   debug.trace("Mongo: fetching recent step history", { user, intentionId });
   const docs = await col
     .find(
