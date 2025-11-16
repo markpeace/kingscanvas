@@ -23,6 +23,7 @@ jest.mock("@/lib/opportunities/generation", () => {
 jest.mock("@/lib/debug", () => ({
   debug: {
     trace: jest.fn(),
+    debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn()

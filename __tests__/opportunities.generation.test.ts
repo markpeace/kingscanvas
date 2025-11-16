@@ -132,6 +132,7 @@ jest.mock("@/lib/dbHelpers", () => {
 jest.mock("@/lib/debug", () => ({
   debug: {
     trace: jest.fn(),
+    debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
     error: jest.fn()
@@ -158,7 +159,7 @@ const { generateOpportunityDraftsForStep } = jest.requireMock("@/lib/opportuniti
   >>
 }
 const { debug } = jest.requireMock("@/lib/debug") as {
-  debug: { info: jest.Mock; error: jest.Mock }
+  debug: { info: jest.Mock; error: jest.Mock; warn: jest.Mock; trace: jest.Mock }
 }
 
 describe("generateOpportunitiesForStep", () => {
@@ -167,6 +168,8 @@ describe("generateOpportunitiesForStep", () => {
     generateOpportunityDraftsForStep.mockReset()
     debug.info.mockReset()
     debug.error.mockReset()
+    debug.warn.mockReset()
+    debug.trace.mockReset()
   })
 
   it("generates and replaces opportunities for a step", async () => {
@@ -264,6 +267,11 @@ describe("generateOpportunitiesForStep", () => {
     await expect(
       generateOpportunitiesForStep({ stepId: "nonexistent", origin: "manual" })
     ).rejects.toBeInstanceOf(StepNotFoundError)
+
+    expect(debug.warn).toHaveBeenCalledWith(
+      "Opportunities: step not found for generation",
+      expect.objectContaining({ stepId: "nonexistent", origin: "manual" })
+    )
   })
 
   it("propagates AI failures and logs an error", async () => {
@@ -304,10 +312,44 @@ describe("generateOpportunitiesForStep", () => {
     await expect(
       generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "ai-accepted" })
     ).rejects.toThrow("AI offline")
+  })
 
+  it("logs failures inside safelyGenerateOpportunitiesForStep", async () => {
+    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
+    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
+
+    const stepObjectId = new ObjectId()
+    const canonicalStepId = stepObjectId.toHexString()
+
+    const stepsCol = await getCollection("steps")
+    await stepsCol.insertMany([
+      {
+        _id: stepObjectId,
+        user: "owner@example.com",
+        intentionId: "int-789",
+        title: "Draft presentation",
+        bucket: "do-later"
+      }
+    ])
+
+    generateOpportunityDraftsForStep.mockRejectedValue(new Error("AI offline"))
+
+    const { safelyGenerateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
+
+    const result = await safelyGenerateOpportunitiesForStep({
+      stepId: canonicalStepId,
+      origin: "ai-accepted"
+    })
+
+    expect(result).toBeNull()
     expect(debug.error).toHaveBeenCalledWith(
-      "Opportunities: generateOpportunitiesForStep failure",
-      expect.objectContaining({ stepId: canonicalStepId, origin: "ai-accepted", message: "AI offline" })
+      "Opportunities: auto generation failed",
+      expect.objectContaining({
+        stepId: canonicalStepId,
+        origin: "ai-accepted",
+        errorName: "Error",
+        errorMessage: "AI offline"
+      })
     )
   })
 })

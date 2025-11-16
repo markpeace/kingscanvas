@@ -71,6 +71,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const opportunities = await getOpportunitiesByStep(email, canonicalStepId)
 
+    debug.info("Opportunities: list for step", {
+      stepId: canonicalStepId,
+      count: opportunities.length,
+      ownerUserId: email
+    })
+
     debug.info("Opportunities API: success", { user: email, stepId: canonicalStepId, count: opportunities.length })
 
     return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
