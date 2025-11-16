@@ -49,6 +49,13 @@ type RawStep = Partial<Omit<Step, 'clientId' | 'id'>> & {
   persistedId?: unknown
 }
 type RawIntention = Partial<Intention> & { steps?: RawStep[] }
+type ManualStepDraft = {
+  clientId: string
+  intentionId: string
+  bucket: Step['bucket']
+  title: string
+  order: number
+}
 
 function normaliseBucketId(bucket?: string): BucketId {
   if (!bucket) {
@@ -657,6 +664,79 @@ export function Canvas() {
     [announce, triggerHighlight]
   )
 
+  const persistManualStep = useCallback(
+    async (draft: ManualStepDraft) => {
+      try {
+        debug.trace('Canvas: persisting manual step', {
+          clientId: draft.clientId,
+          intentionId: draft.intentionId,
+          bucket: draft.bucket,
+          order: draft.order
+        })
+
+        const res = await fetch('/api/steps', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId: draft.clientId,
+            intentionId: draft.intentionId,
+            bucket: draft.bucket,
+            order: draft.order,
+            title: draft.title,
+            text: draft.title,
+            source: 'manual',
+            status: 'active'
+          })
+        })
+
+        const payload: { ok?: boolean; stepId?: string; error?: string } = await res.json().catch(() => ({}))
+
+        if (!res.ok) {
+          throw new Error(payload?.error || 'Failed to persist step')
+        }
+
+        const persistedId = typeof payload?.stepId === 'string' ? payload.stepId.trim() : ''
+
+        if (!persistedId) {
+          debug.warn('Canvas: manual step persistence missing id', {
+            clientId: draft.clientId,
+            intentionId: draft.intentionId
+          })
+          return
+        }
+
+        setIntentions((prev) =>
+          prev.map((intention) => {
+            if (intention.id !== draft.intentionId) {
+              return intention
+            }
+
+            return {
+              ...intention,
+              steps: intention.steps.map((step) =>
+                step.clientId === draft.clientId ? { ...step, id: persistedId } : step
+              )
+            }
+          })
+        )
+
+        debug.info('Canvas: manual step persisted', {
+          stepId: persistedId,
+          clientId: draft.clientId,
+          intentionId: draft.intentionId
+        })
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        debug.error('Canvas: manual step persistence failed', {
+          clientId: draft.clientId,
+          intentionId: draft.intentionId,
+          message
+        })
+      }
+    },
+    [setIntentions]
+  )
+
   const getIntentionForBucket = useCallback(
     (intentionId: string, bucket: BucketId) => {
       const exactMatch = intentions.find((item) => item.id === intentionId)
@@ -676,27 +756,47 @@ export function Canvas() {
     [intentions]
   )
 
-  const handleAddStep = useCallback((intentionId: string, bucket: Step['bucket'], title: string) => {
-    setIntentions((prev) =>
-      prev.map((intention) => {
-        if (intention.id !== intentionId) return intention
+  const handleAddStep = useCallback(
+    (intentionId: string, bucket: Step['bucket'], title: string) => {
+      const clientId = `step-${Date.now()}`
+      let created = false
+      let orderForPersistence = 1
 
-        const stepsInBucket = intention.steps.filter((step) => step.bucket === bucket)
+      setIntentions((prev) =>
+        prev.map((intention) => {
+          if (intention.id !== intentionId) {
+            return intention
+          }
 
-        const clientId = `step-${Date.now()}`
-        const newStep: Step = {
-          id: '',
+          created = true
+          const stepsInBucket = intention.steps.filter((step) => step.bucket === bucket)
+          orderForPersistence = stepsInBucket.length + 1
+
+          const newStep: Step = {
+            id: '',
+            clientId,
+            intentionId,
+            title,
+            bucket,
+            order: orderForPersistence
+          }
+
+          return { ...intention, steps: [...intention.steps, newStep] }
+        })
+      )
+
+      if (created) {
+        void persistManualStep({
           clientId,
           intentionId,
-          title,
           bucket,
-          order: stepsInBucket.length + 1
-        }
-
-        return { ...intention, steps: [...intention.steps, newStep] }
-      })
-    )
-  }, [])
+          title,
+          order: orderForPersistence
+        })
+      }
+    },
+    [persistManualStep]
+  )
 
   const handleAddAIStep = useCallback(
     async (intentionId: string, bucket: Step['bucket']) => {
