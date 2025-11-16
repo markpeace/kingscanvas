@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
+import { debug } from '@/lib/debug'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -118,6 +119,29 @@ export function StepCard({
 }: StepCardProps) {
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
+  const trimmedStepId = typeof step.id === 'string' ? step.id.trim() : '';
+  const hasStepId = trimmedStepId.length > 0;
+  const shouldShowOpportunities = !isGhost && !isSuggested;
+  const shouldRenderOpportunities = shouldShowOpportunities && hasStepId;
+
+  debug.trace('StepCard: render', {
+    stepId: trimmedStepId,
+    clientId: step.clientId,
+    status: step.status,
+    source: step.source,
+    isGhost,
+    isSuggested,
+  });
+
+  debug.trace('StepCard: opportunities eligibility', {
+    stepId: trimmedStepId,
+    clientId: step.clientId,
+    isGhost,
+    isSuggested,
+    hasStepId,
+    shouldShowOpportunities,
+    shouldRenderOpportunities,
+  });
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.clientId,
     data: { type: 'step', step },
@@ -126,10 +150,6 @@ export function StepCard({
   const { active } = useDndContext();
   const [data, setData] = useState(step);
   const [open, setOpen] = useState(false);
-  const shouldShowOpportunities = !isGhost && !isSuggested;
-  const apiStepId = typeof step.id === 'string' ? step.id.trim() : '';
-  const hasApiStepId = apiStepId.length > 0;
-
   const handleSave = (title: string) => {
     setData((prev) => ({
       ...prev,
@@ -252,8 +272,8 @@ export function StepCard({
           }
         }}
       >
-        {shouldShowOpportunities && hasApiStepId && (
-          <StepOpportunitiesSection stepId={apiStepId} stepTitle={displayText} />
+        {shouldRenderOpportunities && (
+          <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
         )}
 
         {isSuggested && (
