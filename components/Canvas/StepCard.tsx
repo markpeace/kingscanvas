@@ -72,11 +72,11 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   return (
     <>
-      <div className="absolute right-3 top-3">
+      <div className="pointer-events-none absolute right-3 top-3 z-10 flex items-start justify-end">
         <button
           ref={opportunitiesTriggerRef}
           type="button"
-          className={`inline-flex min-w-[2.25rem] items-center justify-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
+          className={`pointer-events-auto inline-flex h-7 min-w-[2.25rem] items-center justify-center rounded-full border px-2.5 text-[0.7rem] font-semibold leading-none transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
             opportunitiesError
               ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
               : 'border-kings-grey-light bg-kings-grey-light/30 text-kings-grey-dark hover:bg-kings-grey-light/50'
@@ -276,15 +276,15 @@ export function StepCard({
           <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
         )}
 
-        {isSuggested && (
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
-              Suggested
-            </span>
-          </div>
-        )}
+        <div className="flex flex-col gap-3 text-left pr-12">
+          {isSuggested && (
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+              <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
+                Suggested
+              </span>
+            </div>
+          )}
 
-        <div className="flex flex-col gap-3 text-left">
           <p className="max-w-prose text-sm font-medium leading-relaxed text-slate-900">{displayText}</p>
         </div>
 
