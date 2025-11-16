@@ -269,7 +269,7 @@ describe("generateOpportunitiesForStep", () => {
     ).rejects.toBeInstanceOf(StepNotFoundError)
 
     expect(debug.warn).toHaveBeenCalledWith(
-      "Opportunities: step not found for generation",
+      "Opportunities: step not found in generateOpportunitiesForStep",
       expect.objectContaining({ stepId: "nonexistent", origin: "manual" })
     )
   })
@@ -292,19 +292,6 @@ describe("generateOpportunitiesForStep", () => {
       }
     ])
 
-    const { createOpportunitiesForStep } = await import("@/lib/userData")
-
-    await createOpportunitiesForStep("owner@example.com", canonicalStepId, [
-      {
-        title: "Keep existing",
-        summary: "Old record should stay if AI fails.",
-        source: "independent",
-        form: "evergreen",
-        focus: "capability",
-        status: "suggested"
-      }
-    ])
-
     generateOpportunityDraftsForStep.mockRejectedValue(new Error("AI offline"))
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
@@ -312,6 +299,64 @@ describe("generateOpportunitiesForStep", () => {
     await expect(
       generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "ai-accepted" })
     ).rejects.toThrow("AI offline")
+  })
+
+  it("skips regeneration when manual steps already have opportunities", async () => {
+    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
+    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
+
+    const stepObjectId = new ObjectId()
+    const canonicalStepId = stepObjectId.toHexString()
+
+    const stepsCol = await getCollection("steps")
+    await stepsCol.insertMany([
+      {
+        _id: stepObjectId,
+        user: "owner@example.com",
+        intentionId: "int-789",
+        title: "Draft presentation",
+        bucket: "do-later"
+      }
+    ])
+
+    const { createOpportunitiesForStep, getOpportunitiesByStep } = await import("@/lib/userData")
+
+    await createOpportunitiesForStep("owner@example.com", canonicalStepId, [
+      {
+        title: "Keep existing",
+        summary: "Old record should stay if skip happens.",
+        source: "edge_simulated",
+        form: "evergreen",
+        focus: "capability",
+        status: "suggested"
+      }
+    ])
+
+    generateOpportunityDraftsForStep.mockResolvedValue([
+      {
+        title: "New item",
+        summary: "Should not be created.",
+        source: "edge_simulated",
+        form: "short_form",
+        focus: "credibility",
+        status: "suggested"
+      }
+    ])
+
+    const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
+
+    const created = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "manual" })
+
+    expect(created).toEqual([])
+    expect(generateOpportunityDraftsForStep).not.toHaveBeenCalled()
+    expect(debug.info).toHaveBeenCalledWith(
+      "Opportunities: already has opportunities; skipping auto generation",
+      expect.objectContaining({ stepId: canonicalStepId, origin: "manual" })
+    )
+
+    const existing = await getOpportunitiesByStep("owner@example.com", canonicalStepId)
+    expect(existing).toHaveLength(1)
+    expect(existing[0].title).toBe("Keep existing")
   })
 
   it("logs failures inside safelyGenerateOpportunitiesForStep", async () => {
@@ -341,9 +386,9 @@ describe("generateOpportunitiesForStep", () => {
       origin: "ai-accepted"
     })
 
-    expect(result).toBeNull()
+    expect(result).toBeUndefined()
     expect(debug.error).toHaveBeenCalledWith(
-      "Opportunities: auto generation failed",
+      "Opportunities: safelyGenerateOpportunitiesForStep failed",
       expect.objectContaining({
         stepId: canonicalStepId,
         origin: "ai-accepted",
