@@ -72,7 +72,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   return (
     <>
-      <div className="pointer-events-none absolute -top-1 -right-1 z-10 flex items-start justify-end transform translate-x-2 -translate-y-2">
+      <div className="pointer-events-none absolute top-1.5 right-1.5 z-10 flex items-start justify-end">
         <button
           ref={opportunitiesTriggerRef}
           type="button"
@@ -174,7 +174,7 @@ export function StepCard({
   const cardStyle: CSSProperties = {
     ...transformStyle,
     touchAction: 'manipulation',
-    overflow: 'hidden',
+    overflow: 'visible',
     position: 'relative',
     ...suggestedAnimation,
     ...(isGhost
@@ -213,7 +213,7 @@ export function StepCard({
   const isDragging = active?.id === step.clientId;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white px-4 py-3 shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white overflow-visible'
   const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
   const ghostClasses = 'cursor-default select-none'
   const suggestedClasses =
