@@ -24,9 +24,9 @@ describe('useOpportunities', () => {
         stepId: 'step-123',
         title: 'Opportunity',
         summary: 'Summary',
-        source: 'edge_simulated',
-        form: 'intensive',
-        focus: 'capability',
+        source: 'kings-edge-simulated',
+        form: 'workshop',
+        focus: 'skills',
         status: 'suggested'
       }
     ]

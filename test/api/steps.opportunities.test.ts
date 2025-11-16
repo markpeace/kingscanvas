@@ -132,9 +132,9 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
         stepId: objectId.toHexString(),
         title: "Industry visit",
         summary: "Spend a day shadowing a product team.",
-        source: "edge_simulated",
-        form: "intensive",
-        focus: "capability",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "experience",
         status: "suggested"
       }
     ])
@@ -160,9 +160,9 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
         stepId: objectId.toHexString(),
         title: "Opportunity 1",
         summary: "Summary 1",
-        source: "edge_simulated",
-        form: "intensive",
-        focus: "capability",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "skills",
         status: "suggested"
       },
       {
@@ -170,9 +170,9 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
         stepId: objectId.toHexString(),
         title: "Opportunity 2",
         summary: "Summary 2",
-        source: "edge_simulated",
-        form: "evergreen",
-        focus: "capital",
+        source: "kings-edge-simulated",
+        form: "short-course",
+        focus: "community",
         status: "suggested"
       },
       {
@@ -181,8 +181,8 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
         title: "Opportunity 3",
         summary: "Summary 3",
         source: "independent",
-        form: "short_form",
-        focus: "credibility",
+        form: "independent-action",
+        focus: "experience",
         status: "suggested"
       }
     ]
