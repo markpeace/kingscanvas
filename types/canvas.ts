@@ -26,9 +26,16 @@ export interface Intention {
 
 export type OpportunitySource = "kings-edge-simulated" | "independent"
 
-export type OpportunityForm = "workshop" | "mentoring" | "short-course" | "coaching" | "independent-action"
+export type OpportunityForm =
+  | "workshop"
+  | "mentoring"
+  | "short-course"
+  | "coaching"
+  | "project"
+  | "networking"
+  | "independent-action"
 
-export type OpportunityFocus = "experience" | "skills" | "community" | "reflection"
+export type OpportunityFocus = "experience" | "skills" | "community" | "reflection" | "planning"
 
 export type OpportunityStatus = "suggested" | "saved" | "dismissed"
 
