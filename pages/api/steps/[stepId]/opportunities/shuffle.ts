@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 
 import { authOptions, createTestSession, isProd } from '@/lib/auth/config'
 import { debug } from '@/lib/debug'
+import { isStepEligibleForOpportunities } from '@/lib/opportunities/eligibility'
 import { findStepById, generateOpportunitiesForStep, StepNotFoundError } from '@/lib/opportunities/generation'
 import type { Opportunity } from '@/types/canvas'
 
@@ -47,6 +48,15 @@ export default async function handler(
     if (typeof step.user !== 'string' || step.user !== email) {
       debug.warn('Opportunities API: shuffle forbidden', { user: email, stepId: requestedStepId })
       return res.status(403).json({ ok: false, error: 'Forbidden' })
+    }
+
+    if (!isStepEligibleForOpportunities(step as { id?: string; status?: string; _id?: unknown })) {
+      debug.info('Opportunities API: shuffle ineligible', {
+        user: email,
+        stepId: requestedStepId,
+        status: step?.status ?? null
+      })
+      return res.status(400).json({ ok: false, error: 'Step is not eligible for opportunities' })
     }
 
     const opportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle' })

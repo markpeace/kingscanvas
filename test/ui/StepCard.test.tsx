@@ -84,4 +84,27 @@ describe('StepCard opportunities integration', () => {
 
     expect(useOpportunitiesMock).not.toHaveBeenCalled()
   })
+
+  it('does not call useOpportunities for suggested steps even with an id', () => {
+    const step: Step = {
+      id: 'persisted-1',
+      clientId: 'step-suggested',
+      intentionId: 'int-1',
+      bucket: 'do-now',
+      order: 1,
+      title: 'AI suggestion',
+      status: 'suggested'
+    }
+
+    render(
+      <StepCard
+        step={step}
+        onDelete={noop}
+        onMoveForward={noop}
+        onMoveBackward={noop}
+      />
+    )
+
+    expect(useOpportunitiesMock).not.toHaveBeenCalled()
+  })
 })
