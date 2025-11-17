@@ -85,7 +85,7 @@ function BucketColumn({
       aria-label={`${bucketTitle} bucket`}
       aria-dropeffect="move"
       className={[
-        'border rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors duration-150',
+        'border rounded-lg p-4 min-h-[140px] flex flex-col gap-3 transition-colors duration-150 overflow-visible',
         highlightBucket === bucketId ? 'ring-2 ring-kings-red/50' : '',
         isOver ? 'shadow-sm border-kings-red/40' : '',
         isLater

@@ -78,7 +78,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   return (
     <>
-      <div className="absolute right-1.5 top-1.5 z-10">
+      <div className="absolute top-0 right-0 translate-x-[40%] -translate-y-[40%] z-10">
         <button
           ref={opportunitiesTriggerRef}
           type="button"
@@ -220,7 +220,7 @@ export function StepCard({
   const isDragging = active?.id === step.clientId;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white p-3 text-left text-sm leading-relaxed shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white p-3 text-left text-sm leading-relaxed shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white overflow-visible'
   const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
   const ghostClasses = 'cursor-default select-none'
   const suggestedClasses =
