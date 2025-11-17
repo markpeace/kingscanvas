@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 
-import handler from "@/pages/api/steps/[stepId]/shuffle-opportunities"
+import handler from "@/pages/api/steps/[stepId]/opportunities/shuffle"
 import { getServerSession } from "next-auth"
 
 jest.mock("next-auth", () => ({

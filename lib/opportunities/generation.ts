@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb"
 
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
+import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { generateOpportunityDraftsForStep } from "@/lib/opportunities/simulation"
 import {
   createOpportunitiesForStep,
@@ -28,6 +29,8 @@ type StepRecord = {
   text?: string
   bucket?: string
   bucketId?: string
+  status?: string
+  source?: string
 }
 
 type IntentionRecord = {
@@ -146,6 +149,8 @@ const VALID_FORMS: Opportunity["form"][] = [
   "mentoring",
   "short-course",
   "coaching",
+  "project",
+  "networking",
   "independent-action"
 ]
 const VALID_FOCUS_VALUES = ["experience", "skills", "community", "reflection"] as const
@@ -201,6 +206,16 @@ export async function generateOpportunitiesForStep(params: {
     const stepTitle = resolveStepTitle(step, canonicalStepId)
     const intentionTitle = await findIntentionTitle(step.user, step.intentionId)
     const bucketId = resolveBucketId(step)
+
+    if (!isStepEligibleForOpportunities({ id: canonicalStepId, status: step.status, source: step.source })) {
+      debug.info("Opportunities: step not eligible; skipping generation", {
+        stepId: canonicalStepId,
+        origin,
+        status: step.status,
+        source: step.source
+      })
+      return []
+    }
 
     const shouldSkipAutoGeneration = origin !== "shuffle" && origin !== "lazy-fetch"
 
