@@ -181,7 +181,7 @@ export function StepCard({
   const cardStyle: CSSProperties = {
     ...transformStyle,
     touchAction: 'manipulation',
-    overflow: 'hidden',
+    overflow: 'visible',
     position: 'relative',
     ...suggestedAnimation,
     ...(isGhost
@@ -220,7 +220,7 @@ export function StepCard({
   const isDragging = active?.id === step.clientId;
   const displayText = data.title || data.text || step.title || step.text || 'New Step';
   const baseClasses =
-    'step-card relative flex flex-col rounded-xl border border-kings-grey-light bg-white shadow-sm text-sm leading-relaxed focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
+    'step-card relative flex flex-col gap-3 rounded-xl border border-kings-grey-light bg-white p-3 text-left text-sm leading-relaxed shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white'
   const interactiveClasses = 'cursor-pointer transition-colors hover:border-kings-grey'
   const ghostClasses = 'cursor-default select-none'
   const suggestedClasses =
@@ -283,50 +283,48 @@ export function StepCard({
           <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
         )}
 
-        <div className="flex flex-col gap-3 px-3 py-3 text-left">
-          {isSuggested && (
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-              <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
-                Suggested
-              </span>
-            </div>
-          )}
+        {isSuggested && (
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
+            <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase leading-none text-amber-800">
+              Suggested
+            </span>
+          </div>
+        )}
 
-          <p className="max-w-prose text-sm font-medium leading-relaxed text-slate-900">{displayText}</p>
+        <p className="max-w-prose text-sm font-medium leading-relaxed text-slate-900">{displayText}</p>
 
-          {showActions && (
-            <div
-              className="accept-reject-zone flex flex-wrap items-center gap-3 pt-2"
-              style={{ pointerEvents: 'auto' }}
-            >
-              {onAccept && (
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center rounded-md border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 transition-colors hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40"
-                  onClick={handleAcceptClick}
-                  onMouseDown={blockDrag}
-                  onTouchStart={blockDrag}
-                  onPointerDown={blockDrag}
-                >
-                  Accept
-                </button>
-              )}
+        {showActions && (
+          <div
+            className="accept-reject-zone flex flex-wrap items-center gap-3 pt-2"
+            style={{ pointerEvents: 'auto' }}
+          >
+            {onAccept && (
+              <button
+                type="button"
+                className="inline-flex items-center justify-center rounded-md border border-green-600 px-3 py-1 text-xs font-semibold text-green-700 transition-colors hover:bg-green-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/40"
+                onClick={handleAcceptClick}
+                onMouseDown={blockDrag}
+                onTouchStart={blockDrag}
+                onPointerDown={blockDrag}
+              >
+                Accept
+              </button>
+            )}
 
-              {onReject && (
-                <button
-                  type="button"
-                  className="text-xs font-medium text-red-600 underline-offset-2 hover:underline"
-                  onClick={handleRejectClick}
-                  onMouseDown={blockDrag}
-                  onTouchStart={blockDrag}
-                  onPointerDown={blockDrag}
-                >
-                  Reject
-                </button>
-              )}
-            </div>
-          )}
-        </div>
+            {onReject && (
+              <button
+                type="button"
+                className="text-xs font-medium text-red-600 underline-offset-2 hover:underline"
+                onClick={handleRejectClick}
+                onMouseDown={blockDrag}
+                onTouchStart={blockDrag}
+                onPointerDown={blockDrag}
+              >
+                Reject
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {!isGhost && (

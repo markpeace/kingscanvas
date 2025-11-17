@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { Opportunity } from '@/types/canvas'
@@ -70,6 +70,18 @@ export function StepOpportunitiesModal({
   const handleCloseClick = () => {
     debug.info('Opportunities UI: close clicked', { stepId })
     onClose()
+  }
+
+  const handleOverlayPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation()
+
+    if (event.target === event.currentTarget) {
+      onClose()
+    }
+  }
+
+  const handleDialogPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation()
   }
 
   const handleShuffleClick = async () => {
@@ -160,12 +172,9 @@ export function StepOpportunitiesModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) {
-          onClose()
-        }
-      }}
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+      role="presentation"
+      onPointerDown={handleOverlayPointerDown}
     >
       <div
         role="dialog"
@@ -173,8 +182,8 @@ export function StepOpportunitiesModal({
         aria-labelledby={headingId}
         aria-describedby={descriptionId}
         data-step-id={stepId}
-        className="w-full max-w-[560px] rounded-2xl border border-kings-grey-light/70 bg-kings-white p-6 shadow-2xl focus:outline-none"
-        onMouseDown={(event) => event.stopPropagation()}
+        className="pointer-events-auto w-full max-w-[560px] rounded-2xl border border-kings-grey-light/70 bg-kings-white p-6 shadow-2xl focus:outline-none"
+        onPointerDown={handleDialogPointerDown}
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
