@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 
 import { useOpportunities } from '@/hooks/useOpportunities'
 
@@ -79,5 +79,51 @@ describe('useOpportunities', () => {
 
     expect(result.current.error).toBeInstanceOf(Error)
     expect(result.current.opportunities).toEqual([])
+  })
+
+  it('supports refetching opportunities on demand', async () => {
+    const initialOpportunity = {
+      id: 'opp-initial',
+      stepId: 'step-123',
+      title: 'Initial Opportunity',
+      summary: 'Initial summary',
+      source: 'kings-edge-simulated',
+      form: 'workshop',
+      focus: 'skills',
+      status: 'suggested'
+    }
+    const refreshedOpportunity = {
+      ...initialOpportunity,
+      id: 'opp-refreshed',
+      title: 'Refreshed Opportunity'
+    }
+
+    ;(global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, opportunities: [initialOpportunity] })
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ ok: true, opportunities: [refreshedOpportunity] })
+      })
+
+    const { result } = renderHook(() => useOpportunities('step-123'))
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(result.current.opportunities).toEqual([initialOpportunity])
+
+    await act(async () => {
+      await result.current.refetch()
+    })
+
+    expect(global.fetch).toHaveBeenLastCalledWith('/api/steps/step-123/opportunities')
+    expect(result.current.error).toBeNull()
+    expect(result.current.opportunities).toEqual([refreshedOpportunity])
   })
 })
