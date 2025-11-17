@@ -18,10 +18,6 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
   const [error, setError] = useState<Error | null>(null)
   const fetchIdRef = useRef(0)
 
-  useEffect(() => {
-    debug.trace('Opportunities hook: init', { stepId })
-  }, [stepId])
-
   const fetchOpportunities = useCallback(async (): Promise<Opportunity[]> => {
     if (!stepId) {
       debug.debug('Opportunities hook: skipping fetch (missing step id)')
@@ -82,9 +78,8 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
       }
 
       const normalizedError = err instanceof Error ? err : new Error(String(err))
-      debug.error('Opportunities hook: fetch failed', { stepId, message: normalizedError.message })
+      debug.error('Opportunities hook: fetch failed', { stepId, error: normalizedError })
       setError(normalizedError)
-      setOpportunities([])
       throw normalizedError
     } finally {
       if (currentFetchId === fetchIdRef.current) {

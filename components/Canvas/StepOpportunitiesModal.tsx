@@ -113,6 +113,9 @@ export function StepOpportunitiesModal({
   }
 
   const isBusy = isLoading || isShuffling
+  const hasOpportunities = opportunities.length > 0
+  const showInitialError = Boolean(error && !hasOpportunities)
+  const showRefreshError = Boolean(error && hasOpportunities)
 
   const handleCloseClick = () => {
     debug.info('Opportunities UI: close clicked', { stepId })
@@ -176,15 +179,11 @@ export function StepOpportunitiesModal({
       return <p className="text-sm text-kings-grey-dark">Loading opportunities…</p>
     }
 
-    if (error) {
-      return (
-        <p className="text-sm text-red-600">
-          We could not load opportunities for this step. Please try again later.
-        </p>
-      )
-    }
+    if (!hasOpportunities) {
+      if (showInitialError) {
+        return null
+      }
 
-    if (!opportunities.length) {
       return (
         <p className="text-sm text-kings-grey-dark">
           There are no opportunities for this step yet. When recommendations are available, they’ll appear here.
@@ -243,29 +242,41 @@ export function StepOpportunitiesModal({
           >
             Opportunities for “{stepTitle}”
           </h2>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleShuffleClick}
-              disabled={isBusy}
-              className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
-            </button>
-            <button
-              ref={closeButtonRef}
-              type="button"
-              onClick={handleCloseClick}
-              className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
-            >
-              Close
-            </button>
+          <div className="flex flex-col items-end gap-2 text-right">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleShuffleClick}
+                disabled={isBusy}
+                className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
+              </button>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={handleCloseClick}
+                className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
+              >
+                Close
+              </button>
+            </div>
+            {showRefreshError ? (
+              <p className="text-xs text-kings-grey-dark">
+                We could not refresh suggestions this time. Your existing suggestions are still here.
+              </p>
+            ) : null}
           </div>
         </div>
         <div
           id={descriptionId}
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-2 text-left text-sm text-kings-black"
         >
+          {showInitialError ? (
+            <p className="mb-4 rounded-md bg-kings-grey-light/30 px-3 py-2 text-sm text-kings-grey-dark">
+              We could not load suggestions just now. Please try again in a moment.
+            </p>
+          ) : null}
           {bodyContent}
         </div>
       </div>

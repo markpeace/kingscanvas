@@ -72,36 +72,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const opportunities = await getOpportunitiesByStep(email, canonicalStepId)
 
     if (opportunities.length > 0) {
-      debug.info("Opportunities API: returning existing opportunities", {
+      debug.debug("Opportunities API: returning existing opportunities", {
         stepId: canonicalStepId,
-        count: opportunities.length,
-        ownerUserId: email
+        count: opportunities.length
       })
-
       return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
     }
-
-    debug.info("Opportunities API: no existing opportunities, attempting lazy generation", {
-      stepId: canonicalStepId,
-      ownerUserId: email
-    })
 
     let generated: Opportunity[] = []
 
     try {
       generated = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "lazy-fetch" })
-
-      debug.info("Opportunities API: lazy generation complete", {
+      debug.info("Opportunities API: generated on demand", {
         stepId: canonicalStepId,
-        createdCount: generated.length,
-        ownerUserId: email
+        count: generated.length
       })
     } catch (error) {
-      debug.error("Opportunities API: lazy generation failed", {
+      debug.error("Opportunities API: on-demand generation failed", {
         stepId: canonicalStepId,
-        ownerUserId: email,
-        errorName: error instanceof Error && typeof error.name === "string" ? error.name : "Error",
-        errorMessage: error instanceof Error ? error.message : String(error)
+        error
       })
       generated = []
     }
@@ -111,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     debug.error("Opportunities API: failure", {
       user: email,
       stepId: requestedStepId,
-      message: error instanceof Error ? error.message : String(error),
+      error
     })
     return res.status(500).json({ ok: false, error: "Server error" })
   }
