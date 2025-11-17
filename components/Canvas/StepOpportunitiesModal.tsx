@@ -231,44 +231,42 @@ export function StepOpportunitiesModal({
         aria-labelledby={headingId}
         aria-describedby={descriptionId}
         data-step-id={stepId}
-        className="pointer-events-auto flex w-full max-h-[80vh] max-w-[560px] flex-col rounded-2xl border border-kings-grey-light/70 bg-kings-white shadow-2xl focus:outline-none"
+        className="pointer-events-auto flex w-full max-h-[80vh] max-w-[560px] flex-col overflow-hidden rounded-2xl border border-kings-grey-light/70 bg-kings-white shadow-2xl focus:outline-none"
         onPointerDown={handleDialogPointerDown}
       >
-        <div className="flex h-full flex-col gap-6 p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3 flex-none">
-            <h2
-              id={headingId}
-              ref={headingRef}
-              tabIndex={-1}
-              className="text-xl font-semibold text-kings-red focus:outline-none"
-            >
-              Opportunities for “{stepTitle}”
-            </h2>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleShuffleClick}
-                disabled={isBusy}
-                className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
-              </button>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={handleCloseClick}
-                className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-          <div
-            id={descriptionId}
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 text-left text-sm text-kings-black"
+        <div className="flex flex-wrap items-start justify-between gap-3 p-6 flex-none">
+          <h2
+            id={headingId}
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-xl font-semibold text-kings-red focus:outline-none"
           >
-            {bodyContent}
+            Opportunities for “{stepTitle}”
+          </h2>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleShuffleClick}
+              disabled={isBusy}
+              className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
+            </button>
+            <button
+              ref={closeButtonRef}
+              type="button"
+              onClick={handleCloseClick}
+              className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
+            >
+              Close
+            </button>
           </div>
+        </div>
+        <div
+          id={descriptionId}
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-2 text-left text-sm text-kings-black"
+        >
+          {bodyContent}
         </div>
       </div>
     </div>,
