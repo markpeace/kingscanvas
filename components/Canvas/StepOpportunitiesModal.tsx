@@ -221,7 +221,7 @@ export function StepOpportunitiesModal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-black/40 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
       role="presentation"
       onPointerDown={handleOverlayPointerDown}
     >
@@ -234,8 +234,8 @@ export function StepOpportunitiesModal({
         className="pointer-events-auto flex w-full max-h-[80vh] max-w-[560px] flex-col rounded-2xl border border-kings-grey-light/70 bg-kings-white shadow-2xl focus:outline-none"
         onPointerDown={handleDialogPointerDown}
       >
-        <div className="flex flex-1 flex-col gap-6 p-6">
-          <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex h-full flex-col gap-6 p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3 flex-none">
             <h2
               id={headingId}
               ref={headingRef}
@@ -263,13 +263,11 @@ export function StepOpportunitiesModal({
               </button>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden">
-            <div
-              id={descriptionId}
-              className="h-full overflow-y-auto pr-1 text-left text-sm text-kings-black"
-            >
-              {bodyContent}
-            </div>
+          <div
+            id={descriptionId}
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 text-left text-sm text-kings-black"
+          >
+            {bodyContent}
           </div>
         </div>
       </div>
