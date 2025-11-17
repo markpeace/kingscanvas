@@ -16,6 +16,8 @@ export default function useAutosave<T>(
   const timeout = useRef<NodeJS.Timeout | null>(null)
   const latestData = useRef<T>(data)
 
+  const method = 'PUT'
+
   async function attemptSave(attempt = 1): Promise<boolean> {
     try {
       setSaving(true)
@@ -24,11 +26,12 @@ export default function useAutosave<T>(
       debug.trace('Autosave: attempting save', {
         attempt,
         endpoint,
+        method,
         size: JSON.stringify(latestData.current)?.length || 0
       })
 
       const res = await fetch(endpoint, {
-        method: 'PUT',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(latestData.current)
       })
