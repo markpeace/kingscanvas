@@ -125,7 +125,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns stored opportunities for the step", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
     getOpportunitiesByStep.mockResolvedValue([
       {
         id: "opp-1",
@@ -180,15 +180,25 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
         stepId: objectId.toHexString(),
         title: "Opportunity 3",
         summary: "Summary 3",
+        source: "kings-edge-simulated",
+        form: "project",
+        focus: "experience",
+        status: "suggested"
+      },
+      {
+        id: "generated-4",
+        stepId: objectId.toHexString(),
+        title: "Opportunity 4",
+        summary: "Summary 4",
         source: "independent",
         form: "independent-action",
-        focus: "experience",
+        focus: "reflection",
         status: "suggested"
       }
     ]
 
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
     getOpportunitiesByStep.mockResolvedValue([])
     generateOpportunitiesForStep.mockResolvedValue(generated)
 
@@ -204,14 +214,36 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
     expect(getStatus()).toBe(200)
     const payload = getJSON<{ ok: boolean; opportunities: Array<{ id: string }>; stepId: string }>()
     expect(payload.ok).toBe(true)
-    expect(payload.opportunities).toHaveLength(3)
-    expect(payload.opportunities[0].id).toBe("generated-1")
+    expect(payload.opportunities).toHaveLength(4)
+    const edgeCount = payload.opportunities.filter((item) => item.source === "kings-edge-simulated").length
+    const independentCount = payload.opportunities.filter((item) => item.source === "independent").length
+    expect(edgeCount).toBe(3)
+    expect(independentCount).toBe(1)
+  })
+
+  it("rejects requests for ineligible steps", async () => {
+    const objectId = makeObjectId()
+    getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "suggested" })
+
+    const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: objectId.toHexString() })
+    const handler = (await import("@/pages/api/steps/[stepId]/opportunities")).default
+
+    await handler(req, res)
+
+    expect(getStatus()).toBe(400)
+    expect(getJSON<{ ok: boolean; error: string }>()).toEqual({
+      ok: false,
+      error: "Step is not eligible for opportunities"
+    })
+    expect(getOpportunitiesByStep).not.toHaveBeenCalled()
+    expect(generateOpportunitiesForStep).not.toHaveBeenCalled()
   })
 
   it("returns an empty array when lazy generation fails", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
     getOpportunitiesByStep.mockResolvedValue([])
     generateOpportunitiesForStep.mockRejectedValue(new Error("generation failed"))
 
@@ -230,7 +262,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns 500 when fetching fails", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
     getOpportunitiesByStep.mockRejectedValue(new Error("database offline"))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: objectId.toHexString() })

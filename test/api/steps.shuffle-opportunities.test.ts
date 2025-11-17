@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 
-import handler from "@/pages/api/steps/[stepId]/shuffle-opportunities"
+import handler from "@/pages/api/steps/[stepId]/opportunities/shuffle"
 import { getServerSession } from "next-auth"
 
 jest.mock("next-auth", () => ({
@@ -103,7 +103,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns generated opportunities for the owner", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active" })
     generateOpportunitiesForStep.mockResolvedValue([
       {
         id: "opp-1",
@@ -120,9 +120,29 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
         stepId: "step-123",
         title: "Second",
         summary: "Two",
+        source: "kings-edge-simulated",
+        form: "workshop",
+        focus: "skills",
+        status: "suggested"
+      },
+      {
+        id: "opp-3",
+        stepId: "step-123",
+        title: "Third",
+        summary: "Three",
+        source: "kings-edge-simulated",
+        form: "project",
+        focus: "experience",
+        status: "suggested"
+      },
+      {
+        id: "opp-4",
+        stepId: "step-123",
+        title: "Fourth",
+        summary: "Four",
         source: "independent",
         form: "independent-action",
-        focus: "experience",
+        focus: "planning",
         status: "saved"
       }
     ])
@@ -136,7 +156,11 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
     expect(getStatus()).toBe(200)
     const json = getJSON() as { ok: boolean; opportunities: Array<{ id: string }> }
     expect(json.ok).toBe(true)
-    expect(json.opportunities).toHaveLength(2)
+    expect(json.opportunities).toHaveLength(4)
+    const edgeCount = json.opportunities.filter((item) => item.source === "kings-edge-simulated").length
+    expect(edgeCount).toBe(3)
+    const independentCount = json.opportunities.filter((item) => item.source === "independent").length
+    expect(independentCount).toBe(1)
   })
 
   it("returns 401 when unauthenticated", async () => {
@@ -155,7 +179,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 403 when the user does not own the step", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "different@example.com" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "different@example.com", status: "active" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
 
@@ -185,7 +209,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 500 when generation fails", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active" })
     generateOpportunitiesForStep.mockRejectedValue(new Error("boom"))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
@@ -196,5 +220,20 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
     const json = getJSON() as { ok: boolean; error: string }
     expect(json.ok).toBe(false)
     expect(json.error).toBe("Could not generate opportunities for this step")
+  })
+
+  it("returns 400 when the step status is not eligible", async () => {
+    mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "suggested" })
+
+    const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
+
+    await handler(req, res)
+
+    expect(getStatus()).toBe(400)
+    const json = getJSON() as { ok: boolean; error: string }
+    expect(json.ok).toBe(false)
+    expect(json.error).toBe("Step is not eligible for opportunities")
+    expect(generateOpportunitiesForStep).not.toHaveBeenCalled()
   })
 })

@@ -28,6 +28,7 @@ type StepRecord = {
   text?: string
   bucket?: string
   bucketId?: string
+  status?: string
 }
 
 type IntentionRecord = {

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
+import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
 import { getOpportunitiesByStep } from "@/lib/userData"
 import type { Opportunity } from "@/types/canvas"
@@ -65,6 +66,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (!owner || owner !== email) {
       debug.warn("Opportunities API: forbidden", { user: email, stepId: requestedStepId })
       return res.status(403).json({ ok: false, error: "Forbidden" })
+    }
+
+    if (!isStepEligibleForOpportunities(step as { id?: string; status?: string; _id?: unknown })) {
+      debug.info("Opportunities API: step not eligible", {
+        user: email,
+        stepId: requestedStepId,
+        status: step?.status ?? null
+      })
+      return res.status(400).json({ ok: false, error: "Step is not eligible for opportunities" })
     }
 
     const canonicalStepId = resolveCanonicalStepId(step as { _id?: unknown; id?: unknown }, requestedStepId)

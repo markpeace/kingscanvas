@@ -53,4 +53,42 @@ describe("deterministic opportunity simulation", () => {
 
     expect(viaAsync).toEqual(direct)
   })
+
+  it("always returns four drafts with populated content", () => {
+    const drafts = createSimulatedOpportunityDrafts({
+      stepTitle: "Shadow a neurology clinic",
+      intentionTitle: "Explore health careers"
+    })
+
+    expect(drafts).toHaveLength(4)
+    drafts.forEach((draft) => {
+      expect(draft.title.trim().length).toBeGreaterThan(0)
+      expect(draft.summary.trim().length).toBeGreaterThan(0)
+    })
+  })
+
+  it("guarantees a 3:1 mix of King's Edge to independent sources", () => {
+    const drafts = createSimulatedOpportunityDrafts({
+      stepTitle: "Plan a research placement"
+    })
+
+    const edgeDrafts = drafts.filter((draft) => draft.source === "kings-edge-simulated")
+    const independentDrafts = drafts.filter((draft) => draft.source === "independent")
+
+    expect(edgeDrafts).toHaveLength(3)
+    expect(independentDrafts).toHaveLength(1)
+  })
+
+  it("is deterministic for identical inputs", () => {
+    const firstRun = createSimulatedOpportunityDrafts({
+      stepTitle: "Develop science communication skills",
+      bucket: "do-later"
+    })
+    const secondRun = createSimulatedOpportunityDrafts({
+      stepTitle: "Develop science communication skills",
+      bucket: "do-later"
+    })
+
+    expect(secondRun).toEqual(firstRun)
+  })
 })
