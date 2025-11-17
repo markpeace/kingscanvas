@@ -47,17 +47,14 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
-    shuffle,
-    isShuffling: opportunitiesShuffling
+    refetch
   } = useOpportunities(stepId)
 
   const opportunitiesCount = opportunities.length
-  const isBusy = opportunitiesLoading || opportunitiesShuffling
+  const isBusy = opportunitiesLoading
   const badgeContent = isBusy ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString()
-  const badgeLabel = opportunitiesLoading
+  const badgeLabel = isBusy
     ? 'Loading opportunities'
-    : opportunitiesShuffling
-    ? 'Refreshing opportunities'
     : opportunitiesError
     ? 'Could not load opportunities'
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
@@ -112,8 +109,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
         opportunities={opportunities}
         isLoading={opportunitiesLoading}
         error={opportunitiesError}
-        onShuffle={shuffle}
-        isShuffling={opportunitiesShuffling}
+        refetch={refetch}
       />
     </>
   )

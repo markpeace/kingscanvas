@@ -81,21 +81,21 @@ describe('useOpportunities', () => {
     expect(result.current.opportunities).toEqual([])
   })
 
-  it('allows shuffling opportunities and updates the list', async () => {
+  it('supports refetching opportunities on demand', async () => {
     const initialOpportunity = {
       id: 'opp-initial',
       stepId: 'step-123',
-      title: 'Opportunity A',
+      title: 'Initial Opportunity',
       summary: 'Initial summary',
       source: 'kings-edge-simulated',
       form: 'workshop',
       focus: 'skills',
       status: 'suggested'
     }
-    const shuffledOpportunity = {
+    const refreshedOpportunity = {
       ...initialOpportunity,
-      id: 'opp-shuffled',
-      title: 'Shuffled Opportunity'
+      id: 'opp-refreshed',
+      title: 'Refreshed Opportunity'
     }
 
     ;(global.fetch as jest.Mock)
@@ -107,7 +107,7 @@ describe('useOpportunities', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => ({ ok: true, opportunities: [shuffledOpportunity] })
+        json: async () => ({ ok: true, opportunities: [refreshedOpportunity] })
       })
 
     const { result } = renderHook(() => useOpportunities('step-123'))
@@ -116,50 +116,14 @@ describe('useOpportunities', () => {
       expect(result.current.isLoading).toBe(false)
     })
 
+    expect(result.current.opportunities).toEqual([initialOpportunity])
+
     await act(async () => {
-      await result.current.shuffle()
+      await result.current.refetch()
     })
 
-    expect(global.fetch).toHaveBeenLastCalledWith('/api/steps/step-123/shuffle-opportunities', { method: 'POST' })
+    expect(global.fetch).toHaveBeenLastCalledWith('/api/steps/step-123/opportunities')
     expect(result.current.error).toBeNull()
-    expect(result.current.opportunities).toEqual([shuffledOpportunity])
-  })
-
-  it('surfaces shuffle errors without clearing the previous data', async () => {
-    const stableOpportunity = {
-      id: 'opp-stable',
-      stepId: 'step-123',
-      title: 'Keep me',
-      summary: 'Still here',
-      source: 'kings-edge-simulated',
-      form: 'workshop',
-      focus: 'skills',
-      status: 'suggested'
-    }
-
-    ;(global.fetch as jest.Mock)
-      .mockResolvedValueOnce({
-        ok: true,
-        status: 200,
-        json: async () => ({ ok: true, opportunities: [stableOpportunity] })
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 500,
-        json: async () => ({ ok: false, error: 'Shuffle failed' })
-      })
-
-    const { result } = renderHook(() => useOpportunities('step-123'))
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false)
-    })
-
-    await act(async () => {
-      await expect(result.current.shuffle()).rejects.toThrow('Shuffle failed')
-    })
-
-    expect(result.current.opportunities).toEqual([stableOpportunity])
-    expect(result.current.error).toBeInstanceOf(Error)
+    expect(result.current.opportunities).toEqual([refreshedOpportunity])
   })
 })

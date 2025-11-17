@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useId, useRef } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 import type { Opportunity } from '@/types/canvas'
+import { debug } from '@/lib/debug'
 
 type StepOpportunitiesModalProps = {
   stepId: string
@@ -13,8 +14,7 @@ type StepOpportunitiesModalProps = {
   opportunities: Opportunity[]
   isLoading: boolean
   error: Error | null
-  onShuffle: () => Promise<Opportunity[] | void>
-  isShuffling: boolean
+  refetch: () => Promise<Opportunity[]>
 }
 
 export function StepOpportunitiesModal({
@@ -25,13 +25,13 @@ export function StepOpportunitiesModal({
   opportunities,
   isLoading,
   error,
-  onShuffle,
-  isShuffling
+  refetch
 }: StepOpportunitiesModalProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const headingId = useId()
   const descriptionId = useId()
+  const [isShuffling, setIsShuffling] = useState(false)
 
   useEffect(() => {
     if (!isOpen) {
@@ -66,6 +66,51 @@ export function StepOpportunitiesModal({
   }
 
   const isBusy = isLoading || isShuffling
+
+  const handleCloseClick = () => {
+    debug.info('Opportunities UI: close clicked', { stepId })
+    onClose()
+  }
+
+  const handleShuffleClick = async () => {
+    if (isShuffling) {
+      return
+    }
+
+    debug.info('Opportunities UI: shuffle clicked', { stepId })
+    setIsShuffling(true)
+
+    try {
+      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/opportunities/shuffle`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        debug.error('Opportunities UI: shuffle failed', { stepId, status: response.status })
+        return
+      }
+
+      try {
+        await refetch()
+        debug.info('Opportunities UI: shuffle complete', { stepId })
+      } catch (err) {
+        debug.error('Opportunities UI: shuffle refetch failed', {
+          stepId,
+          error: err instanceof Error ? err.message : String(err)
+        })
+      }
+    } catch (error) {
+      debug.error('Opportunities UI: shuffle error', {
+        stepId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    } finally {
+      setIsShuffling(false)
+    }
+  }
 
   const renderBody = () => {
     if (isBusy) {
@@ -144,13 +189,7 @@ export function StepOpportunitiesModal({
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    await onShuffle()
-                  } catch {
-                    // Error state is handled by the hook; no-op here
-                  }
-                }}
+                onClick={handleShuffleClick}
                 disabled={isBusy}
                 className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -159,7 +198,7 @@ export function StepOpportunitiesModal({
               <button
                 ref={closeButtonRef}
                 type="button"
-                onClick={onClose}
+                onClick={handleCloseClick}
                 className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
               >
                 Close

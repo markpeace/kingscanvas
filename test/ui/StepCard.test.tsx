@@ -32,8 +32,7 @@ describe('StepCard opportunities integration', () => {
       opportunities: [],
       isLoading: false,
       error: null,
-      shuffle: jest.fn(),
-      isShuffling: false
+      refetch: jest.fn()
     })
   })
 
