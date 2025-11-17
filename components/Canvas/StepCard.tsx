@@ -15,7 +15,6 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
-import { debug } from '@/lib/debug'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -130,25 +129,6 @@ export function StepCard({
   const hasStepId = trimmedStepId.length > 0;
   const shouldShowOpportunities = !isGhost && !isSuggested;
   const shouldRenderOpportunities = shouldShowOpportunities && hasStepId;
-
-  debug.trace('StepCard: render', {
-    stepId: trimmedStepId,
-    clientId: step.clientId,
-    status: step.status,
-    source: step.source,
-    isGhost,
-    isSuggested,
-  });
-
-  debug.trace('StepCard: opportunities eligibility', {
-    stepId: trimmedStepId,
-    clientId: step.clientId,
-    isGhost,
-    isSuggested,
-    hasStepId,
-    shouldShowOpportunities,
-    shouldRenderOpportunities,
-  });
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.clientId,
     data: { type: 'step', step },

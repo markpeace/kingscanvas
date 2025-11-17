@@ -179,11 +179,6 @@ export async function generateOpportunitiesForStep(params: {
 }): Promise<Opportunity[]> {
   const { stepId, origin } = params
 
-  debug.info("Opportunities: generateOpportunitiesForStep start", {
-    stepId,
-    origin
-  })
-
   let canonicalStepId = stepId
 
   try {
@@ -205,7 +200,7 @@ export async function generateOpportunitiesForStep(params: {
     const shouldSkipAutoGeneration = origin !== "shuffle" && origin !== "lazy-fetch"
 
     if (shouldSkipAutoGeneration && (await stepHasOpportunities(step.user, canonicalStepId))) {
-      debug.info("Opportunities: already has opportunities; skipping auto generation", {
+      debug.debug("Opportunities: already has opportunities; skipping auto generation", {
         stepId: canonicalStepId,
         origin
       })
@@ -216,12 +211,6 @@ export async function generateOpportunitiesForStep(params: {
       stepTitle,
       intentionTitle,
       bucketId
-    })
-
-    debug.info("Opportunities: drafts generated", {
-      stepId: canonicalStepId,
-      origin,
-      draftCount: drafts.length
     })
 
     const filteredDrafts = drafts.filter(
@@ -253,20 +242,18 @@ export async function generateOpportunitiesForStep(params: {
     await deleteOpportunitiesForStep(step.user, canonicalStepId)
     const created = await createOpportunitiesForStep(step.user, canonicalStepId, records)
 
-    debug.info("Opportunities: generateOpportunitiesForStep success", {
+    debug.info("Opportunities: generate success", {
       stepId: canonicalStepId,
       origin,
-      createdCount: created.length
+      count: created.length
     })
 
     return created
   } catch (error) {
-    debug.error("Opportunities: generateOpportunitiesForStep failed", {
+    debug.error("Opportunities: generate failed", {
       stepId: canonicalStepId,
       origin,
-      errorName: error instanceof Error && typeof error.name === "string" ? error.name : "Error",
-      errorMessage: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error && typeof error.stack === "string" ? error.stack : undefined
+      error
     })
     throw error
   }
@@ -278,25 +265,23 @@ export async function safelyGenerateOpportunitiesForStep(params: {
 }): Promise<void> {
   const { stepId, origin } = params
 
-  debug.info("Opportunities: safelyGenerateOpportunitiesForStep start", {
+  debug.debug("Opportunities: safelyGenerateOpportunitiesForStep start", {
     stepId,
     origin
   })
 
   try {
     const opportunities = await generateOpportunitiesForStep(params)
-    debug.info("Opportunities: safelyGenerateOpportunitiesForStep success", {
+    debug.debug("Opportunities: safelyGenerateOpportunitiesForStep success", {
       stepId,
       origin,
       count: opportunities.length
     })
   } catch (error) {
-    debug.error("Opportunities: safelyGenerateOpportunitiesForStep failed", {
+    debug.warn("Opportunities: safelyGenerateOpportunitiesForStep failed", {
       stepId,
       origin,
-      errorName: error instanceof Error && typeof error.name === "string" ? error.name : "Error",
-      errorMessage: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error && typeof error.stack === "string" ? error.stack : undefined
+      error
     })
   }
 }

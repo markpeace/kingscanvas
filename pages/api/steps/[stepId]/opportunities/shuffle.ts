@@ -34,6 +34,8 @@ export default async function handler(
     return res.status(400).json({ ok: false, error: 'Missing step id' })
   }
 
+  debug.info('Opportunities API: shuffle requested', { stepId: requestedStepId })
+
   try {
     const step = await findStepById(requestedStepId)
 
@@ -59,10 +61,9 @@ export default async function handler(
         ? step.id
         : requestedStepId)
 
-    debug.info('Opportunities API: shuffle', {
-      user: email,
+    debug.info('Opportunities API: shuffle success', {
       stepId: responseStepId,
-      createdCount: opportunities.length
+      count: opportunities.length
     })
 
     return res.status(200).json({ ok: true, stepId: responseStepId, opportunities })
@@ -75,11 +76,9 @@ export default async function handler(
       return res.status(404).json({ ok: false, error: 'Step not found' })
     }
 
-    const message = error instanceof Error ? error.message : String(error)
     debug.error('Opportunities API: shuffle failed', {
-      user: email,
       stepId: requestedStepId,
-      message
+      error
     })
 
     return res.status(500).json({ ok: false, error: 'Could not generate opportunities for this step' })
