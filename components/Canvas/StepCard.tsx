@@ -85,7 +85,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
           className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-full border px-2 text-xs font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white ${
             opportunitiesError
               ? 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
-              : 'border-kings-grey-light bg-kings-grey-light/30 text-kings-grey-dark hover:bg-kings-grey-light/50'
+              : 'border-kings-red bg-kings-red text-white hover:bg-[#a10000]'
           }`}
           aria-label={badgeAriaLabel}
           aria-haspopup="dialog"
