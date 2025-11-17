@@ -1,5 +1,11 @@
 # Changelog
 
+### 2025-11-15 – Epoch 0008 "Opportunity AI Simulation" completed
+- Added the simulated opportunities generator plus eligibility rules for manual steps and accepted AI suggestions only.
+- Implemented shuffle-capable opportunities APIs so the badge/modal always load fresh content on demand.
+- Updated the ear badge and Opportunities modal to show counts, Edge vs independent groupings, shuffle, close, and scroll-safe layouts.
+- Landed structured logging plus unit/integration tests for the generator, eligibility checks, and API flows.
+
 ### 2025-11-14 – Epoch 0007 "Opportunities Model and UI" completed
 - Introduced Opportunity model linked to steps with metadata for source, form, focus, and status.
 - Persisted opportunities and exposed `GET /api/steps/[stepId]/opportunities` for read-only access.

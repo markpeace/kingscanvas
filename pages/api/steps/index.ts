@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
+import { safelyGenerateOpportunitiesForStep } from "@/lib/opportunities/generation";
 import {
   createSuggestedSteps,
   getUserSteps,
@@ -47,6 +48,16 @@ export default async function handler(
       debug.trace("Steps API: update status", { user: email, stepId, status });
       const result = await updateStepStatus(email, stepId, status);
       debug.info("Steps API: update status result", { matched: result.matchedCount });
+
+      if (status === "accepted") {
+        debug.info("Opportunities: auto generation requested", {
+          stepId,
+          origin: "ai-accepted",
+          userId: email,
+        });
+
+        await safelyGenerateOpportunitiesForStep({ stepId, origin: "ai-accepted" });
+      }
       return res.status(200).json({ ok: true });
     }
 
@@ -78,16 +89,31 @@ export default async function handler(
 
         return res.status(200).json({ ok: true, insertedIds });
       }
-    }
 
-    if (req.method === "POST") {
       debug.trace("Steps API: write", {
         user: email,
         payloadKeys: Object.keys(req.body || {}),
       });
-      await saveUserStep(email, req.body);
-      debug.info("Steps API: write complete", { user: email });
-      return res.status(200).json({ ok: true });
+
+      const result = await saveUserStep(email, req.body);
+
+      debug.info("Steps API: write complete", { user: email, stepId: result.stepId });
+
+      const manualIntentionId =
+        typeof req.body?.intentionId === "string" && req.body.intentionId.trim().length > 0
+          ? req.body.intentionId
+          : undefined;
+
+      debug.info("Opportunities: auto generation requested", {
+        stepId: result.stepId,
+        origin: "manual",
+        userId: email,
+        intentionId: manualIntentionId,
+      });
+
+      await safelyGenerateOpportunitiesForStep({ stepId: result.stepId, origin: "manual" });
+
+      return res.status(200).json({ ok: true, stepId: result.stepId });
     }
 
     return res.status(405).json({ error: "Method not allowed" });

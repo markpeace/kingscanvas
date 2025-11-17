@@ -3,12 +3,33 @@ import { getServerSession } from "next-auth"
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
-import { getOpportunitiesByStep, getStepForUser } from "@/lib/userData"
+import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
+import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
+import { getOpportunitiesByStep } from "@/lib/userData"
 import type { Opportunity } from "@/types/canvas"
 
 type OpportunitiesResponse =
   | { ok: true; stepId: string; opportunities: Opportunity[] }
   | { ok: false; error: string }
+
+function resolveCanonicalStepId(step: { _id?: unknown; id?: unknown }, fallback: string): string {
+  const rawId = step?._id
+
+  if (rawId && typeof rawId === "object" && "toHexString" in rawId && typeof rawId.toHexString === "function") {
+    return rawId.toHexString()
+  }
+
+  if (typeof rawId === "string" && rawId.trim().length > 0) {
+    return rawId
+  }
+
+  const candidateId = step?.id
+  if (typeof candidateId === "string" && candidateId.trim().length > 0) {
+    return candidateId
+  }
+
+  return fallback
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<OpportunitiesResponse>) {
   if (req.method !== "GET") {
@@ -34,32 +55,62 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   debug.trace("Opportunities API: fetch", { user: email, stepId: requestedStepId })
 
   try {
-    const step = await getStepForUser(email, requestedStepId)
+    const step = await findStepById(requestedStepId)
 
     if (!step) {
+      debug.warn("Opportunities API: step not found", { user: email, stepId: requestedStepId })
+      return res.status(404).json({ ok: false, error: "Step not found" })
+    }
+
+    const owner = typeof step.user === "string" ? step.user : null
+    if (!owner || owner !== email) {
       debug.warn("Opportunities API: forbidden", { user: email, stepId: requestedStepId })
       return res.status(403).json({ ok: false, error: "Forbidden" })
     }
 
-    const rawStepId = (step as { _id?: unknown })._id
-    let canonicalStepId = requestedStepId
-
-    if (rawStepId && typeof rawStepId === "object" && "toHexString" in rawStepId && typeof rawStepId.toHexString === "function") {
-      canonicalStepId = rawStepId.toHexString()
-    } else if (typeof rawStepId === "string" && rawStepId) {
-      canonicalStepId = rawStepId
+    if (!isStepEligibleForOpportunities(step as { id?: string; status?: string; _id?: unknown })) {
+      debug.info("Opportunities API: step not eligible", {
+        user: email,
+        stepId: requestedStepId,
+        status: step?.status ?? null
+      })
+      return res.status(400).json({ ok: false, error: "Step is not eligible for opportunities" })
     }
+
+    const canonicalStepId = resolveCanonicalStepId(step as { _id?: unknown; id?: unknown }, requestedStepId)
 
     const opportunities = await getOpportunitiesByStep(email, canonicalStepId)
 
-    debug.info("Opportunities API: success", { user: email, stepId: canonicalStepId, count: opportunities.length })
+    if (opportunities.length > 0) {
+      debug.debug("Opportunities API: returning existing opportunities", {
+        stepId: canonicalStepId,
+        count: opportunities.length
+      })
+      return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
+    }
 
-    return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
+    let generated: Opportunity[] = []
+
+    try {
+      generated = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "lazy-fetch" })
+      debug.info("Opportunities API: generated on demand", {
+        stepId: canonicalStepId,
+        count: generated.length
+      })
+    } catch (error) {
+      debug.error("Opportunities API: on-demand generation failed", {
+        stepId: canonicalStepId,
+        error
+      })
+      generated = []
+    }
+
+    return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities: generated })
   } catch (error) {
     debug.error("Opportunities API: failure", {
       user: email,
       stepId: requestedStepId,
-      message: error instanceof Error ? error.message : String(error),
+      error
     })
     return res.status(500).json({ ok: false, error: "Server error" })
   }

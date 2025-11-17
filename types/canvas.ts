@@ -1,8 +1,8 @@
 export type BucketId = 'do-now' | 'do-later' | 'before-graduation' | 'after-graduation'
 
 export interface Step {
-  _id?: string
   id: string
+  clientId: string
   intentionId: string
   title?: string
   text?: string
@@ -24,15 +24,18 @@ export interface Intention {
   updatedAt: string
 }
 
-export type OpportunitySource = "edge_simulated" | "independent"
+export type OpportunitySource = "kings-edge-simulated" | "independent"
 
-export type OpportunityForm = "intensive" | "evergreen" | "short_form" | "sustained"
+export type OpportunityForm =
+  | "workshop"
+  | "mentoring"
+  | "short-course"
+  | "coaching"
+  | "project"
+  | "networking"
+  | "independent-action"
 
-export type OpportunityFocus =
-  | "capability"
-  | "capital"
-  | "credibility"
-  | Array<"capability" | "capital" | "credibility">
+export type OpportunityFocus = "experience" | "skills" | "community" | "reflection" | "planning"
 
 export type OpportunityStatus = "suggested" | "saved" | "dismissed"
 
