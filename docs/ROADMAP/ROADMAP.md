@@ -68,23 +68,20 @@ drag-and-drop cues informed by Epoch 0005 learnings.
 
 ---
 
-### 🧠 Epoch 0008 — Opportunity AI Simulation
-**Status:** In progress. ([PLAN](./EPOCHS/0008-opportunity-ai-simulation/PLAN.md))
+### ✅ Epoch 0008 — Opportunity AI Simulation
+**Status:** Completed. ([STATUS](./EPOCHS/0008-opportunity-ai-simulation/STATUS.yaml))
 
-- Builds on the Opportunity model, storage, and UI introduced in Epoch 0007.
-- Automatically generates fictional King’s Edge style opportunities for real steps when:
-  - Students create steps manually.
-  - Students accept AI suggested steps and they become real.
-- Adds a “Shuffle opportunities” action so real steps can regenerate their opportunity sets.
-- Ensures ghost AI suggestions never trigger generation or display opportunities UI.
-- Relies solely on fictional opportunities aligned with the King’s Edge ethos—no live King’s Edge API integrations are in scope.
+- Shipped simulated King’s Edge style opportunities for every real step, with eligibility rules scoped to manual and accepted AI steps.
+- Added shuffle controls and API support so students can refresh suggestions on demand.
+- Updated the ear badge and modal UI to show counts plus Edge vs independent groupings with reliable scrolling and controls.
+- Hardened the flow with structured logging, error handling, and tests covering the generator, eligibility, and endpoints.
 
 ---
 
-### 🌐 Epoch 0009 — Future Real Edge Integration
-**Status:** Planned (not yet scheduled).
+### 🧠 Epoch 0009 — Future Real Edge Integration
+**Status:** In planning.
 
-Connect to real King’s Edge data sources, handle secure data exchange, and graduate the simulated opportunity experience into production-ready integrations.
+Connect to real King’s Edge data sources, handle secure data exchange, and graduate the simulated opportunity experience into production-ready integrations once data governance clears the path.
 
 ---
 

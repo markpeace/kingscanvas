@@ -3,7 +3,7 @@
 **Parent Project:** King’s Canvas  \
 **Epoch ID:** 0008  \
 **Branch:** `feature/epoch-0008/opportunity-ai-simulation`  \
-**Status:** In Planning
+**Status:** Completed
 
 ---
 
@@ -73,3 +73,19 @@ ghost AI suggestions.
   opportunities.
 - Keeping manual step creation resilient when AI generation fails, including
   sensible fallbacks or retries.
+
+---
+
+## ✅ Outcome (2025-11-15)
+
+- Generated fictional King’s Edge style opportunities automatically for every
+  real step (manual or accepted AI) while ghost suggestions stayed untouched.
+- Introduced shuffle controls backed by `POST /api/steps/[stepId]/opportunities/shuffle`
+  plus existing read endpoint so badges and modals always reflect the latest
+  suggestions.
+- Updated the ear badge and Opportunities modal to show counts, Edge vs
+  independent groupings, shuffle, close, and viewport-safe scrolling.
+- Added structured logging and unit/integration tests that cover generator
+  prompts, eligibility checks, and both API surfaces to keep the flow stable.
+- Documented the deliberate decision to keep all content simulated until Epoch
+  0009 delivers real King’s Edge integrations and copy refinements.
