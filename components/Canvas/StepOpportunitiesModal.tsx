@@ -13,6 +13,8 @@ type StepOpportunitiesModalProps = {
   opportunities: Opportunity[]
   isLoading: boolean
   error: Error | null
+  onShuffle: () => Promise<Opportunity[] | void>
+  isShuffling: boolean
 }
 
 export function StepOpportunitiesModal({
@@ -22,7 +24,9 @@ export function StepOpportunitiesModal({
   onClose,
   opportunities,
   isLoading,
-  error
+  error,
+  onShuffle,
+  isShuffling
 }: StepOpportunitiesModalProps) {
   const headingRef = useRef<HTMLHeadingElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
@@ -61,8 +65,10 @@ export function StepOpportunitiesModal({
     return null
   }
 
+  const isBusy = isLoading || isShuffling
+
   const renderBody = () => {
-    if (isLoading) {
+    if (isBusy) {
       return (
         <p id={descriptionId} className="text-sm text-kings-grey-dark">
           Loading opportunities…
@@ -125,25 +131,43 @@ export function StepOpportunitiesModal({
         className="w-full max-w-[560px] rounded-2xl border border-kings-grey-light/70 bg-kings-white p-6 shadow-2xl focus:outline-none"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4">
-          <h2
-            id={headingId}
-            ref={headingRef}
-            tabIndex={-1}
-            className="text-xl font-semibold text-kings-red focus:outline-none"
-          >
-            Opportunities for “{stepTitle}”
-          </h2>
-          <button
-            ref={closeButtonRef}
-            type="button"
-            onClick={onClose}
-            className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
-          >
-            Close
-          </button>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2
+              id={headingId}
+              ref={headingRef}
+              tabIndex={-1}
+              className="text-xl font-semibold text-kings-red focus:outline-none"
+            >
+              Opportunities for “{stepTitle}”
+            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await onShuffle()
+                  } catch {
+                    // Error state is handled by the hook; no-op here
+                  }
+                }}
+                disabled={isBusy}
+                className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
+              </button>
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+          <div className="text-left text-sm text-kings-black">{renderBody()}</div>
         </div>
-        <div className="mt-4 text-left text-sm text-kings-black">{renderBody()}</div>
       </div>
     </div>,
     document.body

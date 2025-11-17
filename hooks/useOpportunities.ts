@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { debug } from '@/lib/debug'
 import type { Opportunity } from '@/types/canvas'
@@ -9,12 +9,15 @@ type UseOpportunitiesResult = {
   opportunities: Opportunity[]
   isLoading: boolean
   error: Error | null
+  shuffle: () => Promise<Opportunity[] | void>
+  isShuffling: boolean
 }
 
 export function useOpportunities(stepId?: string | null): UseOpportunitiesResult {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [isShuffling, setIsShuffling] = useState(false)
 
   useEffect(() => {
     debug.trace('Opportunities hook: init', { stepId })
@@ -101,7 +104,52 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
     }
   }, [stepId])
 
-  return { opportunities, isLoading, error }
+  const shuffle = useCallback(async () => {
+    if (!stepId) {
+      debug.warn('Opportunities hook: shuffle skipped (missing step id)')
+      return
+    }
+
+    setIsShuffling(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/shuffle-opportunities`, {
+        method: 'POST'
+      })
+
+      let payload: { ok?: boolean; opportunities?: Opportunity[]; error?: string } | null = null
+
+      try {
+        payload = await response.json()
+      } catch (parseError) {
+        debug.warn('Opportunities hook: shuffle response parse failed', {
+          stepId,
+          message: parseError instanceof Error ? parseError.message : String(parseError)
+        })
+      }
+
+      if (!response.ok || payload?.ok === false) {
+        const message = payload?.error || `Failed to shuffle opportunities (${response.status})`
+        throw new Error(message)
+      }
+
+      const items = Array.isArray(payload?.opportunities) ? payload?.opportunities : []
+      setOpportunities(items)
+      setError(null)
+      debug.info('Opportunities hook: shuffle complete', { stepId, count: items.length })
+      return items
+    } catch (err) {
+      const normalizedError = err instanceof Error ? err : new Error(String(err))
+      debug.error('Opportunities hook: shuffle failed', { stepId, message: normalizedError.message })
+      setError(normalizedError)
+      throw normalizedError
+    } finally {
+      setIsShuffling(false)
+    }
+  }, [stepId])
+
+  return { opportunities, isLoading, error, shuffle, isShuffling }
 }
 
 export default useOpportunities
