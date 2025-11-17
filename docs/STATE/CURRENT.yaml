@@ -1,10 +1,10 @@
-epoch_id: "0008-opportunity-ai-simulation"
-title: "Epoch 0008 — Opportunity AI Simulation"
-status: "in_progress"
-started_at: "2025-11-15T00:00:00Z"
+epoch_id: "0009-real-edge-integration"
+title: "Epoch 0009 — Real Edge Integration"
+status: "in_planning"
+started_at: null
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
-last_completed_epoch: "0007-opportunities-model-ui"
-current_epoch: "0008-opportunity-ai-simulation"
+last_completed_epoch: "0008-opportunity-ai-simulation"
+current_epoch: "0009-real-edge-integration"
 epochs:
   - id: "0005-langgraph-ai-step-suggestions"
     status: "completed"
@@ -13,12 +13,14 @@ epochs:
   - id: "0007-opportunities-model-ui"
     status: "completed"
   - id: "0008-opportunity-ai-simulation"
-    status: "in_progress"
+    status: "completed"
+  - id: "0009-real-edge-integration"
+    status: "in_planning"
 summary: |
-  Epoch 0007 — Opportunities Model & UI delivered the opportunity domain model,
-  persistence, read-only API, and real-step UI badge plus modal for real steps.
-  Epoch 0008 — Opportunity AI Simulation is now underway to generate fictional
-  King’s Edge style opportunities whenever real steps are created or accepted
-  from AI suggestions, add shuffle controls, and keep ghost suggestions free of
-  opportunities.
+  Epoch 0008 — Opportunity AI Simulation delivered simulated King’s Edge style
+  opportunities for every real step (manual or accepted AI), added shuffle
+  controls, and refined the badge/modal UX with Edge vs independent groupings.
+  The roadmap now turns to Epoch 0009 — Real Edge Integration, which is in
+  planning to connect these flows to live King’s Edge APIs once the contracts
+  and data governance reviews close.
 expected_prs: []
