@@ -6,6 +6,71 @@ import { createPortal } from 'react-dom'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
 
+type OpportunityVariant = 'edge' | 'independent'
+
+function getVariantFromOpportunity(opportunity: Opportunity): OpportunityVariant {
+  return opportunity.source === 'independent' ? 'independent' : 'edge'
+}
+
+function OpportunityTypeBadge({ variant }: { variant: OpportunityVariant }) {
+  const styles =
+    variant === 'edge'
+      ? 'border-kings-red/40 bg-kings-red/5 text-kings-red'
+      : 'border-kings-grey-light bg-white text-kings-grey-dark'
+
+  const label = variant === 'edge' ? 'Edge style' : 'Independent'
+
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide ${styles}`}>
+      {label}
+    </span>
+  )
+}
+
+type OpportunityListItemProps = {
+  opportunity: Opportunity
+  variant: OpportunityVariant
+}
+
+function OpportunityListItem({ opportunity, variant }: OpportunityListItemProps) {
+  const isIndependent = variant === 'independent'
+
+  return (
+    <li
+      className={`rounded-xl border p-4 shadow-sm ${
+        isIndependent ? 'border-kings-grey-light bg-kings-grey-light/20' : 'border-kings-grey-light/70 bg-white'
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-kings-black">{opportunity.title}</h3>
+        <OpportunityTypeBadge variant={variant} />
+      </div>
+      {opportunity.summary ? (
+        <p className="mt-2 text-sm leading-relaxed text-kings-grey-dark">{opportunity.summary}</p>
+      ) : null}
+    </li>
+  )
+}
+
+type OpportunityListProps = {
+  opportunities: Opportunity[]
+  variant: OpportunityVariant
+}
+
+function OpportunityList({ opportunities, variant }: OpportunityListProps) {
+  if (!opportunities.length) {
+    return null
+  }
+
+  return (
+    <ul className="space-y-4" role="list">
+      {opportunities.map((opportunity) => (
+        <OpportunityListItem key={opportunity.id} opportunity={opportunity} variant={variant} />
+      ))}
+    </ul>
+  )
+}
+
 type StepOpportunitiesModalProps = {
   stepId: string
   stepTitle: string
@@ -126,16 +191,12 @@ export function StepOpportunitiesModal({
 
   const renderBody = () => {
     if (isBusy) {
-      return (
-        <p id={descriptionId} className="text-sm text-kings-grey-dark">
-          Loading opportunities…
-        </p>
-      )
+      return <p className="text-sm text-kings-grey-dark">Loading opportunities…</p>
     }
 
     if (error) {
       return (
-        <p id={descriptionId} className="text-sm text-red-600">
+        <p className="text-sm text-red-600">
           We could not load opportunities for this step. Please try again later.
         </p>
       )
@@ -143,32 +204,42 @@ export function StepOpportunitiesModal({
 
     if (!opportunities.length) {
       return (
-        <p id={descriptionId} className="text-sm text-kings-grey-dark">
+        <p className="text-sm text-kings-grey-dark">
           There are no opportunities for this step yet. When recommendations are available, they’ll appear here.
         </p>
       )
     }
 
+    const edgeOpportunities = opportunities.filter(
+      (opportunity) => getVariantFromOpportunity(opportunity) === 'edge'
+    )
+    const independentOpportunities = opportunities.filter(
+      (opportunity) => getVariantFromOpportunity(opportunity) === 'independent'
+    )
+
     return (
-      <ul
-        id={descriptionId}
-        className="mt-4 space-y-4"
-        role="list"
-      >
-        {opportunities.map((opportunity) => (
-          <li
-            key={opportunity.id}
-            className="rounded-lg border border-kings-grey-light/70 bg-white p-4 shadow-sm"
-          >
-            <h3 className="text-sm font-semibold text-kings-black">{opportunity.title}</h3>
-            {opportunity.summary ? (
-              <p className="mt-2 text-sm leading-relaxed text-kings-grey-dark">{opportunity.summary}</p>
-            ) : null}
-          </li>
-        ))}
-      </ul>
+      <div className="space-y-6">
+        {edgeOpportunities.length ? (
+          <section aria-label="King’s Edge style suggestions" className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-kings-grey-dark">
+              King’s Edge style suggestions
+            </p>
+            <OpportunityList opportunities={edgeOpportunities} variant="edge" />
+          </section>
+        ) : null}
+        {independentOpportunities.length ? (
+          <section aria-label="Independent idea you could try" className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-kings-grey-dark">
+              Independent idea you could try
+            </p>
+            <OpportunityList opportunities={independentOpportunities} variant="independent" />
+          </section>
+        ) : null}
+      </div>
     )
   }
+
+  const bodyContent = renderBody()
 
   return createPortal(
     <div
@@ -182,10 +253,10 @@ export function StepOpportunitiesModal({
         aria-labelledby={headingId}
         aria-describedby={descriptionId}
         data-step-id={stepId}
-        className="pointer-events-auto w-full max-w-[560px] rounded-2xl border border-kings-grey-light/70 bg-kings-white p-6 shadow-2xl focus:outline-none"
+        className="pointer-events-auto flex w-full max-h-[85vh] max-w-[560px] flex-col overflow-hidden rounded-2xl border border-kings-grey-light/70 bg-kings-white p-6 shadow-2xl focus:outline-none"
         onPointerDown={handleDialogPointerDown}
       >
-        <div className="flex flex-col gap-4">
+        <div className="flex h-full flex-col gap-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <h2
               id={headingId}
@@ -214,7 +285,14 @@ export function StepOpportunitiesModal({
               </button>
             </div>
           </div>
-          <div className="text-left text-sm text-kings-black">{renderBody()}</div>
+          <div className="flex-1 overflow-hidden">
+            <div
+              id={descriptionId}
+              className="h-full overflow-y-auto pr-1 text-left text-sm text-kings-black"
+            >
+              {bodyContent}
+            </div>
+          </div>
         </div>
       </div>
     </div>,
