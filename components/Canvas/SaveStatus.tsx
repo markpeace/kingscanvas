@@ -44,7 +44,7 @@ export default function SaveStatus({ saving, error, lastSavedAt, retryCount }: P
     toneClasses = 'border-kings-red/40 bg-white text-kings-red'
     showSpinner = true
   } else if (error) {
-    label = 'Error saving'
+    label = error
     toneClasses = 'border-red-300 bg-red-50 text-red-700'
   } else if (recentlySaved) {
     label = 'Saved a few seconds ago'

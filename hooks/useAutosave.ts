@@ -41,7 +41,37 @@ export default function useAutosave<T>(
         status: res.status
       })
 
-      if (!res.ok) throw new Error(`Save failed: ${res.statusText}`)
+      if (!res.ok) {
+        let responseError: string | null = null
+
+        const contentType = res.headers.get('content-type') ?? ''
+        const isJson = contentType.includes('application/json')
+        const rawBody = await res.clone().text()
+
+        if (rawBody.trim()) {
+          if (isJson) {
+            try {
+              const parsed = JSON.parse(rawBody)
+              responseError = typeof parsed?.error === 'string' ? parsed.error : rawBody
+            } catch (err) {
+              debug.trace('Autosave: failed to parse JSON error payload', {
+                message: err instanceof Error ? err.message : 'Unknown error'
+              })
+              responseError = rawBody
+            }
+          } else {
+            responseError = rawBody
+          }
+        }
+
+        if (res.status === 401) {
+          const message = responseError || 'Not authenticated'
+          debug.warn('Autosave: blocked by auth guard', { message })
+          throw new Error(`Sign in required — ${message}`)
+        }
+
+        throw new Error(responseError ? `Save failed: ${responseError}` : `Save failed: ${res.statusText}`)
+      }
 
       setLastSavedAt(Date.now())
       setRetryCount(0)
