@@ -66,8 +66,9 @@ export default async function handler(
     try {
       debug.trace("Intentions API: GET", { user: email })
       const data = await getUserIntentions(email)
-      debug.info("Intentions API: GET complete", { found: !!data })
-      return res.status(200).json(data || { intentions: [] })
+      const intentions = Array.isArray(data?.intentions) ? data.intentions : []
+      debug.info("Intentions API: GET complete", { count: intentions.length })
+      return res.status(200).json({ ok: true, intentions })
     } catch (error) {
       debug.error("Intentions API: server error", {
         message: error instanceof Error ? error.message : String(error)
