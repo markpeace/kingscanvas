@@ -33,7 +33,8 @@ export default function useAutosave<T>(
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(latestData.current)
+        body: JSON.stringify(latestData.current),
+        credentials: 'include'
       })
 
       debug.trace('Autosave: response received', {
