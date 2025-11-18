@@ -44,24 +44,13 @@ export default function useAutosave<T>(
       if (!res.ok) {
         let responseError: string | null = null
 
-        const contentType = res.headers.get('content-type') ?? ''
-        const isJson = contentType.includes('application/json')
-        const rawBody = await res.clone().text()
-
-        if (rawBody.trim()) {
-          if (isJson) {
-            try {
-              const parsed = JSON.parse(rawBody)
-              responseError = typeof parsed?.error === 'string' ? parsed.error : rawBody
-            } catch (err) {
-              debug.trace('Autosave: failed to parse JSON error payload', {
-                message: err instanceof Error ? err.message : 'Unknown error'
-              })
-              responseError = rawBody
-            }
-          } else {
-            responseError = rawBody
-          }
+        try {
+          const parsed = await res.clone().json()
+          responseError = typeof parsed?.error === 'string' ? parsed.error : null
+        } catch (err) {
+          debug.trace('Autosave: failed to parse error payload', {
+            message: err instanceof Error ? err.message : 'Unknown error'
+          })
         }
 
         if (res.status === 401) {
