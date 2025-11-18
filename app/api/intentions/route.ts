@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
+import { getToken } from "next-auth/jwt"
+
+import { isProd } from "@/lib/auth/config"
 import { getSession } from "@/lib/auth/server"
 import { debug } from "@/lib/debug"
 import { getUserIntentions, saveUserIntentions } from "@/lib/userData"
@@ -9,7 +12,33 @@ type IntentionsPayload = {
   [key: string]: unknown
 }
 
-async function resolveUserEmail() {
+async function resolveUserEmail(request: NextRequest) {
+  if (!isProd) {
+    const session = await getSession()
+    return session?.user?.email ?? null
+  }
+
+  try {
+    const token = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET
+    })
+
+    const directEmail = typeof token?.email === "string" ? token.email : null
+    const nestedEmail =
+      token && typeof token === "object" && typeof (token as any)?.user?.email === "string"
+        ? (token as any).user.email
+        : null
+
+    if (directEmail || nestedEmail) {
+      return directEmail ?? nestedEmail
+    }
+  } catch (error) {
+    debug.error("Intentions API: failed to parse auth token", {
+      message: error instanceof Error ? error.message : String(error)
+    })
+  }
+
   const session = await getSession()
   return session?.user?.email ?? null
 }
@@ -19,7 +48,7 @@ function unauthorisedResponse() {
 }
 
 async function handleSave(request: NextRequest) {
-  const email = await resolveUserEmail()
+  const email = await resolveUserEmail(request)
 
   if (!email) {
     debug.error("Intentions API: unauthenticated request")
@@ -59,8 +88,8 @@ async function handleSave(request: NextRequest) {
   }
 }
 
-export async function GET() {
-  const email = await resolveUserEmail()
+export async function GET(request: NextRequest) {
+  const email = await resolveUserEmail(request)
 
   if (!email) {
     debug.error("Intentions API: unauthenticated request")
