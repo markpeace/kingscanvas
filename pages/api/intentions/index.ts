@@ -1,30 +1,16 @@
 import type { NextApiRequest, NextApiResponse } from "next"
-import { getServerSession } from "next-auth"
-
-import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
-import { getUserIntentions, saveUserIntentions } from "@/lib/userData"
-
-type IntentionsPayload = {
-  intentions?: unknown[]
-  [key: string]: unknown
-}
+import {
+  IntentionsPayload,
+  loadUserIntentions,
+  resolveIntentionsUser,
+  saveUserIntentionsForUser
+} from "@/lib/server/intentions"
 
 type ApiResponse =
   | { ok: true; intentions?: unknown[] }
   | { ok: false; error: string }
   | { error: string }
-
-async function resolveUserEmail(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
-  const session = isProd ? await getServerSession(req, res, authOptions) : createTestSession()
-  const email = session?.user?.email ?? null
-
-  if (!email) {
-    debug.error("Intentions API: unauthenticated request")
-  }
-
-  return email
-}
 
 async function handleSave(
   req: NextApiRequest,
@@ -35,7 +21,7 @@ async function handleSave(
   const count = Array.isArray(payload.intentions) ? payload.intentions.length : 0
 
   try {
-    await saveUserIntentions(email, payload)
+    await saveUserIntentionsForUser(email, Array.isArray(payload.intentions) ? payload.intentions : [])
     debug.info("Intentions API: save success", {
       method: req.method,
       userId: email,
@@ -52,11 +38,15 @@ async function handleSave(
   }
 }
 
+/**
+ * Legacy Pages Router implementation for `/api/intentions`.
+ * Primary handler now lives in `app/api/intentions/route.ts`.
+ */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse>
 ) {
-  const email = await resolveUserEmail(req, res)
+  const email = await resolveIntentionsUser({ kind: "pages", req, res })
 
   if (!email) {
     return res.status(401).json({ error: "Not authenticated" })
@@ -65,7 +55,7 @@ export default async function handler(
   if (req.method === "GET") {
     try {
       debug.trace("Intentions API: GET", { user: email })
-      const data = await getUserIntentions(email)
+      const data = await loadUserIntentions(email)
       const intentions = Array.isArray(data?.intentions) ? data.intentions : []
       debug.info("Intentions API: GET complete", { count: intentions.length })
       return res.status(200).json({ ok: true, intentions })
