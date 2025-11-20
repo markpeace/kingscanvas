@@ -27,10 +27,20 @@ export default function useAutosave<T>(
         size: JSON.stringify(latestData.current)?.length || 0
       })
 
+      console.log('[autosave] sending PUT to /api/intentions', {
+        timestamp: Date.now(),
+        payload: latestData.current
+      })
+
       const res = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(latestData.current)
+      })
+
+      console.log('[autosave] PUT /api/intentions response', {
+        timestamp: Date.now(),
+        status: res.status
       })
 
       debug.trace('Autosave: response received', {
@@ -45,6 +55,10 @@ export default function useAutosave<T>(
       debug.info('Autosave: save succeeded')
       return true
     } catch (err: any) {
+      console.error('[autosave] PUT /api/intentions failed', {
+        timestamp: Date.now(),
+        error: err
+      })
       debug.error('Autosave: save failed', { message: err?.message || 'Unknown' })
 
       if (attempt < maxRetries) {
