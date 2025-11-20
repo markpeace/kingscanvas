@@ -9,11 +9,6 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log("[api/intentions] request received", {
-    method: req.method,
-    timestamp: Date.now(),
-  });
-
   const session = isProd
     ? await getServerSession(req, res, authOptions)
     : createTestSession();
@@ -29,10 +24,6 @@ export default async function handler(
       debug.trace("Intentions API: GET", { user: email });
       const data = await getUserIntentions(email);
       debug.info("Intentions API: GET complete", { found: !!data });
-      console.log("[api/intentions] response sent", {
-        method: req.method,
-        timestamp: Date.now(),
-      });
       return res.status(200).json(data || { intentions: [] });
     }
 
@@ -43,17 +34,9 @@ export default async function handler(
       });
       await saveUserIntentions(email, req.body);
       debug.info("Intentions API: write complete", { user: email });
-      console.log("[api/intentions] response sent", {
-        method: req.method,
-        timestamp: Date.now(),
-      });
       return res.status(200).json({ ok: true });
     }
 
-    console.log("[api/intentions] response sent", {
-      method: req.method,
-      timestamp: Date.now(),
-    });
     return res.status(405).json({ error: "Method not allowed" });
   } catch (error) {
     debug.error("Intentions API: server error", {
