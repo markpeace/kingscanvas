@@ -5,6 +5,7 @@ started_at: null
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
 last_completed_epoch: "0008-opportunity-ai-simulation"
 current_epoch: "0009-real-edge-integration"
+active_epoch: null
 epochs:
   - id: "0005-langgraph-ai-step-suggestions"
     status: "completed"
@@ -16,6 +17,8 @@ epochs:
     status: "completed"
   - id: "0009-real-edge-integration"
     status: "in_planning"
+  - id: "0009a-autosave-prod-fix"
+    status: "completed"
 summary: |
   Epoch 0008 — Opportunity AI Simulation delivered simulated King’s Edge style
   opportunities for every real step (manual or accepted AI), added shuffle
