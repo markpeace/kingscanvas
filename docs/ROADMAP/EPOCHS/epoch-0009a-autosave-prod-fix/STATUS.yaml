@@ -1,0 +1,11 @@
+epoch: "0009a-autosave-prod-fix"
+status: "in_progress"
+started_at: "<TO_BE_FILLED_BY_BACKEND>"
+completed_at: null
+owner: "frontend"
+description: "Hotfix to restore autosave in Vercel production by excluding API routes from service worker handling."
+prerequisites: []
+deliverables:
+  - "Patch to next.config.mjs"
+  - "Verified autosave behaviour in production"
+steps_completed: []
