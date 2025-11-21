@@ -1,4 +1,4 @@
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, defaultModel } from "@/lib/ai/client"
 import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
@@ -81,8 +81,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
         ? llm.modelName
         : undefined) ??
-      process.env.OPENAI_MODEL ??
-      "gpt-4o-mini"
+      defaultModel
 
     debug.trace("AI: suggest-step using model", {
       model: resolvedModel,

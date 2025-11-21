@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 
 import { debug } from '@/lib/debug'
 import { runWorkflow } from '@/lib/langgraph/workflow'
+import { defaultModel } from '@/lib/ai/client'
+import { debugSink } from '@/components/debug/sink'
 
 import { authOptions } from '@/lib/auth/config'
 
@@ -42,6 +44,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   })
 
   try {
+    debugSink.push({
+      label: 'Active LLM model',
+      payload: defaultModel,
+      channel: 'ai',
+      level: 'info'
+    })
+
     const aiResponse = await runWorkflow('suggest-step', {
       intentionText,
       intentionBucket,
