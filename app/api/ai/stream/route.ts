@@ -2,8 +2,16 @@ export const runtime = "nodejs"
 
 import { getChatModel, defaultModel } from "@/lib/ai/client"
 import { debugSink } from "@/components/debug/sink"
+import { serverDebug } from "@/lib/debug/serverSink"
 
 export async function POST(req: Request) {
+  serverDebug.push({
+    label: "Active LLM model (stream)",
+    payload: process.env.LLM,
+    channel: "ai",
+    level: "info"
+  })
+
   try {
     const body = await req.json().catch(() => ({}))
     const q = (typeof body?.q === "string" && body.q.trim()) || "Stream a short hello."

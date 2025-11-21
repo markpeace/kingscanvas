@@ -61,7 +61,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       level: 'error'
     })
 
-    return res.status(500).json({ ok: false, error: err.message })
+    res.status(500).json({ error: err.message })
+    return
   }
 
   const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected } = req.body as SuggestStepsRequestBody

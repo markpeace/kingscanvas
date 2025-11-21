@@ -13,14 +13,14 @@ type ToolCall = {
 }
 
 export async function POST(req: Request) {
-  try {
-    serverDebug.push({
-      label: "Active LLM model (ai-route)",
-      payload: process.env.LLM,
-      channel: "ai",
-      level: "info"
-    })
+  serverDebug.push({
+    label: "Active LLM model (tools)",
+    payload: process.env.LLM,
+    channel: "ai",
+    level: "info"
+  })
 
+  try {
     const body = await req.json().catch(() => ({}))
     const q = (typeof body?.q === "string" && body.q.trim()) || "Find profiles with name fragment 'Ada'."
 
