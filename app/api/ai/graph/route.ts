@@ -10,14 +10,14 @@ function disabled() {
 }
 
 export async function GET(req: Request) {
-  try {
-    serverDebug.push({
-      label: "Active LLM model (ai-route)",
-      payload: process.env.LLM,
-      channel: "ai",
-      level: "info"
-    })
+  serverDebug.push({
+    label: "Active LLM model (graph)",
+    payload: process.env.LLM,
+    channel: "ai",
+    level: "info"
+  })
 
+  try {
     debugSink.push({
       label: "Active LLM model (graph)",
       payload: process.env.LLM || "gpt-4.2-mini",
