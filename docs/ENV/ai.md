@@ -2,10 +2,9 @@
 
 **Required**
 - `OPENAI_API_KEY`
+- `LLM`
 
 **Optional**
-- `LLM` — defaults to `gpt-4.2-mini`
-- `NEXT_PUBLIC_LLM` — optional client-visible override (defaults to `LLM` or `gpt-4.2-mini`)
 - `OPENAI_BASE_URL` — for Azure / compatible gateways
 - `AI_GRAPH_ENABLE` — set "true" to enable `/api/ai/graph`
 

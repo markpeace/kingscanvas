@@ -4,7 +4,6 @@ import { getServerSession } from 'next-auth'
 import { debug } from '@/lib/debug'
 import { runWorkflow } from '@/lib/langgraph/workflow'
 import { defaultModel } from '@/lib/ai/client'
-import { debugSink } from '@/components/debug/sink'
 import { serverDebug } from '@/lib/debug/serverSink'
 
 import { authOptions } from '@/lib/auth/config'
@@ -34,6 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
+  const { debugSink } = await import('@/components/debug/sink')
+
   serverDebug.push({
     label: 'Active LLM model (suggest-steps)',
     payload: process.env.LLM,
@@ -41,12 +42,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     level: 'info'
   })
 
-  debugSink.push({
-    label: 'Active LLM model (suggest-steps)',
-    payload: process.env.LLM,
-    channel: 'ai',
-    level: 'info'
-  })
+  try {
+    if (!process.env.LLM) {
+      throw new Error('LLM environment variable must be set.')
+    }
+  } catch (err: any) {
+    serverDebug.push({
+      label: 'LLM configuration error (server)',
+      payload: err.message,
+      channel: 'ai',
+      level: 'error'
+    })
+
+    debugSink.push({
+      label: 'AI configuration error',
+      payload: err.message,
+      channel: 'ai',
+      level: 'error'
+    })
+
+    return res.status(500).json({ ok: false, error: err.message })
+  }
 
   const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected } = req.body as SuggestStepsRequestBody
 
@@ -59,10 +75,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   })
 
   try {
-    if (!process.env.LLM) {
-      throw new Error('LLM environment variable must be set.')
-    }
-
     debugSink.push({
       label: 'Active LLM model',
       payload: defaultModel,
@@ -77,9 +89,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       historyRejected
     })
 
+    const prompt = (aiResponse as any)?.prompt
+
     serverDebug.push({
       label: 'Step generation prompt',
-      payload: (aiResponse as any)?.prompt,
+      payload: prompt,
       channel: 'ai',
       level: 'trace'
     })
@@ -101,7 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     }
 
     serverDebug.push({
-      label: 'LLM configuration error (server)',
+      label: 'AI suggest-steps error (server)',
       payload: message,
       channel: 'ai',
       level: 'error'

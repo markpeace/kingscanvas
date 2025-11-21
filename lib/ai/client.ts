@@ -1,25 +1,20 @@
 import { ChatOpenAI } from "@langchain/openai"
 
-import { debugSink } from "@/components/debug/sink"
-import { defaultModel, clientVisibleModel } from "./env"
-
-if (!process.env.LLM) {
-  throw new Error("LLM environment variable must be set.")
+// Server-side enforcement only
+if (typeof window === "undefined") {
+  if (!process.env.LLM) {
+    throw new Error("LLM environment variable must be set.")
+  }
 }
 
-debugSink.push({
-  label: "AI client model selection",
-  payload: defaultModel,
-  channel: "ai",
-  level: "info"
-})
+const model = process.env.LLM
+export const defaultModel = model
 
 /**
  * Returns a configured ChatOpenAI model.
  * Env:
  * - OPENAI_API_KEY (required)
  * - LLM (required)
- * - NEXT_PUBLIC_LLM (optional client-visible override)
  * - OPENAI_BASE_URL (optional override for Azure/gateways)
  */
 export function getChatModel() {
@@ -36,5 +31,3 @@ export function getChatModel() {
     ...(baseURL ? { baseURL } : {})
   })
 }
-
-export { defaultModel, clientVisibleModel }
