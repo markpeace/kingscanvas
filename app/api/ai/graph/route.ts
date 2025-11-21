@@ -10,6 +10,13 @@ function disabled() {
 
 export async function GET(req: Request) {
   try {
+    debugSink.push({
+      label: "Active LLM model (graph)",
+      payload: process.env.LLM || "gpt-4.2-mini",
+      channel: "ai",
+      level: "info"
+    })
+
     if (disabled()) {
       return new Response(JSON.stringify({ ok: false, error: "Graph disabled", code: "DISABLED" }), {
         status: 503,

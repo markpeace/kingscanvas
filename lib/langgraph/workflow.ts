@@ -1,6 +1,7 @@
 import { getChatModel, defaultModel } from "@/lib/ai/client"
 import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
 import { debug } from "@/lib/debug"
+import { debugSink } from "@/components/debug/sink"
 import type { BucketId } from "@/types/canvas"
 
 type SuggestStepsInput = {
@@ -66,6 +67,13 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       targetBucket: promptBucket,
       historyAccepted,
       historyRejected
+    })
+
+    debugSink.push({
+      label: "Step generation prompt",
+      payload: prompt,
+      channel: "ai",
+      level: "trace"
     })
 
     debug.trace("AI Prompt Builder v5: constructed prompt", {

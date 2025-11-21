@@ -33,6 +33,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
+  debugSink.push({
+    label: 'Active LLM model (suggest-steps)',
+    payload: process.env.LLM || 'gpt-4.2-mini',
+    channel: 'ai',
+    level: 'info'
+  })
+
   const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected } = req.body as SuggestStepsRequestBody
 
   debug.trace('AI: suggest-steps request', {
