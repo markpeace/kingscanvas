@@ -1,8 +1,11 @@
-const model = process.env.LLM
-if (!model) {
-  console.warn("[ai-client] No LLM environment variable set. Falling back to gpt-4.2-mini.")
+if (!process.env.LLM) {
+  throw new Error("LLM environment variable must be set.")
 }
 
-export const defaultModel = model || "gpt-4.2-mini"
+if (!process.env.LLM && !process.env.NEXT_PUBLIC_LLM) {
+  throw new Error("LLM environment variable must be set.")
+}
+
+export const defaultModel = process.env.LLM
 export const clientVisibleModel = process.env.NEXT_PUBLIC_LLM || defaultModel
 

@@ -2,6 +2,7 @@ import { getChatModel, defaultModel } from "@/lib/ai/client"
 import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
 import { debug } from "@/lib/debug"
 import { debugSink } from "@/components/debug/sink"
+import { serverDebug } from "@/lib/debug/serverSink"
 import type { BucketId } from "@/types/canvas"
 
 type SuggestStepsInput = {
@@ -15,7 +16,7 @@ type Suggestion = { bucket: BucketId; text: string }
 
 type WorkflowName = "suggest-step"
 
-type WorkflowResult = { suggestions: Suggestion[] }
+type WorkflowResult = { suggestions: Suggestion[]; prompt: string }
 
 const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
 
@@ -70,6 +71,13 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     })
 
     debugSink.push({
+      label: "Step generation prompt",
+      payload: prompt,
+      channel: "ai",
+      level: "trace"
+    })
+
+    serverDebug.push({
       label: "Step generation prompt",
       payload: prompt,
       channel: "ai",
@@ -135,7 +143,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
           bucket,
           text
         }
-      ]
+      ],
+      prompt
     }
   }
 

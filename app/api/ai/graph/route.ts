@@ -3,6 +3,7 @@ export const runtime = "nodejs"
 import { runGuarded } from "@/lib/ai/graph/guarded"
 import { defaultModel } from "@/lib/ai/client"
 import { debugSink } from "@/components/debug/sink"
+import { serverDebug } from "@/lib/debug/serverSink"
 
 function disabled() {
   return process.env.AI_GRAPH_ENABLE !== "true"
@@ -10,6 +11,13 @@ function disabled() {
 
 export async function GET(req: Request) {
   try {
+    serverDebug.push({
+      label: "Active LLM model (ai-route)",
+      payload: process.env.LLM,
+      channel: "ai",
+      level: "info"
+    })
+
     debugSink.push({
       label: "Active LLM model (graph)",
       payload: process.env.LLM || "gpt-4.2-mini",
