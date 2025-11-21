@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { ObjectInspector } from "react-inspector"
 import { debugSink } from "./sink"
+import { clientVisibleModel } from "@/lib/ai/env"
 
 type Entry = {
   ts?: string
@@ -24,6 +25,15 @@ export default function DebugPanel() {
 
   useEffect(() => {
     return debugSink.subscribe((list) => setItems(list as Entry[]))
+  }, [])
+
+  useEffect(() => {
+    debugSink.push({
+      label: "Client visible LLM model",
+      payload: clientVisibleModel,
+      channel: "debug",
+      level: "info"
+    })
   }, [])
 
   useEffect(() => {

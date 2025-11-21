@@ -1,6 +1,8 @@
 export const runtime = "nodejs"
 
 import { runPing } from "@/lib/ai/graph/ping"
+import { defaultModel } from "@/lib/ai/client"
+import { debugSink } from "@/components/debug/sink"
 
 function isDisabled() {
   return process.env.AI_ENABLE === "false"
@@ -45,6 +47,15 @@ function errPayload(err: unknown) {
   return { payload, status }
 }
 
+function logActiveModel() {
+  debugSink.push({
+    label: "Active LLM model",
+    payload: defaultModel,
+    channel: "ai",
+    level: "info"
+  })
+}
+
 export async function GET(req: Request) {
   try {
     if (isDisabled()) {
@@ -52,6 +63,7 @@ export async function GET(req: Request) {
     }
     const { searchParams } = new URL(req.url)
     const q = searchParams.get("q") || "Say hello briefly."
+    logActiveModel()
     const output = await runPing(q)
     return new Response(JSON.stringify({ ok: true, data: { output } }), { status: 200, headers: { "content-type": "application/json" } })
   } catch (err) {
@@ -67,6 +79,7 @@ export async function POST(req: Request) {
     }
     const body = await req.json().catch(() => ({}))
     const q = typeof body?.q === "string" && body.q.trim().length > 0 ? body.q : "Say hello briefly."
+    logActiveModel()
     const output = await runPing(q)
     return new Response(JSON.stringify({ ok: true, data: { output } }), { status: 200, headers: { "content-type": "application/json" } })
   } catch (err) {

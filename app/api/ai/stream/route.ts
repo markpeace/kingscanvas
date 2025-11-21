@@ -1,6 +1,7 @@
 export const runtime = "nodejs"
 
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, defaultModel } from "@/lib/ai/client"
+import { debugSink } from "@/components/debug/sink"
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,13 @@ export async function POST(req: Request) {
     const q = (typeof body?.q === "string" && body.q.trim()) || "Stream a short hello."
 
     const model = getChatModel()
+
+    debugSink.push({
+      label: "Active LLM model",
+      payload: defaultModel,
+      channel: "ai",
+      level: "info"
+    })
     const stream = await model.stream(q)
 
     const readable = new ReadableStream({

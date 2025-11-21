@@ -1,8 +1,9 @@
 export const runtime = "nodejs"
 
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, defaultModel } from "@/lib/ai/client"
 import { findProfilesByNameFragment } from "@/lib/ai/tools/profiles"
 import { AIMessage, ToolMessage } from "@langchain/core/messages"
+import { debugSink } from "@/components/debug/sink"
 
 type ToolCall = {
   id: string
@@ -33,6 +34,15 @@ export async function POST(req: Request) {
         }
       }
     ]
+
+    const modelName = defaultModel
+
+    debugSink.push({
+      label: "Active LLM model",
+      payload: modelName,
+      channel: "ai",
+      level: "info"
+    })
 
     const model = getChatModel().bindTools(tools)
 
