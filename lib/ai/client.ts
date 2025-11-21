@@ -1,6 +1,14 @@
 import { ChatOpenAI } from "@langchain/openai"
 
+import { debugSink } from "@/components/debug/sink"
 import { defaultModel, clientVisibleModel } from "./env"
+
+debugSink.push({
+  label: "AI client model selection",
+  payload: defaultModel,
+  channel: "ai",
+  level: "info"
+})
 
 /**
  * Returns a configured ChatOpenAI model.
