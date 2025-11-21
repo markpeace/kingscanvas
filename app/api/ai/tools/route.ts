@@ -4,6 +4,7 @@ import { getChatModel, defaultModel } from "@/lib/ai/client"
 import { findProfilesByNameFragment } from "@/lib/ai/tools/profiles"
 import { AIMessage, ToolMessage } from "@langchain/core/messages"
 import { debugSink } from "@/components/debug/sink"
+import { serverDebug } from "@/lib/debug/serverSink"
 
 type ToolCall = {
   id: string
@@ -13,6 +14,13 @@ type ToolCall = {
 
 export async function POST(req: Request) {
   try {
+    serverDebug.push({
+      label: "Active LLM model (ai-route)",
+      payload: process.env.LLM,
+      channel: "ai",
+      level: "info"
+    })
+
     const body = await req.json().catch(() => ({}))
     const q = (typeof body?.q === "string" && body.q.trim()) || "Find profiles with name fragment 'Ada'."
 

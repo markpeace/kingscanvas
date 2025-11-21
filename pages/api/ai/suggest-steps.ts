@@ -5,6 +5,7 @@ import { debug } from '@/lib/debug'
 import { runWorkflow } from '@/lib/langgraph/workflow'
 import { defaultModel } from '@/lib/ai/client'
 import { debugSink } from '@/components/debug/sink'
+import { serverDebug } from '@/lib/debug/serverSink'
 
 import { authOptions } from '@/lib/auth/config'
 
@@ -33,9 +34,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
+  serverDebug.push({
+    label: 'Active LLM model (suggest-steps)',
+    payload: process.env.LLM,
+    channel: 'ai',
+    level: 'info'
+  })
+
   debugSink.push({
     label: 'Active LLM model (suggest-steps)',
-    payload: process.env.LLM || 'gpt-4.2-mini',
+    payload: process.env.LLM,
     channel: 'ai',
     level: 'info'
   })
@@ -51,6 +59,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   })
 
   try {
+    if (!process.env.LLM) {
+      throw new Error('LLM environment variable must be set.')
+    }
+
     debugSink.push({
       label: 'Active LLM model',
       payload: defaultModel,
@@ -63,6 +75,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       intentionBucket,
       historyAccepted,
       historyRejected
+    })
+
+    serverDebug.push({
+      label: 'Step generation prompt',
+      payload: (aiResponse as any)?.prompt,
+      channel: 'ai',
+      level: 'trace'
     })
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []
@@ -81,12 +100,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       intentionBucket
     }
 
-    if (message.includes('OPENAI_API_KEY is not set')) {
-      debug.error('AI: suggest-steps misconfigured', { ...context, message })
-      return res.status(503).json({ ok: false, error: 'AI is not configured' })
-    }
+    serverDebug.push({
+      label: 'LLM configuration error (server)',
+      payload: message,
+      channel: 'ai',
+      level: 'error'
+    })
+
+    debugSink.push({
+      label: 'AI configuration error',
+      payload: message,
+      channel: 'ai',
+      level: 'error'
+    })
 
     debug.error('AI: suggest-steps failed', { ...context, message })
-    return res.status(500).json({ ok: false, error: 'AI generation failed' })
+    return res.status(500).json({ ok: false, error: message })
   }
 }
