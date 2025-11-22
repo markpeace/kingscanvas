@@ -50,6 +50,12 @@ function sanitiseHistory(history?: string[]): string[] {
 }
 
 export async function runWorkflow(workflowName: WorkflowName, payload: SuggestStepsInput): Promise<WorkflowResult> {
+  if (!process.env.LLM) {
+    const message = "LLM environment variable must be set."
+    debug.error(message)
+    throw new Error(message)
+  }
+
   if (workflowName !== "suggest-step") {
     throw new Error(`Unknown workflow: ${workflowName}`)
   }
@@ -73,23 +79,21 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       intention: intentionText
     })
 
-    const llm = getChatModel()
-    const resolvedModel =
-      (typeof llm.model === "string" && llm.model.trim().length > 0
-        ? llm.model
-        : undefined) ??
-      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
-        ? llm.modelName
-        : undefined) ??
-      process.env.OPENAI_MODEL ??
-      "gpt-4o-mini"
-
-    debug.trace("AI: suggest-step using model", {
-      model: resolvedModel,
-      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
-      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
-      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+    debug.info("Active LLM model (langgraph workflow)", {
+      model: process.env.LLM
     })
+
+    debug.trace("Step generation prompt (langgraph workflow)", {
+      prompt
+    })
+
+    const llm = getChatModel()
+
+    debug.info("LLM request (langgraph runtime)", {
+      model: process.env.LLM,
+      type: "chat-completion"
+    })
+
     const response = await llm.invoke(prompt)
     let rawContent = ""
 
