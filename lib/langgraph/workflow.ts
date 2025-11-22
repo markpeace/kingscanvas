@@ -1,4 +1,4 @@
-import { getChatModel } from "@/lib/ai/client"
+import { client } from "@/lib/ai/client"
 import { buildStepPrompt } from "@/lib/prompts/steps"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
@@ -10,7 +10,7 @@ type SuggestStepsInput = {
   historyRejected?: string[]
 }
 
-type Suggestion = { bucket: BucketId; text: string }
+type Suggestion = { bucket: BucketId; text: string; model: string | undefined }
 
 type WorkflowName = "suggest-step"
 
@@ -44,50 +44,21 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       preview: prompt.slice(0, 200)
     })
 
-    const llm = getChatModel()
-    const resolvedModel =
-      (typeof llm.model === "string" && llm.model.trim().length > 0
-        ? llm.model
-        : undefined) ??
-      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
-        ? llm.modelName
-        : undefined) ??
-      null
-
     debug.trace("AI: suggest-step using model", {
-      model: resolvedModel,
-      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
-      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
+      model: process.env.LLM ?? null,
       ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
     })
-    const response = await llm.invoke(prompt)
-    let rawContent = ""
+    const response = await client.responses.create({
+      model: process.env.LLM,
+      input: prompt
+    })
 
-    const content = response?.content
+    const text =
+      typeof response.output_text === "string"
+        ? response.output_text.trim()
+        : String(response.output_text || "").trim()
 
-    if (typeof content === "string") {
-      rawContent = content
-    } else if (Array.isArray(content)) {
-      rawContent = content
-        .map((part) => {
-          if (typeof part === "string") {
-            return part
-          }
-
-          if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
-            return part.text
-          }
-
-          return ""
-        })
-        .join("")
-    } else if (content != null) {
-      rawContent = String(content)
-    }
-
-    const text = rawContent.trim()
-
-    debug.info("AI: model response (prompt v5)", {
+    debug.info("AI: step-generation response (PR-3 hotfix)", {
       bucket: payload.intentionBucket ?? bucket,
       preview: text.slice(0, 120)
     })
@@ -96,7 +67,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       suggestions: [
         {
           bucket,
-          text
+          text,
+          model: process.env.LLM
         }
       ]
     }
