@@ -1,0 +1,14 @@
+epoch: "0010-prompt-refinement"
+status: "in_progress"
+started_at: "<TO_BE_FILLED_BY_BACKEND>"
+completed_at: null
+owner: "frontend"
+description: "Prompt refinement, context integration, and LLM observability."
+prerequisites: []
+deliverables:
+  - "LLM model integration"
+  - "Debug panel observability"
+  - "New step generation prompt"
+  - "Opportunity generation prompt"
+  - "Context-driven prompt behaviour"
+steps_completed: []
