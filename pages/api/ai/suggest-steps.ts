@@ -15,8 +15,14 @@ type SuggestStepsRequestBody = {
 }
 
 type SuggestStepsResponse =
-  | { ok: true; suggestions: Array<{ bucket: string; text: string }> }
+  | { ok: true; suggestions: Array<AiSuggestion> }
   | { ok?: false; error: string }
+
+type AiSuggestion = {
+  bucket: string
+  text: string
+  model?: string | null
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<SuggestStepsResponse>) {
   const session = await getServerSession(req, res, authOptions)
@@ -51,12 +57,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []
 
+    const model = process.env.LLM || null
+
+    const suggestionsWithModel: AiSuggestion[] = suggestions.map((suggestion: any) => ({
+      bucket: suggestion.bucket,
+      text: suggestion.text,
+      model
+    }))
+
     debug.info('AI: suggest-steps response', {
-      count: suggestions.length,
-      example: suggestions[0]?.text || '(none)'
+      count: suggestionsWithModel.length,
+      example: suggestionsWithModel[0]?.text || '(none)',
+      model
     })
 
-    return res.status(200).json({ ok: true, suggestions })
+    return res.status(200).json({ ok: true, suggestions: suggestionsWithModel })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const context = {
