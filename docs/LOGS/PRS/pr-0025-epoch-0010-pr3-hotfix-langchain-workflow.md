@@ -12,4 +12,5 @@ notes: |
   with the core OpenAI client to enforce the PR-2 model setting and prevent
   prompt overrides. Simplifies response parsing to use the `output_text`
   response field, updates debug labelling, and returns model provenance in the
-  suggestions payload.
+  suggestions payload. Exposes the enforced model configuration for reuse so
+  the workflow uses a validated model string throughout.

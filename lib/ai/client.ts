@@ -30,6 +30,8 @@ function getEnvironmentConfig() {
 
 const { apiKey, envModel, baseURL } = getEnvironmentConfig()
 
+export const enforcedModel = envModel
+
 export const client = new OpenAI({
   apiKey,
   ...(baseURL ? { baseURL } : {})

@@ -1,4 +1,4 @@
-import { client } from "@/lib/ai/client"
+import { client, enforcedModel } from "@/lib/ai/client"
 import { buildStepPrompt } from "@/lib/prompts/steps"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
@@ -10,7 +10,7 @@ type SuggestStepsInput = {
   historyRejected?: string[]
 }
 
-type Suggestion = { bucket: BucketId; text: string; model: string | undefined }
+type Suggestion = { bucket: BucketId; text: string; model: string }
 
 type WorkflowName = "suggest-step"
 
@@ -45,11 +45,11 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     })
 
     debug.trace("AI: suggest-step using model", {
-      model: process.env.LLM ?? null,
+      model: enforcedModel,
       ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
     })
     const response = await client.responses.create({
-      model: process.env.LLM,
+      model: enforcedModel,
       input: prompt
     })
 
@@ -68,7 +68,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         {
           bucket,
           text,
-          model: process.env.LLM
+          model: enforcedModel
         }
       ]
     }
