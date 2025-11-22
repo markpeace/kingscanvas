@@ -1,0 +1,15 @@
+epoch: "0010-prompt-refinement"
+status: "in_progress"
+started_at: "<TO_BE_FILLED_BY_BACKEND>"
+completed_at: null
+owner: "frontend"
+description: "Prompt refinement, context integration, LLM observability, and AI-driven opportunity generation."
+prerequisites: []
+deliverables:
+  - "LLM model integration"
+  - "LLM observability in Debug Panel"
+  - "Consolidated step-generation prompt"
+  - "Consolidated opportunity-generation prompt"
+  - "Context-driven prompt behaviour"
+  - "AI-driven opportunity generation"
+steps_completed: []
