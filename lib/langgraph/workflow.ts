@@ -10,7 +10,7 @@ type SuggestStepsInput = {
   historyRejected?: string[]
 }
 
-type Suggestion = { bucket: BucketId; text: string; model: string }
+type Suggestion = { bucket: BucketId; text: string; model: string | null }
 
 type WorkflowName = "suggest-step"
 
@@ -44,12 +44,14 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       preview: prompt.slice(0, 200)
     })
 
-    debug.trace("AI: suggest-step using model", {
-      model: enforcedModel,
-      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+    const model = process.env.LLM ?? enforcedModel
+
+    debug.trace("AI: suggest-step using model (PR-2)", {
+      model
     })
+
     const response = await client.responses.create({
-      model: enforcedModel,
+      model,
       input: prompt
     })
 
@@ -68,7 +70,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         {
           bucket,
           text,
-          model: enforcedModel
+          model: process.env.LLM || null
         }
       ]
     }
