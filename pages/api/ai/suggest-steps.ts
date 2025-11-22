@@ -15,7 +15,7 @@ type SuggestStepsRequestBody = {
 }
 
 type SuggestStepsResponse =
-  | { ok: true; suggestions: Array<{ bucket: string; text: string }> }
+  | { ok: true; suggestions: Array<{ bucket: string; text: string; model: string | null }> }
   | { ok?: false; error: string }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<SuggestStepsResponse>) {

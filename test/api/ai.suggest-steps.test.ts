@@ -64,7 +64,7 @@ describe('/api/ai/suggest-steps POST', () => {
 
   it('returns AI suggestions when the workflow resolves', async () => {
     mockRunWorkflow.mockResolvedValue({
-      suggestions: [{ bucket: 'do-now', text: 'Write your CV' }]
+      suggestions: [{ bucket: 'do-now', text: 'Write your CV', model: null }]
     })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({
@@ -82,9 +82,9 @@ describe('/api/ai/suggest-steps POST', () => {
       intentionBucket: 'do-now'
     }))
     expect(getStatus()).toBe(200)
-    const json = getJSON() as { ok: boolean; suggestions: Array<{ bucket: string; text: string }> }
+    const json = getJSON() as { ok: boolean; suggestions: Array<{ bucket: string; text: string; model: string | null }> }
     expect(json.ok).toBe(true)
-    expect(json.suggestions).toEqual([{ bucket: 'do-now', text: 'Write your CV' }])
+    expect(json.suggestions).toEqual([{ bucket: 'do-now', text: 'Write your CV', model: null }])
   })
 
   it('returns 503 when the AI client is misconfigured', async () => {

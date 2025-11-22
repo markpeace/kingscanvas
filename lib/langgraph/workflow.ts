@@ -10,7 +10,7 @@ type SuggestStepsInput = {
   historyRejected?: string[]
 }
 
-type Suggestion = { bucket: BucketId; text: string }
+type Suggestion = { bucket: BucketId; text: string; model: string | null }
 
 type WorkflowName = "suggest-step"
 
@@ -126,7 +126,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       suggestions: [
         {
           bucket,
-          text
+          text,
+          model: process.env.LLM || null
         }
       ]
     }
