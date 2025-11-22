@@ -1,4 +1,4 @@
-import { client, enforcedModel } from "@/lib/ai/client"
+import { client } from "@/lib/ai/client"
 import { buildStepPrompt } from "@/lib/prompts/steps"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
@@ -44,14 +44,12 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       preview: prompt.slice(0, 200)
     })
 
-    const model = process.env.LLM ?? enforcedModel
-
     debug.trace("AI: suggest-step using model (PR-2)", {
-      model
+      model: process.env.LLM
     })
 
     const response = await client.responses.create({
-      model,
+      model: process.env.LLM,
       input: prompt
     })
 
@@ -60,7 +58,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         ? response.output_text.trim()
         : String(response.output_text || "").trim()
 
-    debug.info("AI: step-generation response (PR-3 hotfix)", {
+    debug.info("AI: step-generation response (PR-3-final)", {
       bucket: payload.intentionBucket ?? bucket,
       preview: text.slice(0, 120)
     })
