@@ -6,14 +6,14 @@ import { debugSink } from "@/components/debug/sink"
 import type { BucketId } from "@/types/canvas"
 
 serverDebug.push({
-  label: "Active LLM model (workflow: suggest-steps)",
+  label: "Active LLM model (workflow: generate-next-step)",
   payload: process.env.LLM,
   channel: "ai",
   level: "info"
 })
 
 debugSink.push({
-  label: "Active LLM model (workflow: suggest-steps)",
+  label: "Active LLM model (workflow: generate-next-step)",
   payload: process.env.LLM,
   channel: "ai",
   level: "info"
@@ -72,18 +72,21 @@ export async function suggestStepsWorkflow(payload: SuggestStepsInput): Promise<
 
   if (!process.env.LLM) {
     const message = "LLM environment variable must be set."
+
     serverDebug.push({
-      label: "LLM configuration error (workflow)",
+      label: "LLM configuration error (workflow: generate-next-step)",
       payload: message,
       channel: "ai",
       level: "error"
     })
+
     debugSink.push({
       label: "AI configuration error",
       payload: message,
       channel: "ai",
       level: "error"
     })
+
     throw new Error(message)
   }
 
@@ -95,14 +98,14 @@ export async function suggestStepsWorkflow(payload: SuggestStepsInput): Promise<
   })
 
   serverDebug.push({
-    label: "Step generation prompt (workflow)",
+    label: "Step generation prompt (workflow: generate-next-step)",
     payload: prompt,
     channel: "ai",
     level: "trace"
   })
 
   debugSink.push({
-    label: "Step generation prompt (workflow)",
+    label: "Step generation prompt (workflow: generate-next-step)",
     payload: prompt,
     channel: "ai",
     level: "trace"
@@ -128,6 +131,20 @@ export async function suggestStepsWorkflow(payload: SuggestStepsInput): Promise<
     ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
     ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
     ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+  })
+
+  serverDebug.push({
+    label: "LLM request (runtime core)",
+    payload: { model: process.env.LLM },
+    channel: "ai",
+    level: "info"
+  })
+
+  debugSink.push({
+    label: "LLM request (runtime core)",
+    payload: { model: process.env.LLM },
+    channel: "ai",
+    level: "info"
   })
   const response = await llm.invoke(prompt)
   let rawContent = ""
