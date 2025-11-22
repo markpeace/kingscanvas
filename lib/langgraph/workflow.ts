@@ -1,4 +1,4 @@
-import { client, enforcedModel } from "@/lib/ai/client"
+import { client } from "@/lib/ai/client"
 import { buildStepPrompt } from "@/lib/prompts/steps"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
@@ -44,12 +44,12 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       preview: prompt.slice(0, 200)
     })
 
-    debug.trace("AI: suggest-step using model", {
-      model: enforcedModel,
-      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+    debug.trace("AI: suggest-step using model (PR-2)", {
+      model: process.env.LLM
     })
+
     const response = await client.responses.create({
-      model: enforcedModel,
+      model: process.env.LLM,
       input: prompt
     })
 
@@ -68,7 +68,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         {
           bucket,
           text,
-          model: enforcedModel
+          model: process.env.LLM || null
         }
       ]
     }
