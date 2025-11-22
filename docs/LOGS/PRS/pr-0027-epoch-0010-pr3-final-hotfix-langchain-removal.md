@@ -7,8 +7,11 @@ status: open
 branch: work
 related_prompts:
   - prompt-0125
+  - prompt-0126
 epoch: 0010-prompt-refinement
 notes: |
   Removes remaining LangChain usage from the step-generation workflow, routes
   prompting through the PR-3 step prompt, enforces the PR-2 OpenAI client, and
-  preserves model provenance in the returned suggestions.
+  preserves model provenance in the returned suggestions. Follow-up fixes
+  address type-safety for the enforced model when invoking the OpenAI
+  responses API.
