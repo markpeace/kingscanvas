@@ -1,5 +1,5 @@
 import { getChatModel } from "@/lib/ai/client"
-import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
+import { buildStepPrompt } from "@/lib/prompts/steps"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
 
@@ -26,51 +26,22 @@ function normaliseBucket(bucket?: string): BucketId {
   return "do-now"
 }
 
-function mapBucketToPromptTarget(bucket: BucketId): string {
-  switch (bucket) {
-    case "do-now":
-      return "do_now"
-    case "do-later":
-      return "do_soon"
-    case "before-graduation":
-      return "before_grad"
-    case "after-graduation":
-      return "before_grad"
-    default:
-      return "do_now"
-  }
-}
-
-function sanitiseHistory(history?: string[]): string[] {
-  if (!Array.isArray(history)) {
-    return []
-  }
-
-  return history.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
-}
-
 export async function runWorkflow(workflowName: WorkflowName, payload: SuggestStepsInput): Promise<WorkflowResult> {
   if (workflowName !== "suggest-step") {
     throw new Error(`Unknown workflow: ${workflowName}`)
   }
 
   const bucket = normaliseBucket(payload.intentionBucket)
-  const promptBucket = mapBucketToPromptTarget(bucket)
   const intentionText = (payload.intentionText ?? "").trim() || "your intention"
-  const historyAccepted = sanitiseHistory(payload.historyAccepted).slice(-5)
-  const historyRejected = sanitiseHistory(payload.historyRejected).slice(-5)
 
   if (workflowName === "suggest-step") {
-    const prompt = buildSuggestionPromptV5({
-      intentionText,
-      targetBucket: promptBucket,
-      historyAccepted,
-      historyRejected
+    const prompt = buildStepPrompt({
+      intention: intentionText,
+      bucket
     })
 
-    debug.trace("AI Prompt Builder v5: constructed prompt", {
-      bucket: payload.intentionBucket ?? bucket,
-      intention: intentionText
+    debug.trace("AI: step-generation prompt (PR-3)", {
+      preview: prompt.slice(0, 200)
     })
 
     const llm = getChatModel()
