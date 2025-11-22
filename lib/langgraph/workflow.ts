@@ -81,8 +81,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
         ? llm.modelName
         : undefined) ??
-      process.env.OPENAI_MODEL ??
-      "gpt-4o-mini"
+      null
 
     debug.trace("AI: suggest-step using model", {
       model: resolvedModel,

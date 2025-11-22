@@ -72,20 +72,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     })
 
     return res.status(200).json({ ok: true, suggestions: suggestionsWithModel })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    const context = {
-      user: email,
-      intentionId,
-      intentionBucket
-    }
+  } catch (error: any) {
+    const message =
+      typeof error?.message === "string"
+        ? error.message
+        : "Unknown error during AI suggest-steps call."
 
-    if (message.includes('OPENAI_API_KEY is not set')) {
-      debug.error('AI: suggest-steps misconfigured', { ...context, message })
-      return res.status(503).json({ ok: false, error: 'AI is not configured' })
-    }
+    debug.error("AI: suggest-steps failed", { error: message })
 
-    debug.error('AI: suggest-steps failed', { ...context, message })
-    return res.status(500).json({ ok: false, error: 'AI generation failed' })
+    return res.status(500).json({
+      ok: false,
+      error: message
+    })
   }
 }

@@ -60,6 +60,7 @@ describe('/api/ai/suggest-steps POST', () => {
     mockGetServerSession.mockResolvedValue({
       user: { email: 'tester@example.com' }
     } as any)
+    process.env.LLM = 'test-model'
   })
 
   it('returns AI suggestions when the workflow resolves', async () => {
@@ -87,10 +88,10 @@ describe('/api/ai/suggest-steps POST', () => {
       suggestions: Array<{ bucket: string; text: string; model: string | null }>
     }
     expect(json.ok).toBe(true)
-    expect(json.suggestions).toEqual([{ bucket: 'do-now', text: 'Write your CV', model: null }])
+    expect(json.suggestions).toEqual([{ bucket: 'do-now', text: 'Write your CV', model: 'test-model' }])
   })
 
-  it('returns 503 when the AI client is misconfigured', async () => {
+  it('returns failure details when the AI client is misconfigured', async () => {
     mockRunWorkflow.mockRejectedValue(new Error('OPENAI_API_KEY is not set'))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({
@@ -101,9 +102,9 @@ describe('/api/ai/suggest-steps POST', () => {
 
     await handler(req, res)
 
-    expect(getStatus()).toBe(503)
+    expect(getStatus()).toBe(500)
     const json = getJSON() as { ok: boolean; error: string }
     expect(json.ok).toBe(false)
-    expect(json.error).toBe('AI is not configured')
+    expect(json.error).toBe('OPENAI_API_KEY is not set')
   })
 })

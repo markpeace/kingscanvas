@@ -2,9 +2,9 @@
 
 **Required**
 - `OPENAI_API_KEY`
+- `LLM` — target model identifier
 
 **Optional**
-- `OPENAI_MODEL` — defaults to `gpt-4o-mini`
 - `OPENAI_BASE_URL` — for Azure / compatible gateways
 - `AI_GRAPH_ENABLE` — set "true" to enable `/api/ai/graph`
 
