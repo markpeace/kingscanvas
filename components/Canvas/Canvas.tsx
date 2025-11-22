@@ -899,7 +899,8 @@ export function Canvas() {
         const suggestion = suggestions[0]
 
         debug.info('Canvas: AI on-demand suggestion received', {
-          text: suggestion?.text || null
+          text: suggestion?.text || null,
+          model: (suggestion as any)?.model ?? null
         })
 
         if (!suggestion || !suggestion.text) {
