@@ -14,7 +14,7 @@ type Suggestion = { bucket: BucketId; text: string }
 
 type WorkflowName = "suggest-step"
 
-type WorkflowResult = { suggestions: Suggestion[] }
+type WorkflowResult = { suggestions: Suggestion[]; model: string }
 
 const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
 
@@ -123,6 +123,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     })
 
     return {
+      model: resolvedModel,
       suggestions: [
         {
           bucket,

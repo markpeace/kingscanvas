@@ -873,7 +873,11 @@ export function Canvas() {
 
       try {
         type SuggestionEntry = { _id?: string; text?: string }
-        type SuggestionResponse = { suggestions?: SuggestionEntry[]; error?: string }
+        type SuggestionResponse = {
+          suggestions?: SuggestionEntry[]
+          error?: string
+          model?: string
+        }
 
         const aiRes = await fetch('/api/ai/suggest-steps', {
           method: 'POST',
@@ -897,8 +901,10 @@ export function Canvas() {
 
         const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : []
         const suggestion = suggestions[0]
+        const model = data?.model
 
         debug.info('Canvas: AI on-demand suggestion received', {
+          model: model || null,
           text: suggestion?.text || null
         })
 
@@ -1143,14 +1149,17 @@ export function Canvas() {
               })
             })
 
-            const data = await res.json()
+            const data: { suggestions?: Array<{ _id?: string; text?: string }>; model?: string } =
+              await res.json()
             if (!res.ok || !data.suggestions?.length) {
               throw new Error('No suggestion returned')
             }
 
             suggestion = data.suggestions[0]
+            const model = data?.model
 
             debug.info('Suggestion received', {
+              model: model ?? null,
               intentionId: intention.id,
               bucket: targetBucket,
               preview: suggestion?.text?.slice(0, 80)
