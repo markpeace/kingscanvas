@@ -76,7 +76,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(503).json({ ok: false, error: 'AI is not configured' })
     }
 
+    if (message.includes('LLM environment variable is not set')) {
+      debug.error('AI: suggest-steps misconfigured', { ...context, message })
+      return res.status(503).json({ ok: false, error: 'LLM environment variable is not set' })
+    }
+
     debug.error('AI: suggest-steps failed', { ...context, message })
-    return res.status(500).json({ ok: false, error: 'AI generation failed' })
+    return res.status(500).json({ ok: false, error: message })
   }
 }
