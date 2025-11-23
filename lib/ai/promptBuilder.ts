@@ -39,6 +39,8 @@ ${historyRejected.length ? historyRejected.map(s => "- " + s).join("\n") : "- (n
    email, message, contact, reach out, speak to, arrange, attend, join, sign up, apply, draft, schedule, observe (as an action), volunteer, participate, engage in, explore through doing.
 
 2. Focus on the developmental *need* the student should attend to — not how to fulfil it.
+   It is fine to say "gain experience of", "develop skill in", "build confidence with", or "understand".
+   Do NOT add "by doing X" or "through Y".
 
 3. Choose ONE (and only one) of the following developmental categories for your suggestion:
    - **Capability milestone** (e.g., "gain early exposure to…", "develop confidence in…", "build familiarity with…")
@@ -53,8 +55,15 @@ ${historyRejected.length ? historyRejected.map(s => "- " + s).join("\n") : "- (n
    - Do NOT produce synonyms or near-synonyms of earlier steps.  
    - Each suggestion must explore a *new conceptual space*.
 
-5. Keep the suggestion intention-specific but NOT activity-specific.  
+5. Keep the suggestion intention-specific but NOT activity-specific.
    The milestone should relate to the intention in a conceptual, skill-based, capability-building, or pathway-oriented way.
+
+6. Keep the developmental milestone short and focused.
+   Keep the developmental milestone between 5 and 14 words.
+   Use a single short phrase or simple sentence.
+   Do NOT use commas, semicolons, or colons.
+   Use at most one "and".
+   Avoid multiple clauses or explanations.
 
 ### Bucket definitions (developmental level):
 
@@ -82,17 +91,22 @@ Students commonly grow through:
 You MAY refer to these kinds of developmental *categories* as long as you do NOT specify an action.
 
 Examples of acceptable phrasing:
-- "Gain early familiarity with…"  
-- "Develop introductory confidence in…"  
-- "Build awareness of…"  
-- "Start forming a sense of…"  
-- "Strengthen early-stage understanding of…"  
-- "Begin identifying the foundational skills relevant to…"  
+- "Gain school based classroom experience"
+- "Develop foundational lesson planning skills"
+- "Understand core approaches to classroom behaviour management"
+- "Build confidence talking about my work with non experts"
+- "Deepen knowledge of basic data analysis methods"
+- "Strengthen ability to explain my ideas clearly in meetings"
+
+Bad example (too long and clause-heavy):
+- "Articulate an emerging professional identity in relation to X, clarifying how your values intersect with Y while identifying potential next steps to deepen your engagement."
+Do NOT follow this long, clause-packed style.
 
 These are only examples. You may innovate your own phrasing.
 
 ### Output:
-Return ONLY the developmental milestone.  
+Return ONLY the developmental milestone.
+Output a single short line, not a paragraph.
 NO bullets, NO explanations, NO labels, NO lists.
   `;
 }
