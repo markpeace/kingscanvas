@@ -1,3 +1,4 @@
+import { StateGraph } from "@langchain/langgraph"
 import { getChatModel } from "@/lib/ai/client"
 import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
 import { debug } from "@/lib/debug"
@@ -17,12 +18,94 @@ type WorkflowName = "suggest-step"
 
 type WorkflowResult = { suggestions: Suggestion[]; model: string }
 
+type SuggestState = {
+  prompt: string
+  suggestionText?: string
+  model?: string
+}
+
 type WorkflowTrace = {
   workflow: WorkflowName
   model: string
   durationMs: number
   error?: string
 }
+
+const suggestStepGraph = (() => {
+  const graph = new StateGraph<SuggestState>({
+    channels: {
+      prompt: { value: null },
+      suggestionText: { value: null },
+      model: { value: null }
+    }
+  })
+
+  graph.addNode("call_model", async (state: SuggestState): Promise<SuggestState> => {
+    const llm = getChatModel()
+    const resolvedModel =
+      (typeof llm.model === "string" && llm.model.trim().length > 0
+        ? llm.model
+        : undefined) ??
+      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
+        ? llm.modelName
+        : undefined) ??
+      ((process.env.LLM ?? "").trim() || undefined) ??
+      "unknown"
+
+    debug.trace("AI: suggest-step using model", {
+      model: resolvedModel,
+      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
+      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
+      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+    })
+
+    try {
+      const response = await llm.invoke(state.prompt)
+      let rawContent = ""
+
+      const content = response?.content
+
+      if (typeof content === "string") {
+        rawContent = content
+      } else if (Array.isArray(content)) {
+        rawContent = content
+          .map((part) => {
+            if (typeof part === "string") {
+              return part
+            }
+
+            if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+              return part.text
+            }
+
+            return ""
+          })
+          .join("")
+      } else if (content != null) {
+        rawContent = String(content)
+      }
+
+      const text = rawContent.trim()
+
+      return {
+        ...state,
+        suggestionText: text,
+        model: resolvedModel
+      }
+    } catch (error) {
+      if (error && typeof error === "object") {
+        ;(error as Record<string, unknown>).model = resolvedModel
+      }
+
+      throw error
+    }
+  })
+
+  graph.setEntryPoint("call_model")
+  graph.setFinishPoint("call_model")
+
+  return graph.compile()
+})()
 
 const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
 
@@ -85,49 +168,16 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         intention: intentionText
       })
 
-      const llm = getChatModel()
-      resolvedModel =
-        (typeof llm.model === "string" && llm.model.trim().length > 0
-          ? llm.model
-          : undefined) ??
-        (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
-          ? llm.modelName
-          : undefined) ??
-        ((process.env.LLM ?? "").trim() || undefined) ??
-        "unknown"
-
-      debug.trace("AI: suggest-step using model", {
-        model: resolvedModel,
-        ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
-        ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
-        ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
-      })
-      const response = await llm.invoke(prompt)
-      let rawContent = ""
-
-      const content = response?.content
-
-      if (typeof content === "string") {
-        rawContent = content
-      } else if (Array.isArray(content)) {
-        rawContent = content
-          .map((part) => {
-            if (typeof part === "string") {
-              return part
-            }
-
-            if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
-              return part.text
-            }
-
-            return ""
-          })
-          .join("")
-      } else if (content != null) {
-        rawContent = String(content)
+      const initialState: SuggestState = {
+        prompt,
+        suggestionText: "",
+        model: ""
       }
 
-      const text = rawContent.trim()
+      const finalState = await suggestStepGraph.invoke(initialState)
+
+      resolvedModel = finalState.model ?? "unknown"
+      const text = (finalState.suggestionText ?? "").trim()
 
       debug.info("AI: model response (prompt v5)", {
         bucket: payload.intentionBucket ?? bucket,
@@ -160,6 +210,10 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
 
     throw new Error(`Unhandled workflow: ${workflowName}`)
   } catch (error) {
+    if (error && typeof error === "object" && "model" in error && typeof (error as Record<string, unknown>).model === "string") {
+      resolvedModel = (error as Record<string, string>).model
+    }
+
     const workflowDuration = Date.now() - startedAt
     const trace: WorkflowTrace = {
       workflow: workflowName,
