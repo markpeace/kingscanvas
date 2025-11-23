@@ -1,0 +1,32 @@
+status: "in_progress"
+epoch: "0010-prompt-refinement"
+plan: "PLAN.md"
+start_date: "2025-11-23"
+completed_at: null
+updated_at: "2025-11-23"
+branch: "feature/epoch-0010/prompt-refinement"
+summary: |
+  Prompt refinement and AI architecture for King’s Canvas with explicit model
+  control, consolidated prompts, context-aware guidance, and reliable Debug
+  Panel visibility.
+tasks:
+  - id: "llm-model-control"
+    title: "Enforce single LLM selector and observability"
+    status: "planned"
+    notes: "Surface missing LLM configuration in the Debug Panel and return model provenance with every AI response."
+  - id: "step-prompt"
+    title: "Consolidate step-generation prompt"
+    status: "planned"
+    notes: "Move to a single prompt file that adapts to intention buckets, programme type, and study mode."
+  - id: "opportunity-prompt"
+    title: "Create opportunity-generation prompt"
+    status: "planned"
+    notes: "Generate opportunity types aligned to King’s Edge tiers and replace deterministic opportunity logic."
+  - id: "context-pipeline"
+    title: "Thread student context through UI, API, and prompts"
+    status: "planned"
+    notes: "Capture course, year, programme, and study mode so prompts adjust guidance appropriately."
+  - id: "debug-panel"
+    title: "Document Debug Panel expectations"
+    status: "planned"
+    notes: "Ensure each PR includes Debug Panel instructions covering model usage, errors, and final AI outputs."
