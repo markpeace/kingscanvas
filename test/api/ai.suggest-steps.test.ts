@@ -106,4 +106,19 @@ describe('/api/ai/suggest-steps POST', () => {
     expect(json.ok).toBe(false)
     expect(json.error).toBe('AI is not configured')
   })
+
+  it('returns 503 when LLM is not configured', async () => {
+    mockRunWorkflow.mockRejectedValue(new Error('LLM environment variable is not set'))
+
+    const { req, res, getStatus, getJSON } = createMockRequestResponse({
+      intentionText: 'Learn React'
+    })
+
+    await handler(req, res)
+
+    expect(getStatus()).toBe(503)
+    const json = getJSON() as { ok: boolean; error: string }
+    expect(json.ok).toBe(false)
+    expect(json.error).toBe('LLM environment variable is not set')
+  })
 })

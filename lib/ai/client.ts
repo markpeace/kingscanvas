@@ -4,7 +4,7 @@ import { ChatOpenAI } from "@langchain/openai"
  * Returns a configured ChatOpenAI model.
  * Env:
  * - OPENAI_API_KEY (required)
- * - OPENAI_MODEL (optional, default "gpt-4o-mini")
+ * - LLM (required model name)
  * - OPENAI_BASE_URL (optional override for Azure/gateways)
  */
 export function getChatModel() {
@@ -12,7 +12,10 @@ export function getChatModel() {
   if (!apiKey) {
     throw new Error("OPENAI_API_KEY is not set")
   }
-  const model = process.env.OPENAI_MODEL || "gpt-4o-mini"
+  const model = (process.env.LLM ?? "").trim()
+  if (!model) {
+    throw new Error("LLM environment variable is not set")
+  }
   const baseURL = process.env.OPENAI_BASE_URL // optional
 
   return new ChatOpenAI({
