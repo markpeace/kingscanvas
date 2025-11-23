@@ -15,7 +15,7 @@ type SuggestStepsRequestBody = {
 }
 
 type SuggestStepsResponse =
-  | { ok: true; suggestions: Array<{ bucket: string; text: string }> }
+  | { ok: true; suggestions: Array<{ bucket: string; text: string }>; model: string }
   | { ok?: false; error: string }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<SuggestStepsResponse>) {
@@ -50,13 +50,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     })
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []
+    const model = aiResponse?.model ?? 'unknown'
 
     debug.info('AI: suggest-steps response', {
+      model,
       count: suggestions.length,
       example: suggestions[0]?.text || '(none)'
     })
 
-    return res.status(200).json({ ok: true, suggestions })
+    return res.status(200).json({
+      ok: true,
+      suggestions,
+      model
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const context = {
