@@ -12,9 +12,17 @@ type SuggestStepsInput = {
 
 type Suggestion = { bucket: BucketId; text: string }
 
+// New workflows (e.g. opportunity recommendations) will be added here in future iterations.
 type WorkflowName = "suggest-step"
 
 type WorkflowResult = { suggestions: Suggestion[]; model: string }
+
+type WorkflowTrace = {
+  workflow: WorkflowName
+  model: string
+  durationMs: number
+  error?: string
+}
 
 const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
 
@@ -54,84 +62,117 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     throw new Error(`Unknown workflow: ${workflowName}`)
   }
 
+  const startedAt = Date.now()
+  let resolvedModel = "unknown"
+
   const bucket = normaliseBucket(payload.intentionBucket)
   const promptBucket = mapBucketToPromptTarget(bucket)
   const intentionText = (payload.intentionText ?? "").trim() || "your intention"
   const historyAccepted = sanitiseHistory(payload.historyAccepted).slice(-5)
   const historyRejected = sanitiseHistory(payload.historyRejected).slice(-5)
 
-  if (workflowName === "suggest-step") {
-    const prompt = buildSuggestionPromptV5({
-      intentionText,
-      targetBucket: promptBucket,
-      historyAccepted,
-      historyRejected
-    })
+  try {
+    if (workflowName === "suggest-step") {
+      const prompt = buildSuggestionPromptV5({
+        intentionText,
+        targetBucket: promptBucket,
+        historyAccepted,
+        historyRejected
+      })
 
-    debug.trace("AI Prompt Builder v5: constructed prompt", {
-      bucket: payload.intentionBucket ?? bucket,
-      intention: intentionText
-    })
+      debug.trace("AI Prompt Builder v5: constructed prompt", {
+        bucket: payload.intentionBucket ?? bucket,
+        intention: intentionText
+      })
 
-    const llm = getChatModel()
-    const resolvedModel =
-      (typeof llm.model === "string" && llm.model.trim().length > 0
-        ? llm.model
-        : undefined) ??
-      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
-        ? llm.modelName
-        : undefined) ??
-      ((process.env.LLM ?? "").trim() || undefined) ??
-      "unknown"
+      const llm = getChatModel()
+      resolvedModel =
+        (typeof llm.model === "string" && llm.model.trim().length > 0
+          ? llm.model
+          : undefined) ??
+        (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
+          ? llm.modelName
+          : undefined) ??
+        ((process.env.LLM ?? "").trim() || undefined) ??
+        "unknown"
 
-    debug.trace("AI: suggest-step using model", {
-      model: resolvedModel,
-      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
-      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
-      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
-    })
-    const response = await llm.invoke(prompt)
-    let rawContent = ""
+      debug.trace("AI: suggest-step using model", {
+        model: resolvedModel,
+        ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
+        ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
+        ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+      })
+      const response = await llm.invoke(prompt)
+      let rawContent = ""
 
-    const content = response?.content
+      const content = response?.content
 
-    if (typeof content === "string") {
-      rawContent = content
-    } else if (Array.isArray(content)) {
-      rawContent = content
-        .map((part) => {
-          if (typeof part === "string") {
-            return part
+      if (typeof content === "string") {
+        rawContent = content
+      } else if (Array.isArray(content)) {
+        rawContent = content
+          .map((part) => {
+            if (typeof part === "string") {
+              return part
+            }
+
+            if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+              return part.text
+            }
+
+            return ""
+          })
+          .join("")
+      } else if (content != null) {
+        rawContent = String(content)
+      }
+
+      const text = rawContent.trim()
+
+      debug.info("AI: model response (prompt v5)", {
+        bucket: payload.intentionBucket ?? bucket,
+        preview: text.slice(0, 120)
+      })
+
+      const workflowDuration = Date.now() - startedAt
+      const trace: WorkflowTrace = {
+        workflow: workflowName,
+        model: resolvedModel,
+        durationMs: workflowDuration
+      }
+
+      debug.info("AI workflow completed", {
+        ...trace,
+        ...(payload.intentionBucket ? { bucket: payload.intentionBucket } : {}),
+        ...(payload.intentionText ? { intention: intentionText } : {})
+      })
+
+      return {
+        model: resolvedModel,
+        suggestions: [
+          {
+            bucket,
+            text
           }
-
-          if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
-            return part.text
-          }
-
-          return ""
-        })
-        .join("")
-    } else if (content != null) {
-      rawContent = String(content)
+        ]
+      }
     }
 
-    const text = rawContent.trim()
+    throw new Error(`Unhandled workflow: ${workflowName}`)
+  } catch (error) {
+    const workflowDuration = Date.now() - startedAt
+    const trace: WorkflowTrace = {
+      workflow: workflowName,
+      model: resolvedModel,
+      durationMs: workflowDuration,
+      error: error instanceof Error ? error.message : String(error)
+    }
 
-    debug.info("AI: model response (prompt v5)", {
-      bucket: payload.intentionBucket ?? bucket,
-      preview: text.slice(0, 120)
+    debug.error("AI workflow failed", {
+      ...trace,
+      ...(payload.intentionBucket ? { bucket: payload.intentionBucket } : {})
     })
 
-    return {
-      model: resolvedModel,
-      suggestions: [
-        {
-          bucket,
-          text
-        }
-      ]
-    }
+    throw error
   }
-
-  throw new Error(`Unhandled workflow: ${workflowName}`)
 }
