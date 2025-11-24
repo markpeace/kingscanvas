@@ -2,12 +2,14 @@ export function buildSuggestionPromptV5({
   intentionText,
   targetBucket,
   historyAccepted = [],
-  historyRejected = []
+  historyRejected = [],
+  lastSuggestion
 }: {
   intentionText: string;
   targetBucket: string;
   historyAccepted?: string[];
   historyRejected?: string[];
+  lastSuggestion?: string;
 }) {
   return `
 You are a university employability and development advisor.
@@ -51,6 +53,9 @@ ${historyAccepted.length ? historyAccepted.map(s => "- " + s).join("\n") : "- (n
 Rejected:
 ${historyRejected.length ? historyRejected.map(s => "- " + s).join("\n") : "- (none)"}
 
+Last suggested developmental focus (not yet accepted or rejected):
+- ${lastSuggestion && lastSuggestion.trim().length ? lastSuggestion : "(none)"}
+
 
 ### STRICT RULES
 
@@ -70,6 +75,8 @@ ${historyRejected.length ? historyRejected.map(s => "- " + s).join("\n") : "- (n
    - Avoid near duplicates of those milestones, even with slightly different wording.
    - If recent milestones for this intention have similar wording or the same focus type, prefer a different focus type or a clearly different conceptual angle for the next suggestion.
    - Do NOT repeat any previous idea or verb root.
+   - Do not repeat or lightly rephrase the last suggested developmental focus shown above.
+   - Prefer a clearly different type (skill, experience, or knowledge) or a clearly different conceptual angle than the last suggestion. If the last suggestion was skill-focused, consider an experience-focused or knowledge-focused milestone (and vice versa) while staying relevant to the intention.
    - Each suggestion must explore a *new conceptual space*.
 
 5. Keep the suggestion intention-specific but NOT activity-specific.

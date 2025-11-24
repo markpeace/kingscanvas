@@ -12,6 +12,7 @@ type SuggestStepsRequestBody = {
   intentionBucket?: string
   historyAccepted?: string[]
   historyRejected?: string[]
+  lastSuggestion?: string
 }
 
 type SuggestStepsResponse =
@@ -31,7 +32,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
-  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected } = req.body as SuggestStepsRequestBody
+  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected, lastSuggestion } =
+    req.body as SuggestStepsRequestBody
 
   debug.trace('AI: suggest-steps request', {
     user: email,
@@ -46,7 +48,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       intentionText,
       intentionBucket,
       historyAccepted,
-      historyRejected
+      historyRejected,
+      lastSuggestion
     })
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []
