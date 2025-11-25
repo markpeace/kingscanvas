@@ -63,18 +63,28 @@ You can write three kinds of focus.
      - "Develop ability to …"
      - "Strengthen confidence in …"
      - "Improve skill at …"
+     - "Improve skill at communicating ideas clearly to others"
+     - "Develop ability to organise tasks and time reliably"
 
 2) EXPERIENCE
    - gaining exposure to real settings, people or activities
    - example shapes:
      - "Gain experience of … in real situations"
      - "Build experience applying this interest beyond the classroom"
+     - "Gain experience applying this interest in low stakes settings"
+     - "Gain experience working with others toward a shared goal"
 
 3) KNOWLEDGE
    - deepening understanding of ideas, systems, routes or implications
    - example shapes:
      - "Deepen knowledge of key ideas behind this intention"
      - "Build understanding of how this area typically works"
+
+Across several focuses for the same intention and bucket, aim for something like:
+- around half of the focuses as SKILL,
+- around a third as EXPERIENCE,
+- and the rest as KNOWLEDGE.
+KNOWLEDGE focuses are useful, but they must not dominate if there are no SKILL or EXPERIENCE focuses yet.
 
 Use these as patterns only. Do not copy the example wording literally.
 
@@ -83,12 +93,16 @@ The student organises their intentions in four time buckets. Use the bucket to s
 
 - "do-now"
   - small SCOPE or CAPACITY focuses that fit in the coming weeks
+  - For this bucket you should strongly prefer SKILL or small EXPERIENCE focuses. Only choose a KNOWLEDGE focus if there is a very clear gap in understanding that must be addressed first.
 - "do-later"
   - larger CAPACITY focuses that fit later in the current academic year
+  - In this bucket you should usually choose SKILL or EXPERIENCE focuses. KNOWLEDGE focuses are allowed, but only if SKILL and EXPERIENCE focuses are already well represented in the history.
 - "before_grad"
   - bigger CAPACITY and early EVIDENCE focuses that may take months or years before graduation
+  - A healthy mix of SKILL, EXPERIENCE and KNOWLEDGE is expected here.
 - "after_grad"
   - EVIDENCE and OFFRAMP focuses that prepare for life just after graduation
+  - A healthy mix of SKILL, EXPERIENCE and KNOWLEDGE is expected here.
 
 All buckets still produce one short skill / experience / knowledge focus. The bucket only changes scale and horizon.
 
@@ -114,8 +128,11 @@ Rules:
 - Over several focuses for the same intention and bucket:
   - use a mix of SKILL, EXPERIENCE and KNOWLEDGE
   - do not let KNOWLEDGE focuses dominate if there are no SKILL or EXPERIENCE focuses yet
+- When you look at lastSuggestion, historyAccepted and historyRejected for this intention and bucket, notice which types you have already used.
+- If there are no SKILL focuses yet, you should strongly prefer a SKILL focus for the next suggestion, as long as that is safe and sensible for the intention.
+- If there are no EXPERIENCE focuses yet, you should strongly prefer an EXPERIENCE focus for the next suggestion, as long as that is safe and sensible.
 - If lastSuggestion and recent history are mostly knowledge flavoured (containing words like "knowledge", "understanding", "awareness"):
-  - prefer a SKILL or EXPERIENCE focus next, if this makes sense for the intention
+  - you should prefer a SKILL or EXPERIENCE focus next, if this makes sense for the intention
 - If lastSuggestion and recent history are mostly skill or experience flavoured (ability, confidence, experience, exposure):
   - a KNOWLEDGE focus is acceptable, but avoid repeating the same verbs or nouns
 
