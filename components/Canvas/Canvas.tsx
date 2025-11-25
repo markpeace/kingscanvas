@@ -879,6 +879,35 @@ export function Canvas() {
           model?: string
         }
 
+        const lastSuggestedStep = intention.steps
+          .filter(
+            (step) =>
+              step.bucket === bucket &&
+              step.source === 'ai' &&
+              step.status === 'suggested' &&
+              typeof (step.text ?? step.title) === 'string'
+          )
+          .reduce<Step | undefined>((latest, step) => {
+            if (!latest) return step
+
+            const latestTimestamp = latest.createdAt ? new Date(latest.createdAt).getTime() : -Infinity
+            const stepTimestamp = step.createdAt ? new Date(step.createdAt).getTime() : -Infinity
+
+            if (stepTimestamp !== latestTimestamp) {
+              return stepTimestamp > latestTimestamp ? step : latest
+            }
+
+            const latestOrder = typeof latest.order === 'number' ? latest.order : -Infinity
+            const stepOrder = typeof step.order === 'number' ? step.order : -Infinity
+
+            return stepOrder >= latestOrder ? step : latest
+          }, undefined)
+
+        const lastSuggestionText =
+          (lastSuggestedStep?.text || lastSuggestedStep?.title)?.trim().length
+            ? (lastSuggestedStep?.text || lastSuggestedStep?.title)
+            : undefined
+
         const aiRes = await fetch('/api/ai/suggest-steps', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -887,7 +916,8 @@ export function Canvas() {
             intentionText: intention.title,
             intentionBucket: bucket,
             historyAccepted: history.accepted,
-            historyRejected: history.rejected
+            historyRejected: history.rejected,
+            lastSuggestion: lastSuggestionText
           })
         })
 

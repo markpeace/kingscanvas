@@ -9,6 +9,7 @@ type SuggestStepsInput = {
   intentionBucket?: string
   historyAccepted?: string[]
   historyRejected?: string[]
+  lastSuggestion?: string
 }
 
 type Suggestion = { bucket: BucketId; text: string }
@@ -153,6 +154,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
   const intentionText = (payload.intentionText ?? "").trim() || "your intention"
   const historyAccepted = sanitiseHistory(payload.historyAccepted).slice(-5)
   const historyRejected = sanitiseHistory(payload.historyRejected).slice(-5)
+  const lastSuggestionRaw = typeof payload.lastSuggestion === "string" ? payload.lastSuggestion.trim() : ""
+  const lastSuggestion = lastSuggestionRaw.length > 0 ? lastSuggestionRaw : undefined
 
   try {
     if (workflowName === "suggest-step") {
@@ -160,7 +163,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         intentionText,
         targetBucket: promptBucket,
         historyAccepted,
-        historyRejected
+        historyRejected,
+        lastSuggestion
       })
 
       debug.trace("AI Prompt Builder v5: constructed prompt", {
