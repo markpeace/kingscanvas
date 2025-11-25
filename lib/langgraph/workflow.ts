@@ -21,7 +21,9 @@ type WorkflowName = "suggest-step"
 export type OpportunitySuggestion = {
   title: string
   summary: string
-  tier?: "Intensive" | "Sustained" | "Short" | "Evergreen"
+  source?: string
+  form?: string
+  focus?: string
 }
 
 export type SuggestOpportunitiesInput = StepOpportunityPromptContext
@@ -248,7 +250,7 @@ export async function runOpportunityWorkflow(
   payload: SuggestOpportunitiesInput
 ): Promise<{ opportunities: OpportunitySuggestion[] }> {
   const stepTitle = (payload.stepTitle || "").trim() || "your step"
-  const stepBucket = payload.stepBucket
+  const stepBucket = payload.stepBucket || "do-now"
   const intentionTitle = payload.intentionTitle
   const existingOpportunityTitles = Array.isArray(payload.existingOpportunityTitles)
     ? payload.existingOpportunityTitles.filter((t) => typeof t === "string" && t.trim().length > 0).slice(-10)
@@ -264,26 +266,24 @@ export async function runOpportunityWorkflow(
   const llm = getChatModel()
 
   const resolvedModel =
-    (typeof llm.model === "string" && llm.model.trim().length > 0
-      ? llm.model
+    (typeof (llm as any).model === "string" && (llm as any).model.trim().length > 0
+      ? (llm as any).model
       : undefined) ??
-    (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
-      ? llm.modelName
+    (typeof (llm as any).modelName === "string" && (llm as any).modelName.trim().length > 0
+      ? (llm as any).modelName
       : undefined) ??
     process.env.OPENAI_MODEL ??
     "gpt-4o-mini"
 
   debug.trace("AI: suggest-opportunities using model", {
     model: resolvedModel,
-    ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
-    ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
     ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
   })
 
   const response = await llm.invoke(prompt)
+  
   let rawContent = ""
-
-  const content = response?.content
+  const content = (response as any)?.content
 
   if (typeof content === "string") {
     rawContent = content
@@ -301,39 +301,42 @@ export async function runOpportunityWorkflow(
     rawContent = String(content)
   }
 
+  const trimmed = rawContent.trim()
+
   debug.info("AI: raw suggest-opportunities response", {
-    preview: rawContent.slice(0, 200)
+    preview: trimmed.slice(0, 200)
   })
 
-  let parsed: unknown
+  let parsed: any
   try {
-    parsed = JSON.parse(rawContent)
+    parsed = JSON.parse(trimmed)
   } catch {
     debug.warn("AI: suggest-opportunities returned non JSON, wrapping as single summary")
     return {
       opportunities: [
         {
           title: stepTitle,
-          summary: rawContent.slice(0, 240)
+          summary: trimmed.slice(0, 240),
+          source: "independent",
+          form: "independent-action",
+          focus: "experience"
         }
       ]
     }
   }
 
-  const opportunities = Array.isArray((parsed as any)?.opportunities)
-    ? (parsed as any).opportunities
+  const opportunities = Array.isArray(parsed?.opportunities)
+    ? parsed.opportunities
         .filter((item: any) => item && typeof item.title === "string" && typeof item.summary === "string")
-        .map((item: any): OpportunitySuggestion => ({
-          title: String(item.title).trim(),
-          summary: String(item.summary).trim(),
-          tier:
-            item.tier === "Intensive" ||
-            item.tier === "Sustained" ||
-            item.tier === "Short" ||
-            item.tier === "Evergreen"
-              ? item.tier
-              : undefined
-        }))
+        .map(
+          (item: any): OpportunitySuggestion => ({
+            title: String(item.title).trim(),
+            summary: String(item.summary).trim(),
+            source: typeof item.source === "string" ? item.source : undefined,
+            form: typeof item.form === "string" ? item.form : undefined,
+            focus: typeof item.focus === "string" ? item.focus : undefined
+          })
+        )
     : []
 
   debug.info("AI: suggest-opportunities parsed response", {

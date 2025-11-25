@@ -2,7 +2,7 @@ import { ObjectId } from "mongodb"
 
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
-import { generateOpportunityDraftsForStep } from "@/lib/opportunities/simulation"
+import { runOpportunityWorkflow } from "@/lib/langgraph/workflow"
 import {
   createOpportunitiesForStep,
   deleteOpportunitiesForStep,
@@ -208,11 +208,39 @@ export async function generateOpportunitiesForStep(params: {
       return []
     }
 
-    const drafts = await generateOpportunityDraftsForStep({
+    const aiResult = await runOpportunityWorkflow({
       stepTitle,
+      stepBucket: bucketId,
       intentionTitle,
-      bucketId
+      existingOpportunityTitles: []
     })
+
+    const drafts = Array.isArray(aiResult?.opportunities)
+      ? aiResult.opportunities.map((opp): PersistenceOpportunityDraft => {
+          const title = isNonEmptyString(opp.title) ? opp.title : stepTitle
+          const summary = isNonEmptyString(opp.summary) ? opp.summary : stepTitle
+
+          const source = isValidSource(opp.source) ? (opp.source as Opportunity["source"]) : "kings-edge-simulated"
+          const form = isValidForm(opp.form) ? (opp.form as Opportunity["form"]) : "independent-action"
+
+          const focus: Opportunity["focus"] =
+            opp.focus === "experience" ||
+            opp.focus === "skills" ||
+            opp.focus === "community" ||
+            opp.focus === "reflection"
+              ? (opp.focus as Opportunity["focus"])
+              : "experience"
+
+          return {
+            title,
+            summary,
+            source,
+            form,
+            focus,
+            status: "suggested"
+          }
+        })
+      : []
 
     const filteredDrafts = drafts.filter(
       (draft) =>

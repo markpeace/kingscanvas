@@ -141,24 +141,24 @@ jest.mock("@/lib/debug", () => ({
   }
 }))
 
-jest.mock("@/lib/opportunities/simulation", () => ({
-  generateOpportunityDraftsForStep: jest.fn()
+jest.mock("@/lib/langgraph/workflow", () => ({
+  runOpportunityWorkflow: jest.fn()
 }))
 
 const { resetCollections } = jest.requireMock("@/lib/dbHelpers") as { resetCollections: () => void }
-const { generateOpportunityDraftsForStep } = jest.requireMock("@/lib/opportunities/simulation") as {
-  generateOpportunityDraftsForStep: jest.MockedFunction<(
-    input: { stepTitle: string; intentionTitle?: string; bucketId?: string }
-  ) => Promise<
-    Array<{
+const { runOpportunityWorkflow } = jest.requireMock("@/lib/langgraph/workflow") as {
+  runOpportunityWorkflow: jest.MockedFunction<(
+    input: { stepTitle: string; stepBucket?: string; intentionTitle?: string; existingOpportunityTitles?: string[] }
+  ) => Promise<{
+    opportunities: Array<{
       title: string
       summary: string
-      source: OpportunitySource
-      form: OpportunityForm
-      focus: OpportunityFocus
+      source?: OpportunitySource
+      form?: OpportunityForm
+      focus?: OpportunityFocus
       status?: OpportunityStatus
     }>
-  >>
+  }>>
 }
 const { debug } = jest.requireMock("@/lib/debug") as {
   debug: { info: jest.Mock; error: jest.Mock; warn: jest.Mock; trace: jest.Mock }
@@ -167,7 +167,7 @@ const { debug } = jest.requireMock("@/lib/debug") as {
 describe("generateOpportunitiesForStep", () => {
   beforeEach(() => {
     resetCollections()
-    generateOpportunityDraftsForStep.mockReset()
+    runOpportunityWorkflow.mockReset()
     debug.info.mockReset()
     debug.error.mockReset()
     debug.warn.mockReset()
@@ -215,32 +215,31 @@ describe("generateOpportunitiesForStep", () => {
       }
     ])
 
-    generateOpportunityDraftsForStep.mockResolvedValue([
-      {
-        title: "Attend industry breakfast",
-        summary: "Meet alumni working in creative agencies.",
-        source: "kings-edge-simulated",
-        form: "workshop",
-        focus: "community",
-        status: "suggested"
-      },
-      {
-        title: "Shadow a portfolio review",
-        summary: "Observe how mentors critique a professional portfolio.",
-        source: "kings-edge-simulated",
-        form: "mentoring",
-        focus: "skills",
-        status: "suggested"
-      },
-      {
-        title: "Join creative showcase",
-        summary: "Apply to present work at the student showcase in March.",
-        source: "independent",
-        form: "independent-action",
-        focus: "experience",
-        status: "saved"
-      }
-    ])
+    runOpportunityWorkflow.mockResolvedValue({
+      opportunities: [
+        {
+          title: "Attend industry breakfast",
+          summary: "Meet alumni working in creative agencies.",
+          source: "kings-edge-simulated",
+          form: "workshop",
+          focus: "community"
+        },
+        {
+          title: "Shadow a portfolio review",
+          summary: "Observe how mentors critique a professional portfolio.",
+          source: "kings-edge-simulated",
+          form: "mentoring",
+          focus: "skills"
+        },
+        {
+          title: "Join creative showcase",
+          summary: "Apply to present work at the student showcase in March.",
+          source: "independent",
+          form: "independent-action",
+          focus: "experience"
+        }
+      ]
+    })
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
@@ -248,10 +247,11 @@ describe("generateOpportunitiesForStep", () => {
 
     expect(created).toHaveLength(3)
     expect(created.every((item) => item.stepId === canonicalStepId)).toBe(true)
-    expect(generateOpportunityDraftsForStep).toHaveBeenCalledWith({
+    expect(runOpportunityWorkflow).toHaveBeenCalledWith({
       stepTitle: "Prepare portfolio",
+      stepBucket: "do-now",
       intentionTitle: "Launch creative career",
-      bucketId: "do-now"
+      existingOpportunityTitles: []
     })
 
     const remaining = await getOpportunitiesByStep("owner@example.com", canonicalStepId)
@@ -294,7 +294,7 @@ describe("generateOpportunitiesForStep", () => {
       }
     ])
 
-    generateOpportunityDraftsForStep.mockRejectedValue(new Error("AI offline"))
+    runOpportunityWorkflow.mockRejectedValue(new Error("AI offline"))
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
@@ -334,23 +334,25 @@ describe("generateOpportunitiesForStep", () => {
       }
     ])
 
-    generateOpportunityDraftsForStep.mockResolvedValue([
-      {
-        title: "New item",
-        summary: "Should not be created.",
-        source: "kings-edge-simulated",
-        form: "short-course",
-        focus: "reflection",
-        status: "suggested"
-      }
-    ])
+    runOpportunityWorkflow.mockResolvedValue({
+      opportunities: [
+        {
+          title: "New item",
+          summary: "Should not be created.",
+          source: "kings-edge-simulated",
+          form: "short-course",
+          focus: "reflection",
+          status: "suggested"
+        }
+      ]
+    })
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
     const created = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "manual" })
 
     expect(created).toEqual([])
-    expect(generateOpportunityDraftsForStep).not.toHaveBeenCalled()
+    expect(runOpportunityWorkflow).not.toHaveBeenCalled()
     expect(debug.info).toHaveBeenCalledWith(
       "Opportunities: already has opportunities; skipping auto generation",
       expect.objectContaining({ stepId: canonicalStepId, origin: "manual" })
@@ -379,7 +381,7 @@ describe("generateOpportunitiesForStep", () => {
       }
     ])
 
-    generateOpportunityDraftsForStep.mockRejectedValue(new Error("AI offline"))
+    runOpportunityWorkflow.mockRejectedValue(new Error("AI offline"))
 
     const { safelyGenerateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
