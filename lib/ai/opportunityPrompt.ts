@@ -86,30 +86,29 @@ You are NOT allowed to:
 - duplicate any existing opportunity titles listed above
 
 For opportunities labelled "independent":
-- Use language that emphasises student agency and self initiated action.
-- Avoid describing them as formal programmes, schemes, courses or challenges owned by King’s.
+- Use language that emphasises student agency and self initiated action that could start today.
+- Avoid framing them as programmes, schemes, rotas, challenges, or services run for the student.
 - Do not mention King’s Edge explicitly.
-- They may still connect to King’s spaces (for example using a library, attending a public talk on campus), but the core idea should be something the student chooses and organises for themselves.
+- They may still connect to King’s spaces (for example using a library, attending a public talk on campus), but the core idea should be something the student chooses and organises for themselves rather than joining a rota, society, club or formal programme.
 
 Allowed values
 For each opportunity you must choose:
 
   - source:
     - "kings-edge-simulated":
-      - Used for opportunities that feel like they could plausibly sit inside a King’s or King’s Edge style portfolio.
-      - Typically structured, curated or facilitated by a university team or a trusted partner.
-      - Often described as programmes, schemes, courses, workshops, mentoring frameworks or challenges with a recognisable structure.
+      - Use this when the opportunity type feels like a structured or curated offer.
+      - It could plausibly sit inside King’s Edge or a similar university portfolio.
+      - Typical language: programme, scheme, challenge, structured workshop series, organised mentoring, society-run initiative.
     - "independent":
-      - Used for opportunities the student could reasonably initiate or access without needing a formal King’s or King’s Edge programme.
-      - Examples include:
-        - personal or group projects
-        - involvement in community or civic groups
-        - self initiated volunteering or part time work
-        - using open online materials or public events
-        - student led societies or peer organised spaces
-      - These should not rely on King’s branding, King’s owned platforms, or a formal scheme run by the institution.
-    - If an idea sounds like a structured, curated programme, course, challenge or mentoring scheme that would normally be organised by a university or formal provider, "kings-edge-simulated" is usually the right source.
-    - If an idea sounds like something the student could realistically set up or join on their own, outside formal provision, "independent" is usually the right source.
+      - Use this only when a student could realistically do the activity by themselves, starting from today, without joining a rota, club, society, or formal programme.
+      - It must not depend on a timetable set by someone else, or on an ongoing group or service being created for them.
+      - The action can involve other people (for example, talking to someone, visiting a place), but it should read as something the student chooses and arranges personally.
+    - Peer tutoring rotas, lesson-swap nights, student society schemes, or any recurring group initiative should almost always be "kings-edge-simulated", not "independent".
+
+  - For opportunities labelled "independent":
+    - Do not describe them as programmes, schemes, rotas, initiatives, or challenges run by a group.
+    - Do not mention societies, clubs, or student-run services as the organiser.
+    - Use plain action language instead, such as: practise, try, observe, record, reflect, test, explore, create, build.
 
   - form (a simple delivery shape):
     - "workshop"
@@ -139,6 +138,8 @@ Behaviours
   - Across 2–5 opportunities for a given step, aim for a mix of sources where that makes sense.
   - Unless the step is clearly only suitable for formal provision, at least one suggestion should be a genuinely independent opportunity type.
   - Do not label an opportunity as "independent" if its description sounds like a formal King’s style programme or Edge activity.
+  - Independent opportunities can involve other people, but they must not require an organised group, rota, or repeated scheduled sessions.
+  - Ask yourself: could the student start a credible version of this activity on their own tomorrow, without anyone’s permission? If not, it should not be labelled "independent".
   - Avoid trivial rephrasings. Each title should point to a meaningfully different idea.
   - Across 2–5 opportunities for a given step, prefer a mix of tiers and patterns where that makes sense.
   - Do not give three ideas that all feel like the same size and shape (for example three near-identical workshops).
