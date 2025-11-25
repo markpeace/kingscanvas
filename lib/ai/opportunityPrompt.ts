@@ -85,44 +85,65 @@ You are NOT allowed to:
 - repeat the step text back as the opportunity
 - duplicate any existing opportunity titles listed above
 
+For opportunities labelled "independent":
+- Use language that emphasises student agency and self initiated action that could start today.
+- Avoid framing them as programmes, schemes, rotas, challenges, or services run for the student.
+- Do not mention King’s Edge explicitly.
+- They may still connect to King’s spaces (for example using a library, attending a public talk on campus), but the core idea should be something the student chooses and organises for themselves rather than joining a rota, society, club or formal programme.
+
 Allowed values
 For each opportunity you must choose:
 
-- source:
-  - "kings-edge-simulated"
-  - or "independent"
-  - Use "kings-edge-simulated" when the opportunity TYPE could plausibly sit inside a King’s style programme or portfolio.
-  - Use "independent" when it is more self-directed, community based, or something the student would initiate beyond formal provision.
+  - source:
+    - "kings-edge-simulated":
+      - Use this when the opportunity type feels like a structured or curated offer.
+      - It could plausibly sit inside King’s Edge or a similar university portfolio.
+      - Typical language: programme, scheme, challenge, structured workshop series, organised mentoring, society-run initiative.
+    - "independent":
+      - Use this only when a student could realistically do the activity by themselves, starting from today, without joining a rota, club, society, or formal programme.
+      - It must not depend on a timetable set by someone else, or on an ongoing group or service being created for them.
+      - The action can involve other people (for example, talking to someone, visiting a place), but it should read as something the student chooses and arranges personally.
+    - Peer tutoring rotas, lesson-swap nights, student society schemes, or any recurring group initiative should almost always be "kings-edge-simulated", not "independent".
 
-- form (a simple delivery shape):
-  - "workshop"
-  - "mentoring"
-  - "short-course"
-  - "coaching"
-  - "independent-action"
-  - Use "short-course" for six-week skills programmes, structured upskill-and-apply arcs, or similar sequences with repeated sessions and applied tasks.
-  - Use "workshop" for one-off workshops or events, and short active challenges delivered in a single block of time.
-  - Use "independent-action" for self-study style activity, self-initiated projects, or evergreen live project patterns relying on the student organising their own engagement.
-  - Use "mentoring" or "coaching" when the core of the idea is sustained input from a person or small group focused on development rather than content delivery.
+  - For opportunities labelled "independent":
+    - Do not describe them as programmes, schemes, rotas, initiatives, or challenges run by a group.
+    - Do not mention societies, clubs, or student-run services as the organiser.
+    - Use plain action language instead, such as: practise, try, observe, record, reflect, test, explore, create, build.
 
-- focus (what it mainly develops):
-  - "experience"
-  - "skills"
-  - "community"
-  - "reflection"
-  - Use "experience" when the main value is being in real settings, handling authentic tasks.
-  - Use "skills" when the main value is practising and improving specific capabilities.
-  - Use "community" when the main value is belonging, networks or shared identity.
-  - Use "reflection" when the main value is structured reflection, synthesis, sense-making.
+  - form (a simple delivery shape):
+    - "workshop"
+    - "mentoring"
+    - "short-course"
+    - "coaching"
+    - "independent-action"
+    - Use "short-course" for six-week skills programmes, structured upskill-and-apply arcs, or similar sequences with repeated sessions and applied tasks.
+    - Use "workshop" for one-off workshops or events, and short active challenges delivered in a single block of time.
+    - Use "independent-action" for self-study style activity, self-initiated projects, or evergreen live project patterns relying on the student organising their own engagement.
+    - Use "mentoring" or "coaching" when the core of the idea is sustained input from a person or small group focused on development rather than content delivery.
+
+  - focus (what it mainly develops):
+    - "experience"
+    - "skills"
+    - "community"
+    - "reflection"
+    - Use "experience" when the main value is being in real settings, handling authentic tasks.
+    - Use "skills" when the main value is practising and improving specific capabilities.
+    - Use "community" when the main value is belonging, networks or shared identity.
+    - Use "reflection" when the main value is structured reflection, synthesis, sense-making.
 
 Behaviours
-- Use the step text to keep suggestions tightly on theme.
-- Vary focus: across several suggestions, do not make all of them the same focus.
-- Vary form: do not give three workshops in a row unless it is clearly justified by the step.
-- Avoid trivial rephrasings. Each title should point to a meaningfully different idea.
-- Across 2–5 opportunities for a given step, prefer a mix of tiers and patterns where that makes sense.
-- Do not give three ideas that all feel like the same size and shape (for example three near-identical workshops).
-- At least one suggestion should feel more substantial or sustained if the step would benefit from a deeper commitment, and at least one should feel lighter and more accessible.
+  - Use the step text to keep suggestions tightly on theme.
+  - Vary focus: across several suggestions, do not make all of them the same focus.
+  - Vary form: do not give three workshops in a row unless it is clearly justified by the step.
+  - Across 2–5 opportunities for a given step, aim for a mix of sources where that makes sense.
+  - Unless the step is clearly only suitable for formal provision, at least one suggestion should be a genuinely independent opportunity type.
+  - Do not label an opportunity as "independent" if its description sounds like a formal King’s style programme or Edge activity.
+  - Independent opportunities can involve other people, but they must not require an organised group, rota, or repeated scheduled sessions.
+  - Ask yourself: could the student start a credible version of this activity on their own tomorrow, without anyone’s permission? If not, it should not be labelled "independent".
+  - Avoid trivial rephrasings. Each title should point to a meaningfully different idea.
+  - Across 2–5 opportunities for a given step, prefer a mix of tiers and patterns where that makes sense.
+  - Do not give three ideas that all feel like the same size and shape (for example three near-identical workshops).
+  - At least one suggestion should feel more substantial or sustained if the step would benefit from a deeper commitment, and at least one should feel lighter and more accessible.
 
 Output
 Return a JSON object with this exact shape:
