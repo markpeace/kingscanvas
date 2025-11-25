@@ -1,6 +1,7 @@
 import { StateGraph } from "@langchain/langgraph"
 import { getChatModel } from "@/lib/ai/client"
-import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
+import { buildStepOpportunitiesPromptV1, type StepOpportunityPromptContext } from "@/lib/ai/opportunityPrompt"
+import { buildSuggestionPromptV5 } from "@/lib/ai/stepPrompt"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
 
@@ -16,6 +17,14 @@ type Suggestion = { bucket: BucketId; text: string }
 
 // New workflows (e.g. opportunity recommendations) will be added here in future iterations.
 type WorkflowName = "suggest-step"
+
+export type OpportunitySuggestion = {
+  title: string
+  summary: string
+  tier?: "Intensive" | "Sustained" | "Short" | "Evergreen"
+}
+
+export type SuggestOpportunitiesInput = StepOpportunityPromptContext
 
 type WorkflowResult = { suggestions: Suggestion[]; model: string }
 
@@ -233,4 +242,104 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
 
     throw error
   }
+}
+
+export async function runOpportunityWorkflow(
+  payload: SuggestOpportunitiesInput
+): Promise<{ opportunities: OpportunitySuggestion[] }> {
+  const stepTitle = (payload.stepTitle || "").trim() || "your step"
+  const stepBucket = payload.stepBucket
+  const intentionTitle = payload.intentionTitle
+  const existingOpportunityTitles = Array.isArray(payload.existingOpportunityTitles)
+    ? payload.existingOpportunityTitles.filter((t) => typeof t === "string" && t.trim().length > 0).slice(-10)
+    : []
+
+  const prompt = buildStepOpportunitiesPromptV1({
+    stepTitle,
+    stepBucket,
+    intentionTitle,
+    existingOpportunityTitles
+  })
+
+  const llm = getChatModel()
+
+  const resolvedModel =
+    (typeof llm.model === "string" && llm.model.trim().length > 0
+      ? llm.model
+      : undefined) ??
+    (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
+      ? llm.modelName
+      : undefined) ??
+    process.env.OPENAI_MODEL ??
+    "gpt-4o-mini"
+
+  debug.trace("AI: suggest-opportunities using model", {
+    model: resolvedModel,
+    ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
+    ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
+    ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+  })
+
+  const response = await llm.invoke(prompt)
+  let rawContent = ""
+
+  const content = response?.content
+
+  if (typeof content === "string") {
+    rawContent = content
+  } else if (Array.isArray(content)) {
+    rawContent = content
+      .map((part) => {
+        if (typeof part === "string") return part
+        if (part && typeof part === "object" && "text" in part && typeof (part as any).text === "string") {
+          return (part as any).text
+        }
+        return ""
+      })
+      .join("")
+  } else if (content != null) {
+    rawContent = String(content)
+  }
+
+  debug.info("AI: raw suggest-opportunities response", {
+    preview: rawContent.slice(0, 200)
+  })
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(rawContent)
+  } catch {
+    debug.warn("AI: suggest-opportunities returned non JSON, wrapping as single summary")
+    return {
+      opportunities: [
+        {
+          title: stepTitle,
+          summary: rawContent.slice(0, 240)
+        }
+      ]
+    }
+  }
+
+  const opportunities = Array.isArray((parsed as any)?.opportunities)
+    ? (parsed as any).opportunities
+        .filter((item: any) => item && typeof item.title === "string" && typeof item.summary === "string")
+        .map((item: any): OpportunitySuggestion => ({
+          title: String(item.title).trim(),
+          summary: String(item.summary).trim(),
+          tier:
+            item.tier === "Intensive" ||
+            item.tier === "Sustained" ||
+            item.tier === "Short" ||
+            item.tier === "Evergreen"
+              ? item.tier
+              : undefined
+        }))
+    : []
+
+  debug.info("AI: suggest-opportunities parsed response", {
+    count: opportunities.length,
+    example: opportunities[0]?.title || "(none)"
+  })
+
+  return { opportunities }
 }
