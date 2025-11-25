@@ -1,7 +1,7 @@
 import { StateGraph } from "@langchain/langgraph"
 import { getChatModel } from "@/lib/ai/client"
 import { buildStepOpportunitiesPromptV1, type StepOpportunityPromptContext } from "@/lib/ai/opportunityPrompt"
-import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
+import { buildSuggestionPromptV5 } from "../ai/stepPrompt"
 import { debug } from "@/lib/debug"
 import type { BucketId } from "@/types/canvas"
 
