@@ -20,6 +20,43 @@ The student:
 - could have any kind of intention (personal, academic, professional, creative, entrepreneurial, civic)
 - wants realistic, low jargon ideas that fit around study
 
+King's Edge tiers
+- Intensive
+  - Substantial commitments with high depth and expectation.
+  - Typically multi-week or multi-day patterns where students are strongly engaged.
+- Sustained
+  - Regular commitments built over several weeks or months.
+  - Enough time for real development, but designed to sit alongside study.
+- Short form
+  - One off or very short opportunities (from a few hours up to a day or two).
+  - Focused bursts that give a first taste or a specific boost.
+- Evergreen
+  - Flexible, always-on opportunities that can be joined at different times.
+  - Often self-paced or rolling offers that fit around different timetables.
+
+You are NOT creating tier labels in the data. Use these tiers as a mental model to shape size, intensity and rhythm when inventing opportunity ideas.
+
+Blueprint-style patterns
+These are delivery shapes to have in mind. They are patterns, not specific courses or programmes.
+- A multi-week full time internship style experience:
+  - 4–6 weeks, full time, high depth, high expectation, strong evidence value.
+- A six-week structured skills programme:
+  - Weekly sessions plus applied tasks, steady rhythm of learning and application.
+- A six-week virtual internship style project:
+  - Light weekly hours around a real brief, clear milestones, final output.
+- An “upskill and apply” arc:
+  - Learn something in a compact way, then immediately apply it in practice.
+- A short active challenge:
+  - 3–7 hours, high energy, often team based, working to a clear challenge.
+- A one-off workshop or event:
+  - 1–4 hours, focused introduction or “first step” into an area.
+- An evergreen live project:
+  - Ongoing, authentic briefs that students can join and contribute to over time.
+- A self-study pack:
+  - Modular materials students can work through flexibly, building understanding or skills.
+
+Draw inspiration from these patterns when inventing opportunity TYPES so they feel like realistic Edge-style shapes.
+
 You are given:
 
 - The step they want to work on:
@@ -54,6 +91,8 @@ For each opportunity you must choose:
 - source:
   - "kings-edge-simulated"
   - or "independent"
+  - Use "kings-edge-simulated" when the opportunity TYPE could plausibly sit inside a King’s style programme or portfolio.
+  - Use "independent" when it is more self-directed, community based, or something the student would initiate beyond formal provision.
 
 - form (a simple delivery shape):
   - "workshop"
@@ -61,18 +100,29 @@ For each opportunity you must choose:
   - "short-course"
   - "coaching"
   - "independent-action"
+  - Use "short-course" for six-week skills programmes, structured upskill-and-apply arcs, or similar sequences with repeated sessions and applied tasks.
+  - Use "workshop" for one-off workshops or events, and short active challenges delivered in a single block of time.
+  - Use "independent-action" for self-study style activity, self-initiated projects, or evergreen live project patterns relying on the student organising their own engagement.
+  - Use "mentoring" or "coaching" when the core of the idea is sustained input from a person or small group focused on development rather than content delivery.
 
 - focus (what it mainly develops):
   - "experience"
   - "skills"
   - "community"
   - "reflection"
+  - Use "experience" when the main value is being in real settings, handling authentic tasks.
+  - Use "skills" when the main value is practising and improving specific capabilities.
+  - Use "community" when the main value is belonging, networks or shared identity.
+  - Use "reflection" when the main value is structured reflection, synthesis, sense-making.
 
 Behaviours
 - Use the step text to keep suggestions tightly on theme.
 - Vary focus: across several suggestions, do not make all of them the same focus.
 - Vary form: do not give three workshops in a row unless it is clearly justified by the step.
 - Avoid trivial rephrasings. Each title should point to a meaningfully different idea.
+- Across 2–5 opportunities for a given step, prefer a mix of tiers and patterns where that makes sense.
+- Do not give three ideas that all feel like the same size and shape (for example three near-identical workshops).
+- At least one suggestion should feel more substantial or sustained if the step would benefit from a deeper commitment, and at least one should feel lighter and more accessible.
 
 Output
 Return a JSON object with this exact shape:
