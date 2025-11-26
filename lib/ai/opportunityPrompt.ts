@@ -20,6 +20,27 @@ The student:
 - could have any kind of intention (personal, academic, professional, creative, entrepreneurial, civic)
 - wants realistic, low jargon ideas that fit around study
 
+Blueprint patterns to keep in mind
+These are generic activity shapes, not specific King’s branded products. Use them as design patterns when inventing opportunity TYPES.
+- SixWeekFullTimeInternship
+  - A 4–6 week full time internship style experience with high depth and expectation, strong evidence value.
+- SixWeekSkillsCourse
+  - A structured six week skills development programme with weekly sessions and applied tasks.
+- VirtualInternship
+  - A six week virtual internship style project with low weekly hours around a real brief and clear milestones.
+- UpskillAndApply
+  - A compact learning phase followed immediately by an applied project or challenge that uses the new skill.
+- ShortActiveChallenge
+  - A 3–7 hour high energy challenge or sprint, often team based, working to a clear problem or brief.
+- OneOffWorkshop
+  - A 1–4 hour workshop or event that provides a focused introduction or first step into a topic.
+- EvergreenLiveProject
+  - An ongoing live project or authentic brief that students can join at different times and contribute to over time.
+- SelfStudyPack
+  - A modular self-study pack or set of materials that students can work through flexibly to build understanding or skills.
+
+Draw on these patterns when inventing opportunity TYPES so the suggestions feel like a spread of realistic Edge-style shapes rather than repeating a single format.
+
 King's Edge tiers
 - Intensive
   - Substantial commitments with high depth and expectation.
@@ -35,27 +56,6 @@ King's Edge tiers
   - Often self-paced or rolling offers that fit around different timetables.
 
 You are NOT creating tier labels in the data. Use these tiers as a mental model to shape size, intensity and rhythm when inventing opportunity ideas.
-
-Blueprint-style patterns
-These are delivery shapes to have in mind. They are patterns, not specific courses or programmes.
-- A multi-week full time internship style experience:
-  - 4–6 weeks, full time, high depth, high expectation, strong evidence value.
-- A six-week structured skills programme:
-  - Weekly sessions plus applied tasks, steady rhythm of learning and application.
-- A six-week virtual internship style project:
-  - Light weekly hours around a real brief, clear milestones, final output.
-- An “upskill and apply” arc:
-  - Learn something in a compact way, then immediately apply it in practice.
-- A short active challenge:
-  - 3–7 hours, high energy, often team based, working to a clear challenge.
-- A one-off workshop or event:
-  - 1–4 hours, focused introduction or “first step” into an area.
-- An evergreen live project:
-  - Ongoing, authentic briefs that students can join and contribute to over time.
-- A self-study pack:
-  - Modular materials students can work through flexibly, building understanding or skills.
-
-Draw inspiration from these patterns when inventing opportunity TYPES so they feel like realistic Edge-style shapes.
 
 You are given:
 
@@ -131,19 +131,49 @@ For each opportunity you must choose:
     - Use "community" when the main value is belonging, networks or shared identity.
     - Use "reflection" when the main value is structured reflection, synthesis, sense-making.
 
+  - Blueprint pattern guidance for source / form / focus (guidance, not strict rules):
+    - SixWeekFullTimeInternship:
+      - usually "kings-edge-simulated"
+      - often "short-course" with focus "experience" and "skills".
+    - SixWeekSkillsCourse:
+      - usually "kings-edge-simulated"
+      - "short-course" with focus "skills".
+    - VirtualInternship:
+      - usually "kings-edge-simulated"
+      - "short-course" with focus "experience" and "skills".
+    - UpskillAndApply:
+      - usually "kings-edge-simulated"
+      - "short-course" or "independent-action", focus "skills" then "experience".
+    - ShortActiveChallenge:
+      - usually "kings-edge-simulated"
+      - "workshop" or "independent-action", focus "experience" and "community".
+    - OneOffWorkshop:
+      - usually "kings-edge-simulated"
+      - "workshop", focus "skills" or "reflection".
+    - EvergreenLiveProject:
+      - "kings-edge-simulated" or "independent" depending on framing,
+      - "independent-action" or "short-course", focus "experience" and "community".
+    - SelfStudyPack:
+      - usually "independent"
+      - "independent-action", focus "skills" or "reflection".
+    - These mappings are prompts for variety, not rigid constraints. Choose the best fit for the student and step.
+
 Behaviours
   - Use the step text to keep suggestions tightly on theme.
   - Vary focus: across several suggestions, do not make all of them the same focus.
   - Vary form: do not give three workshops in a row unless it is clearly justified by the step.
+  - When you propose 2–5 opportunities for a step, vary the underlying blueprint pattern where that makes sense.
   - Across 2–5 opportunities for a given step, aim for a mix of sources where that makes sense.
   - Unless the step is clearly only suitable for formal provision, at least one suggestion should be a genuinely independent opportunity type.
   - Do not label an opportunity as "independent" if its description sounds like a formal King’s style programme or Edge activity.
   - Independent opportunities can involve other people, but they must not require an organised group, rota, or repeated scheduled sessions.
   - Ask yourself: could the student start a credible version of this activity on their own tomorrow, without anyone’s permission? If not, it should not be labelled "independent".
   - Avoid trivial rephrasings. Each title should point to a meaningfully different idea.
-  - Across 2–5 opportunities for a given step, prefer a mix of tiers and patterns where that makes sense.
-  - Do not give three ideas that all feel like the same size and shape (for example three near-identical workshops).
-  - At least one suggestion should feel more substantial or sustained if the step would benefit from a deeper commitment, and at least one should feel lighter and more accessible.
+  - Do not give three ideas that all feel like the same pattern (for example three near-identical OneOffWorkshop ideas).
+  - Across the set, try to include:
+    - at least one lighter or short-form pattern (for example ShortActiveChallenge or OneOffWorkshop),
+    - at least one more sustained or substantial pattern (for example SixWeekSkillsCourse, VirtualInternship, or UpskillAndApply),
+    - and, where appropriate, at least one flexible / evergreen or self initiated pattern (for example SelfStudyPack or EvergreenLiveProject).
 
 Output
 Return a JSON object with this exact shape:
