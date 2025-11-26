@@ -39,6 +39,18 @@ These are generic activity shapes, not specific King’s branded products. Use t
 - SelfStudyPack
   - A modular self-study pack or set of materials that students can work through flexibly to build understanding or skills.
 
+For the following patterns, assume they are structured offers organised by King’s or a similar provider. By default, set source to "kings-edge-simulated" unless you have a very strong reason not to:
+- SixWeekFullTimeInternship
+- SixWeekSkillsCourse
+- VirtualInternship
+- UpskillAndApply
+- ShortActiveChallenge
+- OneOffWorkshop
+- EvergreenLiveProject (when framed as an ongoing institutional project)
+- SelfStudyPack (when it is a designed pack or pathway rather than ad hoc self study)
+
+Independent opportunities are not mini programmes. They are personal actions, routines, micro projects or experiments a student can initiate without joining a scheme, rota, society or pack. They may borrow ideas from the blueprints but should not be branded or packaged like them.
+
 Draw on these patterns when inventing opportunity TYPES so the suggestions feel like a spread of realistic Edge-style shapes rather than repeating a single format.
 
 King's Edge tiers
@@ -64,6 +76,12 @@ You are given:
 
 - The time bucket this step sits in:
   "${stepBucket || "not specified"}"
+
+  - If "do-now": strongly prefer light, low risk, low commitment ideas (ShortActiveChallenge, OneOffWorkshop, small EvergreenLiveProject contributions, or truly independent self-directed actions). Avoid very intensive or multi week patterns unless the step clearly demands it.
+  - If "do-later": allow a mix (OneOffWorkshop, ShortActiveChallenge, SelfStudyPack, lighter UpskillAndApply arcs). Use six week or internship style patterns sparingly and only when they make developmental sense.
+  - If "before-graduate": it is acceptable and often desirable to include SixWeekSkillsCourse, VirtualInternship, UpskillAndApply, or EvergreenLiveProject with deeper responsibility. Still include at least one lighter or more flexible option so the portfolio does not feel all or nothing.
+  - If "after-graduate": tilt towards intensive internships, substantial UpskillAndApply arcs, and late stage EvergreenLiveProject or placement style ideas, while keeping one accessible option.
+  - When stepBucket is missing or unknown, default to a mixed set of short-form plus one sustained idea, rather than only long or only short options.
 
 - The broader intention (if any):
   "${intentionTitle || "not specified"}"
@@ -99,14 +117,16 @@ For each opportunity you must choose:
       - Use this when the opportunity type feels like a structured or curated offer.
       - It could plausibly sit inside King’s Edge or a similar university portfolio.
       - Typical language: programme, scheme, challenge, structured workshop series, organised mentoring, society-run initiative.
+      - Blueprint defaults: SixWeekFullTimeInternship, SixWeekSkillsCourse, VirtualInternship, UpskillAndApply, ShortActiveChallenge, OneOffWorkshop, EvergreenLiveProject (when framed as an ongoing institutional project), SelfStudyPack (when it is a designed pack or pathway rather than ad hoc self study) should all default to this source unless there is a very strong reason not to.
     - "independent":
-      - Use this only when a student could realistically do the activity by themselves, starting from today, without joining a rota, club, society, or formal programme.
-      - It must not depend on a timetable set by someone else, or on an ongoing group or service being created for them.
-      - The action can involve other people (for example, talking to someone, visiting a place), but it should read as something the student chooses and arranges personally.
+      - A single student can start this activity on their own, this week, without enrolling on a course, joining a rota or circle, relying on a society or club, or waiting for an organised event.
+      - The opportunity can involve other people, but the student is the organiser or initiator.
+      - Avoid words like pack, programme, bootcamp, series, lab, hub, or clinic. Preferred words include: practise, experiment, track, test, reflect, create, build, explore.
+      - Do not label an opportunity as "independent" if it reads like a skills pack, a bootcamp, a lab, a course, a programme, a challenge series, or a recurring circle or cohort.
     - Peer tutoring rotas, lesson-swap nights, student society schemes, or any recurring group initiative should almost always be "kings-edge-simulated", not "independent".
 
   - For opportunities labelled "independent":
-    - Do not describe them as programmes, schemes, rotas, initiatives, or challenges run by a group.
+    - Do not describe them as programmes, schemes, rotas, initiatives, packs, bootcamps, labs, hubs, or challenges run by a group.
     - Do not mention societies, clubs, or student-run services as the organiser.
     - Use plain action language instead, such as: practise, try, observe, record, reflect, test, explore, create, build.
 
@@ -151,10 +171,10 @@ For each opportunity you must choose:
       - usually "kings-edge-simulated"
       - "workshop", focus "skills" or "reflection".
     - EvergreenLiveProject:
-      - "kings-edge-simulated" or "independent" depending on framing,
+      - default to "kings-edge-simulated" if framed as an ongoing institutional project, otherwise use judgement for independent contributions,
       - "independent-action" or "short-course", focus "experience" and "community".
     - SelfStudyPack:
-      - usually "independent"
+      - usually "kings-edge-simulated" when presented as a designed pack or pathway; only treat as "independent" when it is clearly self-directed and unbranded,
       - "independent-action", focus "skills" or "reflection".
     - These mappings are prompts for variety, not rigid constraints. Choose the best fit for the student and step.
 
@@ -162,6 +182,9 @@ Behaviours
   - Use the step text to keep suggestions tightly on theme.
   - Vary focus: across several suggestions, do not make all of them the same focus.
   - Vary form: do not give three workshops in a row unless it is clearly justified by the step.
+  - Across 2–5 opportunities for a given step, vary the underlying blueprint pattern so the student sees a small portfolio, not many near-duplicates.
+  - Respect the time bucket when choosing intensity: lighter patterns earlier, more sustained patterns in later buckets.
+  - Ensure at least one suggestion feels realistic for a time-stretched first year student, even in later buckets.
   - When you propose 2–5 opportunities for a step, vary the underlying blueprint pattern where that makes sense.
   - Across 2–5 opportunities for a given step, aim for a mix of sources where that makes sense.
   - Unless the step is clearly only suitable for formal provision, at least one suggestion should be a genuinely independent opportunity type.
