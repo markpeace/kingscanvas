@@ -15,7 +15,7 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
-import { isStepEligibleForOpportunities } from '@/lib/opportunities/eligibility'
+import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -126,9 +126,9 @@ export function StepCard({
 }: StepCardProps) {
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
-  const trimmedStepId = typeof step.id === 'string' ? step.id.trim() : '';
+  const persistedStepId = resolvePersistedStepId(step);
   const isEligibleForOpportunities = isStepEligibleForOpportunities(step);
-  const shouldRenderOpportunities = isEligibleForOpportunities;
+  const shouldRenderOpportunities = Boolean(isEligibleForOpportunities && persistedStepId);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.clientId,
     data: { type: 'step', step },
@@ -259,8 +259,8 @@ export function StepCard({
           }
         }}
       >
-        {shouldRenderOpportunities && (
-          <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
+        {shouldRenderOpportunities && persistedStepId && (
+          <StepOpportunitiesSection stepId={persistedStepId} stepTitle={displayText} />
         )}
 
         {isSuggested && (

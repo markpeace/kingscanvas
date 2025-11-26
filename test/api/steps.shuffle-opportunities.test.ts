@@ -103,7 +103,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns generated opportunities for the owner", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active", bucket: "do-now" })
     generateOpportunitiesForStep.mockResolvedValue([
       {
         id: "opp-1",
@@ -179,7 +179,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 403 when the user does not own the step", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "different@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "different@example.com", status: "active", bucket: "do-now" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
 
@@ -209,7 +209,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 500 when generation fails", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active", bucket: "do-now" })
     generateOpportunitiesForStep.mockRejectedValue(new Error("boom"))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
@@ -224,7 +224,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 400 when the step status is not eligible", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "suggested" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "suggested", bucket: "do-now" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
 
