@@ -39,6 +39,14 @@ These are generic activity shapes, not specific King’s branded products. Use t
 - SelfStudyPack
   - A modular self-study pack or set of materials that students can work through flexibly to build understanding or skills.
 
+Bucket fit notes (combine these with the bucket rules above):
+- SixWeekSkillsCourse and VirtualInternship: never for "do-now", rarely for "do-later", common for "before-graduate" and "after-graduate".
+- SixWeekFullTimeInternship: never for "do-now" or "do-later", only in "before-graduate" or "after-graduate" when intensity fits.
+- ShortActiveChallenge and OneOffWorkshop: common for "do-now" and "do-later", can appear as lighter options in "before-graduate", rarely the only pattern in later buckets.
+- SelfStudyPack: small samplers fit "do-now" and "do-later"; deeper packs fit "before-graduate" or "after-graduate".
+- UpskillAndApply: lighter arcs can appear in "do-later"; fuller arcs belong in "before-graduate" or "after-graduate".
+- EvergreenLiveProject: small contributions can suit "do-now"/"do-later"; deeper roles suit "before-graduate"/"after-graduate".
+
 For the following patterns, assume they are structured offers organised by King’s or a similar provider. By default, set source to "kings-edge-simulated" unless you have a very strong reason not to:
 - SixWeekFullTimeInternship
 - SixWeekSkillsCourse
@@ -77,11 +85,24 @@ You are given:
 - The time bucket this step sits in:
   "${stepBucket || "not specified"}"
 
-  - If "do-now": strongly prefer light, low risk, low commitment ideas (ShortActiveChallenge, OneOffWorkshop, small EvergreenLiveProject contributions, or truly independent self-directed actions). Avoid very intensive or multi week patterns unless the step clearly demands it.
-  - If "do-later": allow a mix (OneOffWorkshop, ShortActiveChallenge, SelfStudyPack, lighter UpskillAndApply arcs). Use six week or internship style patterns sparingly and only when they make developmental sense.
-  - If "before-graduate": it is acceptable and often desirable to include SixWeekSkillsCourse, VirtualInternship, UpskillAndApply, or EvergreenLiveProject with deeper responsibility. Still include at least one lighter or more flexible option so the portfolio does not feel all or nothing.
-  - If "after-graduate": tilt towards intensive internships, substantial UpskillAndApply arcs, and late stage EvergreenLiveProject or placement style ideas, while keeping one accessible option.
-  - When stepBucket is missing or unknown, default to a mixed set of short-form plus one sustained idea, rather than only long or only short options.
+  - If "do-now":
+    - Only suggest light, low commitment actions that can be started this week.
+    - Typical duration: 1–6 hours total, or a tiny recurring habit tried for a week.
+    - Allowed patterns: ShortActiveChallenge, OneOffWorkshop, very small SelfStudyPack samplers, simple independent experiments or micro projects.
+    - Do NOT mention six week programmes, bootcamps, labs or internships, or require multi week commitment, selection processes or applications.
+  - If "do-later":
+    - Suggest a mixture of short form tasters and early stage sustained patterns still realistic alongside study.
+    - Typical duration: a 1 day workshop, a short challenge, or 2–4 weeks at low hours per week.
+    - Allowed patterns: OneOffWorkshop, ShortActiveChallenge, SelfStudyPack, lighter UpskillAndApply arcs.
+    - Use six week or internship style blueprints only if the step is explicitly substantial and should be staged for later.
+  - If "before-graduate":
+    - Include at least one clearly sustained or substantial pattern.
+    - Typical duration: 4–6 week skills programmes, virtual internships, deeper UpskillAndApply arcs, or ongoing EvergreenLiveProject roles with real responsibility.
+    - The full set of 2–5 ideas should feel like a couple of lighter or flexible options plus at least one serious commitment that would build strong evidence.
+  - If "after-graduate":
+    - You can propose intensive patterns such as full time internships, multi month UpskillAndApply projects, or deeper EvergreenLiveProject placements.
+    - Still include at least one option that is accessible if plans change.
+  - If the bucket is missing or unknown, default to a mix of one or two short form ideas plus at least one medium depth option (avoid full time or six week intensive patterns).
 
 - The broader intention (if any):
   "${intentionTitle || "not specified"}"
@@ -182,9 +203,11 @@ Behaviours
   - Use the step text to keep suggestions tightly on theme.
   - Vary focus: across several suggestions, do not make all of them the same focus.
   - Vary form: do not give three workshops in a row unless it is clearly justified by the step.
+  - If stepBucket is "do-now": do not propose any opportunity lasting longer than one week, and do not use wording that implies a six week programme, lab, bootcamp, internship, or similar.
+  - If stepBucket is "before-graduate" or "after-graduate": at least one opportunity must clearly be a sustained or substantial pattern (for example a six week skills programme, virtual internship, substantial UpskillAndApply arc, or deep EvergreenLiveProject role).
   - Across 2–5 opportunities for a given step, vary the underlying blueprint pattern so the student sees a small portfolio, not many near-duplicates.
   - Respect the time bucket when choosing intensity: lighter patterns earlier, more sustained patterns in later buckets.
-  - Ensure at least one suggestion feels realistic for a time-stretched first year student, even in later buckets.
+  - Ensure at least one suggestion feels realistic for a time-stretched first year student, even in later buckets, and at least one option in "before-graduate" and "after-graduate" feels meaningfully stretching.
   - When you propose 2–5 opportunities for a step, vary the underlying blueprint pattern where that makes sense.
   - Across 2–5 opportunities for a given step, aim for a mix of sources where that makes sense.
   - Unless the step is clearly only suitable for formal provision, at least one suggestion should be a genuinely independent opportunity type.
