@@ -3,6 +3,7 @@ import { getChatModel } from "@/lib/ai/client"
 import { buildStepOpportunitiesPromptV1, type StepOpportunityPromptContext } from "@/lib/ai/opportunityPrompt"
 import { buildSuggestionPromptV5 } from "@/lib/ai/stepPrompt"
 import { debug } from "@/lib/debug"
+import { DEFAULT_STUDENT_PERSONA_ID, getStudentPersona, type StudentPersona } from "@/lib/context/studentPersonas"
 import type { BucketId } from "@/types/canvas"
 
 type SuggestStepsInput = {
@@ -11,6 +12,7 @@ type SuggestStepsInput = {
   historyAccepted?: string[]
   historyRejected?: string[]
   lastSuggestion?: string
+  persona?: StudentPersona
 }
 
 type Suggestion = { bucket: BucketId; text: string }
@@ -167,6 +169,7 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
   const historyRejected = sanitiseHistory(payload.historyRejected).slice(-5)
   const lastSuggestionRaw = typeof payload.lastSuggestion === "string" ? payload.lastSuggestion.trim() : ""
   const lastSuggestion = lastSuggestionRaw.length > 0 ? lastSuggestionRaw : undefined
+  const persona = payload.persona ?? getStudentPersona(DEFAULT_STUDENT_PERSONA_ID)
 
   try {
     if (workflowName === "suggest-step") {
@@ -175,12 +178,14 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         targetBucket: promptBucket,
         historyAccepted,
         historyRejected,
-        lastSuggestion
+        lastSuggestion,
+        persona
       })
 
       debug.trace("AI Prompt Builder v5: constructed prompt", {
         bucket: payload.intentionBucket ?? bucket,
-        intention: intentionText
+        intention: intentionText,
+        ...(persona ? { persona: persona.shortLabel } : {})
       })
 
       const initialState: SuggestState = {
@@ -196,7 +201,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
 
       debug.info("AI: model response (prompt v5)", {
         bucket: payload.intentionBucket ?? bucket,
-        preview: text.slice(0, 120)
+        preview: text.slice(0, 120),
+        ...(persona ? { persona: persona.shortLabel } : {})
       })
 
       const workflowDuration = Date.now() - startedAt
@@ -209,7 +215,8 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       debug.info("AI workflow completed", {
         ...trace,
         ...(payload.intentionBucket ? { bucket: payload.intentionBucket } : {}),
-        ...(payload.intentionText ? { intention: intentionText } : {})
+        ...(payload.intentionText ? { intention: intentionText } : {}),
+        ...(persona ? { persona: persona.shortLabel } : {})
       })
 
       return {
@@ -256,11 +263,14 @@ export async function runOpportunityWorkflow(
     ? payload.existingOpportunityTitles.filter((t) => typeof t === "string" && t.trim().length > 0).slice(-10)
     : []
 
+  const persona = payload.persona ?? getStudentPersona(DEFAULT_STUDENT_PERSONA_ID)
+
   const prompt = buildStepOpportunitiesPromptV1({
     stepTitle,
     stepBucket,
     intentionTitle,
-    existingOpportunityTitles
+    existingOpportunityTitles,
+    persona
   })
 
   const llm = getChatModel()
@@ -277,6 +287,7 @@ export async function runOpportunityWorkflow(
 
   debug.trace("AI: suggest-opportunities using model", {
     model: resolvedModel,
+    ...(persona ? { persona: persona.shortLabel } : {}),
     ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
   })
 
@@ -304,7 +315,8 @@ export async function runOpportunityWorkflow(
   const trimmed = rawContent.trim()
 
   debug.info("AI: raw suggest-opportunities response", {
-    preview: trimmed.slice(0, 200)
+    preview: trimmed.slice(0, 200),
+    ...(persona ? { persona: persona.shortLabel } : {})
   })
 
   let parsed: any
@@ -341,7 +353,8 @@ export async function runOpportunityWorkflow(
 
   debug.info("AI: suggest-opportunities parsed response", {
     count: opportunities.length,
-    example: opportunities[0]?.title || "(none)"
+    example: opportunities[0]?.title || "(none)",
+    ...(persona ? { persona: persona.shortLabel } : {})
   })
 
   return { opportunities }

@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 
+import { useStudentPersona } from '@/context/StudentPersonaContext'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
 
@@ -74,6 +75,7 @@ export function StepOpportunitiesModal({
   error,
   refetch
 }: StepOpportunitiesModalProps) {
+  const { personaId } = useStudentPersona()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const headingId = useId()
@@ -139,7 +141,7 @@ export function StepOpportunitiesModal({
       return
     }
 
-    debug.info('Opportunities UI: shuffle clicked', { stepId })
+    debug.info('Opportunities UI: shuffle clicked', { stepId, personaId })
     setIsShuffling(true)
 
     try {
@@ -147,7 +149,8 @@ export function StepOpportunitiesModal({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ personaId })
       })
 
       if (!response.ok) {

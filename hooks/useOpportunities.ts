@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { debug } from '@/lib/debug'
+import type { StudentPersonaId } from '@/lib/context/studentPersonas'
 import type { Opportunity } from '@/types/canvas'
 
 type UseOpportunitiesResult = {
@@ -12,7 +13,7 @@ type UseOpportunitiesResult = {
   refetch: () => Promise<Opportunity[]>
 }
 
-export function useOpportunities(stepId?: string | null): UseOpportunitiesResult {
+export function useOpportunities(stepId?: string | null, personaId?: StudentPersonaId): UseOpportunitiesResult {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
@@ -32,9 +33,10 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
     setError(null)
 
     try {
-      debug.trace('Opportunities hook: fetching', { stepId })
+      debug.trace('Opportunities hook: fetching', { stepId, personaId: personaId ?? 'default' })
 
-      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/opportunities`)
+      const personaQuery = personaId ? `?personaId=${encodeURIComponent(personaId)}` : ''
+      const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/opportunities${personaQuery}`)
 
       let payload: { ok?: boolean; opportunities?: Opportunity[]; error?: string } | null = null
 
@@ -86,7 +88,7 @@ export function useOpportunities(stepId?: string | null): UseOpportunitiesResult
         setIsLoading(false)
       }
     }
-  }, [stepId])
+  }, [personaId, stepId])
 
   useEffect(() => {
     fetchOpportunities().catch(() => {

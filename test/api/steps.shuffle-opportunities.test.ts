@@ -33,7 +33,7 @@ jest.mock("@/lib/debug", () => ({
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const { generateOpportunitiesForStep, findStepById } = jest.requireMock("@/lib/opportunities/generation") as {
   generateOpportunitiesForStep: jest.MockedFunction<(
-    params: { stepId: string; origin: "shuffle" }
+    params: { stepId: string; origin: "shuffle"; persona?: unknown }
   ) => Promise<
     Array<{
       id: string
@@ -152,7 +152,13 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
     await handler(req, res)
 
     expect(findStepById).toHaveBeenCalledWith("step-123")
-    expect(generateOpportunitiesForStep).toHaveBeenCalledWith({ stepId: "step-123", origin: "shuffle" })
+    expect(generateOpportunitiesForStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepId: "step-123",
+        origin: "shuffle",
+        persona: expect.objectContaining({ id: "social-science-ug-first-year" })
+      })
+    )
     expect(getStatus()).toBe(200)
     const json = getJSON() as { ok: boolean; opportunities: Array<{ id: string }> }
     expect(json.ok).toBe(true)

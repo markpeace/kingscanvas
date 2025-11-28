@@ -251,7 +251,8 @@ describe("generateOpportunitiesForStep", () => {
       stepTitle: "Prepare portfolio",
       stepBucket: "do-now",
       intentionTitle: "Launch creative career",
-      existingOpportunityTitles: []
+      existingOpportunityTitles: [],
+      persona: undefined
     })
 
     const remaining = await getOpportunitiesByStep("owner@example.com", canonicalStepId)
@@ -353,7 +354,7 @@ describe("generateOpportunitiesForStep", () => {
 
     expect(created).toEqual([])
     expect(runOpportunityWorkflow).not.toHaveBeenCalled()
-    expect(debug.info).toHaveBeenCalledWith(
+    expect(debug.debug).toHaveBeenCalledWith(
       "Opportunities: already has opportunities; skipping auto generation",
       expect.objectContaining({ stepId: canonicalStepId, origin: "manual" })
     )
@@ -391,7 +392,7 @@ describe("generateOpportunitiesForStep", () => {
     })
 
     expect(result).toBeUndefined()
-    expect(debug.error).toHaveBeenCalledWith(
+    expect(debug.warn).toHaveBeenCalledWith(
       "Opportunities: safelyGenerateOpportunitiesForStep failed",
       expect.objectContaining({
         stepId: canonicalStepId,
