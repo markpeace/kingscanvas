@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 
 import { debug } from "@/lib/debug"
 import { runOpportunityWorkflow } from "@/lib/langgraph/workflow"
+import { getStudentPersona, type StudentPersonaId } from "@/lib/context/studentPersonas"
 import { authOptions } from "@/lib/auth/config"
 
 type SuggestOpportunitiesRequestBody = {
@@ -10,6 +11,7 @@ type SuggestOpportunitiesRequestBody = {
   stepBucket: string
   intentionTitle?: string
   existingOpportunityTitles?: string[]
+  personaId?: StudentPersonaId
 }
 
 type SuggestOpportunitiesResponse =
@@ -32,15 +34,18 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: "Method not allowed" })
   }
 
-  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles } =
+  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles, personaId } =
     req.body as SuggestOpportunitiesRequestBody
+
+  const persona = getStudentPersona(personaId)
 
   debug.trace("AI: suggest-opportunities request", {
     user: email,
     stepBucket,
     hasStepTitle: !!stepTitle,
     intentionTitle,
-    existingCount: existingOpportunityTitles?.length || 0
+    existingCount: existingOpportunityTitles?.length || 0,
+    persona: persona.shortLabel
   })
 
   try {
@@ -48,7 +53,8 @@ export default async function handler(
       stepTitle: stepTitle || "",
       stepBucket: stepBucket as any,
       intentionTitle,
-      existingOpportunityTitles
+      existingOpportunityTitles,
+      persona
     })
 
     const opportunities = Array.isArray(result?.opportunities) ? result.opportunities : []
