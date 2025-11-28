@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
-import { getStudentPersona } from "@/lib/context/studentPersonas"
+import { STUDENT_PERSONAS, getStudentPersona, type StudentPersonaId } from "@/lib/context/studentPersonas"
 import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
 import { getOpportunitiesByStep } from "@/lib/userData"
@@ -55,7 +55,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
   const personaIdParam = req.query.personaId
   const personaId = Array.isArray(personaIdParam) ? personaIdParam[0] : personaIdParam
-  const persona = getStudentPersona(typeof personaId === "string" ? personaId : undefined)
+  const resolvedPersonaId =
+    typeof personaId === "string" && STUDENT_PERSONAS.some((persona) => persona.id === personaId)
+      ? (personaId as StudentPersonaId)
+      : undefined
+  const persona = getStudentPersona(resolvedPersonaId)
 
   debug.trace("Opportunities API: fetch", {
     user: email,

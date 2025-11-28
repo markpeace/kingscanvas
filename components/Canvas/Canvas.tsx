@@ -1331,7 +1331,7 @@ function CanvasContent() {
 
       debug.info('Distribution complete', { intentionId: intention.id })
     },
-    [mapBucketIdToDistributionBucket, mapDistributionBucketToBucketId, userEmail]
+    [mapBucketIdToDistributionBucket, mapDistributionBucketToBucketId, personaId, userEmail]
   )
 
   const handleAddIntention = useCallback(
