@@ -1,0 +1,22 @@
+{
+  "persona_intro": {
+    "headline": "Pick the student profile that fits you",
+    "body": "Your student profile helps shape the suggestions you see. You can change it at any time using this menu."
+  },
+  "first_intention": {
+    "headline": "Start with something you want to work towards",
+    "body": "Add an intention like \"Get lab experience\" or \"Explore digital law\". We will help you break it into concrete steps."
+  },
+  "steps_and_suggestions": {
+    "headline": "We are generating steps for this intention",
+    "body": "You will see suggested steps appear here. You can accept, edit, or reject them, and you can always add your own steps as well."
+  },
+  "opportunities_intro": {
+    "headline": "Here are ways to move this step forward",
+    "body": "These are simulated King's Edge style and independent opportunities that match this step. You can scan them for ideas and adapt them to your situation."
+  },
+  "opportunities_shuffle": {
+    "headline": "Shuffle to see different ideas",
+    "body": "If these suggestions do not feel quite right, you can shuffle to see another set of opportunities for this step."
+  }
+}
