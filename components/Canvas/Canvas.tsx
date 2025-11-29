@@ -188,7 +188,7 @@ function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
 function CanvasContent() {
   const { user, status } = useUser()
   const { personaId } = useStudentPersona()
-  const { activeStepId, showStep, completeStep, skipAll, dismissStep } = useTutorial()
+  const { activeStepId, showStep, completeStep, skipAll, dismissStep, resetTutorial } = useTutorial()
   const [intentions, setIntentions] = useState<Intention[]>([])
   const [loadingIntentions, setLoadingIntentions] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -212,6 +212,7 @@ function CanvasContent() {
   )
   const debugUiEnabled =
     process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
+  const isDev = process.env.NODE_ENV !== 'production'
   const userEmail = user?.email ?? 'test@test.com'
 
   useEffect(() => {
@@ -1685,6 +1686,15 @@ function CanvasContent() {
                 <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
                 <div ref={personaSelectorRef}>
                   <StudentPersonaSelector />
+                  {isDev ? (
+                    <button
+                      type="button"
+                      onClick={() => resetTutorial()}
+                      className="mt-2 text-xs text-kings-red underline underline-offset-2"
+                    >
+                      Reset tutorial tips
+                    </button>
+                  ) : null}
                 </div>
               </div>
               <button

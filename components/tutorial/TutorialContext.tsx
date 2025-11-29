@@ -10,6 +10,7 @@ export type TutorialContextValue = {
   completeStep: (id: TutorialMessageId) => void
   skipAll: () => void
   dismissStep: (id: TutorialMessageId) => void
+  resetTutorial: () => void
 }
 
 const TutorialContext = createContext<TutorialContextValue | undefined>(undefined)
@@ -52,9 +53,14 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     setActiveStepId(null)
   }, [])
 
+  const resetTutorial = useCallback(() => {
+    setSkippedAll(false)
+    setActiveStepId("persona_intro")
+  }, [])
+
   const value = useMemo<TutorialContextValue>(
-    () => ({ activeStepId, showStep, completeStep, skipAll, dismissStep }),
-    [activeStepId, completeStep, dismissStep, showStep, skipAll]
+    () => ({ activeStepId, showStep, completeStep, skipAll, dismissStep, resetTutorial }),
+    [activeStepId, completeStep, dismissStep, resetTutorial, showStep, skipAll]
   )
 
   return <TutorialContext.Provider value={value}>{children}</TutorialContext.Provider>
