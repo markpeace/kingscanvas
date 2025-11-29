@@ -89,3 +89,20 @@ architecture.
 Build a transparent, context-aware AI guidance engine with explicit model
 control, consolidated prompts, and full Debug Panel visibility aligned to King’s
 Edge learning pathways.
+
+---
+
+## Outcome
+
+- Replaced scattered AI usage with a single LangGraph workflow and shared model
+  client that surfaces provenance and configuration errors.
+- Consolidated step prompting into `lib/ai/stepPrompt.ts` with clearer control
+  over knowledge, skill, and experience balance and intention bucket
+  behaviours.
+- Introduced AI-based opportunity generation via `lib/ai/opportunityPrompt.ts`
+  aligned with Edge-style activity forms, intensity handling, and an Edge versus
+  independent split.
+- Threaded student persona selection (discipline, stage, constraints) through
+  both prompts for more contextualised guidance.
+- Enabled AI opportunity generation for saved manual steps, aligning behaviour
+  with accepted AI suggestions and improving Debug Panel visibility for both.
