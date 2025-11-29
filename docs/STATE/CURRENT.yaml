@@ -1,10 +1,10 @@
 epoch_id: "0010-prompt-refinement"
 title: "Epoch 0010 — Prompt Refinement and AI Architecture"
-status: "in_progress"
+status: "completed"
 started_at: "2025-11-23T08:06:27Z"
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
-last_completed_epoch: "0008-opportunity-ai-simulation"
-current_epoch: "0010-prompt-refinement"
+last_completed_epoch: "0010-prompt-refinement"
+current_epoch: null
 active_epoch: null
 epochs:
   - id: "0005-langgraph-ai-step-suggestions"
@@ -20,14 +20,12 @@ epochs:
   - id: "0009a-autosave-prod-fix"
     status: "completed"
   - id: "0010-prompt-refinement"
-    status: "in_progress"
+    status: "completed"
     description: "Prompt refinement and AI architecture for King’s Canvas"
 summary: |
-  Epoch 0008 — Opportunity AI Simulation delivered simulated King’s Edge style
-  opportunities for every real step (manual or accepted AI), added shuffle
-  controls, and refined the badge/modal UX with Edge vs independent groupings.
-  Epoch 0009 — Real Edge Integration remains in planning pending live API access
-  and governance approvals, while Epoch 0010 — Prompt Refinement and AI
-  Architecture is now in progress to enforce explicit LLM selection, consolidate
-  prompts, thread student context, and improve Debug Panel transparency.
+  Epoch 0010 — Prompt Refinement and AI Architecture completed with explicit LLM
+  selection and provenance, consolidated step and opportunity prompts aligned to
+  King’s Edge, threaded student personas through both workflows, and improved
+  Debug Panel visibility for AI outputs. Epoch 0009 — Real Edge Integration
+  remains in planning pending live API access and governance approvals.
 expected_prs: []

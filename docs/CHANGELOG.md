@@ -1,5 +1,18 @@
 # Changelog
 
+### 2025-11-29 – Epoch 0010 "Prompt Refinement and AI Architecture" completed
+- Centralised AI layer for step and opportunity generation with explicit model
+  configuration and debug-level provenance surfaced in the Debug Panel.
+- Step suggestions now flow through a single prompt in `lib/ai/stepPrompt.ts`
+  with clearer knowledge/skill/experience balance and bucket-aware behaviour.
+- Opportunities are generated via `lib/ai/opportunityPrompt.ts` with Edge-style
+  activity patterns, intensity handling, and a clear Edge versus independent
+  split.
+- Student persona selection now feeds discipline, stage, and constraints into
+  both step and opportunity prompts for more contextualised guidance.
+- AI opportunity generation now covers saved manual steps as well as accepted AI
+  suggestions for consistent treatment.
+
 ### 2025-11-15 – Epoch 0008 "Opportunity AI Simulation" completed
 - Added the simulated opportunities generator plus eligibility rules for manual steps and accepted AI suggestions only.
 - Implemented shuffle-capable opportunities APIs so the badge/modal always load fresh content on demand.

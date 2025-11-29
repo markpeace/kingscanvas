@@ -1,32 +1,51 @@
-status: "in_progress"
+status: "completed"
 epoch: "0010-prompt-refinement"
 plan: "PLAN.md"
 start_date: "2025-11-23"
-completed_at: null
-updated_at: "2025-11-23"
+completed_at: "2025-11-29"
+updated_at: "2025-11-29"
 branch: "feature/epoch-0010/prompt-refinement"
 summary: |
-  Prompt refinement and AI architecture for King’s Canvas with explicit model
-  control, consolidated prompts, context-aware guidance, and reliable Debug
-  Panel visibility.
+  Completed prompt refinement and AI architecture with a single model selector,
+  consolidated prompts for steps and opportunities, threaded personas, and
+  clearer Debug Panel provenance for every AI response.
+shipped:
+  - Centralised AI flow using LangGraph with a single model helper and explicit
+    LLM selection surfaced in Debug Panel provenance and errors.
+  - Step prompt consolidated into `lib/ai/stepPrompt.ts` with balanced skill,
+    knowledge, and experience guidance plus bucket-aware behaviour.
+  - Opportunity prompt consolidated into `lib/ai/opportunityPrompt.ts` featuring
+    Edge-style activity patterns, intensity controls, and Edge vs independent
+    splits.
+  - Student persona selection added and threaded through both prompts so
+    discipline, stage, and constraints shape guidance.
+  - AI opportunity generation extended to saved manual steps alongside accepted
+    AI suggestions for consistent behaviour.
 tasks:
   - id: "llm-model-control"
     title: "Enforce single LLM selector and observability"
-    status: "planned"
-    notes: "Surface missing LLM configuration in the Debug Panel and return model provenance with every AI response."
+    status: "completed"
+    notes: "Single model helper with env-driven selection, surfaced provenance, and Debug Panel errors when misconfigured."
   - id: "step-prompt"
     title: "Consolidate step-generation prompt"
-    status: "planned"
-    notes: "Move to a single prompt file that adapts to intention buckets, programme type, and study mode."
+    status: "completed"
+    notes: "Step prompt consolidated with bucket-aware emphasis and balanced knowledge/skills/experience focus."
   - id: "opportunity-prompt"
     title: "Create opportunity-generation prompt"
-    status: "planned"
-    notes: "Generate opportunity types aligned to King’s Edge tiers and replace deterministic opportunity logic."
+    status: "completed"
+    notes: "Opportunity prompt generates Edge-style offers with intensity handling and independent vs Edge groupings."
   - id: "context-pipeline"
     title: "Thread student context through UI, API, and prompts"
-    status: "planned"
-    notes: "Capture course, year, programme, and study mode so prompts adjust guidance appropriately."
+    status: "completed"
+    notes: "Student persona and context passed through to AI workflows for tailored prompts."
   - id: "debug-panel"
     title: "Document Debug Panel expectations"
-    status: "planned"
-    notes: "Ensure each PR includes Debug Panel instructions covering model usage, errors, and final AI outputs."
+    status: "completed"
+    notes: "Debug Panel guidance updated with model provenance, configuration errors, and AI output expectations."
+follow_up:
+  - id: "bucket-tuning"
+    notes: "Further tune bucket and intensity behaviour based on real usage data."
+  - id: "blueprint-promotion"
+    notes: "Consider promoting tiers and blueprint patterns into first-class data model fields instead of prompt-only text."
+  - id: "discipline-pedagogy"
+    notes: "Plan deeper pedagogy refinements for specific disciplines in future epochs."
