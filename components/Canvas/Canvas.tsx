@@ -25,6 +25,8 @@ import { concertinaSteps } from '@/lib/steps'
 import useAutosave from '@/hooks/useAutosave'
 import SaveStatus from '@/components/Canvas/SaveStatus'
 import StudentPersonaSelector from '@/components/StudentPersonaSelector'
+import TutorialCallout from '@/components/tutorial/TutorialCallout'
+import { TutorialProvider, useTutorial } from '@/components/tutorial/TutorialContext'
 
 const DEFAULT_BUCKET: BucketId = 'do-now'
 
@@ -186,6 +188,7 @@ function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
 function CanvasContent() {
   const { user, status } = useUser()
   const { personaId } = useStudentPersona()
+  const { activeStepId, showStep, completeStep, skipAll, dismissStep, resetTutorial } = useTutorial()
   const [intentions, setIntentions] = useState<Intention[]>([])
   const [loadingIntentions, setLoadingIntentions] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -193,9 +196,12 @@ function CanvasContent() {
   const [trashSuccessId, setTrashSuccessId] = useState<string | null>(null)
   const [trashSuccessType, setTrashSuccessType] = useState<'step' | 'intention' | null>(null)
   const [announcement, setAnnouncement] = useState('')
+  const [tutorialReady, setTutorialReady] = useState(false)
+  const [hasShownPersonaIntro, setHasShownPersonaIntro] = useState(false)
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
+  const personaSelectorRef = useRef<HTMLDivElement | null>(null)
   const addIntentionTriggerRef = useRef<HTMLElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(
@@ -206,7 +212,21 @@ function CanvasContent() {
   )
   const debugUiEnabled =
     process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
+  const isDev = process.env.NODE_ENV !== 'production'
   const userEmail = user?.email ?? 'test@test.com'
+
+  useEffect(() => {
+    setTutorialReady(true)
+  }, [])
+
+  useEffect(() => {
+    if (!tutorialReady || activeStepId || hasShownPersonaIntro) {
+      return
+    }
+
+    showStep('persona_intro')
+    setHasShownPersonaIntro(true)
+  }, [activeStepId, hasShownPersonaIntro, showStep, tutorialReady])
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) {
@@ -1637,6 +1657,9 @@ function CanvasContent() {
     return <p style={{ textAlign: 'center' }}>Loading your intentions…</p>
   }
 
+  const shouldShowPersonaIntro =
+    tutorialReady && activeStepId === 'persona_intro' && Boolean(personaSelectorRef.current)
+
   return (
     <>
       <DndContext
@@ -1661,7 +1684,18 @@ function CanvasContent() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-col gap-3">
                 <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
-                <StudentPersonaSelector />
+                <div ref={personaSelectorRef}>
+                  <StudentPersonaSelector />
+                  {isDev ? (
+                    <button
+                      type="button"
+                      onClick={() => resetTutorial()}
+                      className="mt-2 text-xs text-kings-red underline underline-offset-2"
+                    >
+                      Reset tutorial tips
+                    </button>
+                  ) : null}
+                </div>
               </div>
               <button
                 onClick={(event) => {
@@ -1706,6 +1740,15 @@ function CanvasContent() {
           retryCount={retryCount}
         />
       </DndContext>
+      {shouldShowPersonaIntro ? (
+        <TutorialCallout
+          targetRef={personaSelectorRef}
+          stepId="persona_intro"
+          onNext={() => completeStep('persona_intro')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('persona_intro')}
+        />
+      ) : null}
       {debugUiEnabled ? (
         <div
           style={{
@@ -1737,9 +1780,11 @@ function CanvasContent() {
 
 export function Canvas() {
   return (
-    <StudentPersonaProvider>
-      <CanvasContent />
-    </StudentPersonaProvider>
+    <TutorialProvider>
+      <StudentPersonaProvider>
+        <CanvasContent />
+      </StudentPersonaProvider>
+    </TutorialProvider>
   )
 }
 
