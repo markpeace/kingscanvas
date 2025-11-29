@@ -16,7 +16,7 @@ export type TutorialContextValue = {
 const TutorialContext = createContext<TutorialContextValue | undefined>(undefined)
 
 export function TutorialProvider({ children }: { children: ReactNode }) {
-  const [activeStepId, setActiveStepId] = useState<TutorialMessageId | null>(null)
+  const [activeStepId, setActiveStepId] = useState<TutorialMessageId | null>('persona_intro')
   const [skippedAll, setSkippedAll] = useState(false)
 
   const showStep = useCallback(
@@ -30,23 +30,13 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     [skippedAll]
   )
 
-  const completeStep = useCallback((id: TutorialMessageId) => {
-    if (activeStepId === id) {
-      setActiveStepId(null)
-      return
-    }
-
+  const completeStep = useCallback((_id: TutorialMessageId) => {
     setActiveStepId(null)
-  }, [activeStepId])
+  }, [])
 
-  const dismissStep = useCallback((id: TutorialMessageId) => {
-    if (activeStepId === id) {
-      setActiveStepId(null)
-      return
-    }
-
+  const dismissStep = useCallback((_id: TutorialMessageId) => {
     setActiveStepId(null)
-  }, [activeStepId])
+  }, [])
 
   const skipAll = useCallback(() => {
     setSkippedAll(true)
