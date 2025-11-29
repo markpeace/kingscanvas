@@ -3,6 +3,8 @@
 import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 
+import TutorialCallout from '@/components/tutorial/TutorialCallout'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
@@ -75,12 +77,24 @@ export function StepOpportunitiesModal({
   error,
   refetch
 }: StepOpportunitiesModalProps) {
+  const {
+    activeStepId,
+    skippedAll,
+    isStepCompleted,
+    showStep,
+    completeStep,
+    skipAll,
+    dismissStep
+  } = useTutorial()
   const { personaId } = useStudentPersona()
   const headingRef = useRef<HTMLHeadingElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const opportunitiesListRef = useRef<HTMLDivElement>(null)
+  const shuffleButtonRef = useRef<HTMLButtonElement>(null)
   const headingId = useId()
   const descriptionId = useId()
   const [isShuffling, setIsShuffling] = useState(false)
+  const hasOpportunities = opportunities.length > 0
 
   useEffect(() => {
     if (!isOpen) {
@@ -110,14 +124,43 @@ export function StepOpportunitiesModal({
     focusTarget?.focus()
   }, [isOpen])
 
+  useEffect(() => {
+    if (
+      !isOpen ||
+      !hasOpportunities ||
+      skippedAll ||
+      isStepCompleted('opportunities_intro') ||
+      activeStepId !== null
+    ) {
+      return
+    }
+
+    showStep('opportunities_intro')
+  }, [activeStepId, hasOpportunities, isOpen, isStepCompleted, showStep, skippedAll])
+
   if (!isOpen) {
     return null
   }
 
   const isBusy = isLoading || isShuffling
-  const hasOpportunities = opportunities.length > 0
   const showInitialError = Boolean(error && !hasOpportunities)
   const showRefreshError = Boolean(error && hasOpportunities)
+
+  const shouldShowOpportunitiesIntroCallout =
+    isOpen &&
+    hasOpportunities &&
+    !skippedAll &&
+    activeStepId === 'opportunities_intro' &&
+    !isStepCompleted('opportunities_intro') &&
+    Boolean(opportunitiesListRef.current)
+
+  const shouldShowOpportunitiesShuffleCallout =
+    isOpen &&
+    hasOpportunities &&
+    !skippedAll &&
+    activeStepId === 'opportunities_shuffle' &&
+    !isStepCompleted('opportunities_shuffle') &&
+    Boolean(shuffleButtonRef.current)
 
   const handleCloseClick = () => {
     debug.info('Opportunities UI: close clicked', { stepId })
@@ -221,70 +264,99 @@ export function StepOpportunitiesModal({
 
   const bodyContent = renderBody()
 
-  return createPortal(
-    <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
-      role="presentation"
-      onPointerDown={handleOverlayPointerDown}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={headingId}
-        aria-describedby={descriptionId}
-        data-step-id={stepId}
-        className="pointer-events-auto flex w-full max-h-[80vh] max-w-[560px] flex-col overflow-hidden rounded-2xl border border-kings-grey-light/70 bg-kings-white shadow-2xl focus:outline-none"
-        onPointerDown={handleDialogPointerDown}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-3 p-6 flex-none">
-          <h2
-            id={headingId}
-            ref={headingRef}
-            tabIndex={-1}
-            className="text-xl font-semibold text-kings-red focus:outline-none"
-          >
-            Opportunities for “{stepTitle}”
-          </h2>
-          <div className="flex flex-col items-end gap-2 text-right">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={handleShuffleClick}
-                disabled={isBusy}
-                className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
-              </button>
-              <button
-                ref={closeButtonRef}
-                type="button"
-                onClick={handleCloseClick}
-                className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
-              >
-                Close
-              </button>
-            </div>
-            {showRefreshError ? (
-              <p className="text-xs text-kings-grey-dark">
-                We could not refresh suggestions this time. Your existing suggestions are still here.
-              </p>
-            ) : null}
-          </div>
-        </div>
+  return (
+    <>
+      {createPortal(
         <div
-          id={descriptionId}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-2 text-left text-sm text-kings-black"
+          className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 px-4 py-6 backdrop-blur-sm"
+          role="presentation"
+          onPointerDown={handleOverlayPointerDown}
         >
-          {showInitialError ? (
-            <p className="mb-4 rounded-md bg-kings-grey-light/30 px-3 py-2 text-sm text-kings-grey-dark">
-              We could not load suggestions just now. Please try again in a moment.
-            </p>
-          ) : null}
-          {bodyContent}
-        </div>
-      </div>
-    </div>,
-    document.body
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={headingId}
+            aria-describedby={descriptionId}
+            data-step-id={stepId}
+            className="pointer-events-auto flex w-full max-h-[80vh] max-w-[560px] flex-col overflow-hidden rounded-2xl border border-kings-grey-light/70 bg-kings-white shadow-2xl focus:outline-none"
+            onPointerDown={handleDialogPointerDown}
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3 p-6 flex-none">
+              <h2
+                id={headingId}
+                ref={headingRef}
+                tabIndex={-1}
+                className="text-xl font-semibold text-kings-red focus:outline-none"
+              >
+                Opportunities for “{stepTitle}”
+              </h2>
+              <div className="flex flex-col items-end gap-2 text-right">
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    ref={shuffleButtonRef}
+                    onClick={handleShuffleClick}
+                    disabled={isBusy}
+                    className="inline-flex items-center rounded-md border border-kings-grey-light/80 bg-white px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:border-kings-grey disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isShuffling ? 'Shuffling…' : 'Shuffle suggestions'}
+                  </button>
+                  <button
+                    ref={closeButtonRef}
+                    type="button"
+                    onClick={handleCloseClick}
+                    className="inline-flex items-center rounded-md border border-transparent px-3 py-1.5 text-sm font-medium text-kings-grey-dark transition hover:text-kings-red focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2 focus-visible:ring-offset-kings-white"
+                  >
+                    Close
+                  </button>
+                </div>
+                {showRefreshError ? (
+                  <p className="text-xs text-kings-grey-dark">
+                    We could not refresh suggestions this time. Your existing suggestions are still here.
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <div
+              id={descriptionId}
+              ref={opportunitiesListRef}
+              className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-2 text-left text-sm text-kings-black"
+            >
+              {showInitialError ? (
+                <p className="mb-4 rounded-md bg-kings-grey-light/30 px-3 py-2 text-sm text-kings-grey-dark">
+                  We could not load suggestions just now. Please try again in a moment.
+                </p>
+              ) : null}
+              {bodyContent}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {shouldShowOpportunitiesIntroCallout ? (
+        <TutorialCallout
+          targetRef={opportunitiesListRef}
+          stepId="opportunities_intro"
+          onNext={() => {
+            completeStep('opportunities_intro')
+            if (!skippedAll && !isStepCompleted('opportunities_shuffle')) {
+              showStep('opportunities_shuffle')
+            }
+          }}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_intro')}
+        />
+      ) : null}
+      {shouldShowOpportunitiesShuffleCallout ? (
+        <TutorialCallout
+          targetRef={shuffleButtonRef}
+          stepId="opportunities_shuffle"
+          onNext={() => completeStep('opportunities_shuffle')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_shuffle')}
+        />
+      ) : null}
+    </>
   )
 }
 
