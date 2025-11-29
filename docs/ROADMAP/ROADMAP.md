@@ -85,10 +85,17 @@ Connect to real King’s Edge data sources, handle secure data exchange, and gra
 
 ---
 
-### 🚧 Epoch 0010 — Prompt Refinement and AI Architecture
-**Status:** In progress. ([PLAN](./EPOCHS/0010-prompt-refinement/PLAN.md))
+### ✅ Epoch 0010 — Prompt Refinement and AI Architecture
+**Status:** Completed. ([STATUS](./EPOCHS/0010-prompt-refinement/STATUS.yaml))
 
 Enforce explicit LLM selection with Debug Panel visibility, consolidate and contextualise the step and opportunity prompts, and thread student context through UI, API, and prompts to keep AI guidance transparent and trustworthy.
+
+---
+
+### 🧭 Epoch 0011 — Contextual tutorial and guidance system
+**Status:** In planning. ([PLAN](./EPOCHS/epoch-0011-tutorial-guidance/PLAN.md))
+
+Add a contextual, event-driven tutorial with JSON-driven copy, tooltip-style callouts, and per-user state in the database so students can pick up guidance across devices without blocking their flow.
 
 ---
 

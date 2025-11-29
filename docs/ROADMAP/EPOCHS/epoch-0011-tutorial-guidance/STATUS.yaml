@@ -1,0 +1,31 @@
+status: "in_planning"
+epoch: "epoch-0011-tutorial-guidance"
+plan: "PLAN.md"
+start_date: "2025-11-29"
+completed_at: null
+updated_at: "2025-11-29"
+branch: "epoch-0011-tutorial-guidance"
+summary: |
+  Plan contextual, event-driven tutorial callouts driven by JSON copy with
+  per-user persistence so onboarding tips follow students across devices.
+tasks:
+  - id: "tutorial-copy-loader"
+    title: "Tutorial copy JSON and loader"
+    status: "planned"
+    notes: "Centralise tutorial strings in a JSON config with a typed loader for safe consumption."
+  - id: "tutorial-manager-ui"
+    title: "Client tutorial manager and callout UI"
+    status: "planned"
+    notes: "Create a client-side controller with tooltip-style callouts that can anchor to Canvas elements."
+  - id: "tutorial-state-persistence"
+    title: "Persist tutorial state per user"
+    status: "planned"
+    notes: "Store tutorial completion/defer actions in Mongo with a small API surface to update state."
+  - id: "event-wiring"
+    title: "Wire Canvas events to tutorial moments"
+    status: "planned"
+    notes: "Trigger callouts for persona selection, first intention creation, suggested steps, opportunities view, and shuffle control."
+  - id: "accessibility-polish"
+    title: "Accessibility and visual polish"
+    status: "planned"
+    notes: "Ensure callouts meet basic accessibility expectations and present consistent styling."
