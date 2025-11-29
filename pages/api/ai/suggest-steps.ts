@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 
 import { debug } from '@/lib/debug'
 import { runWorkflow } from '@/lib/langgraph/workflow'
+import { getStudentPersona, type StudentPersonaId } from '@/lib/context/studentPersonas'
 
 import { authOptions } from '@/lib/auth/config'
 
@@ -13,6 +14,7 @@ type SuggestStepsRequestBody = {
   historyAccepted?: string[]
   historyRejected?: string[]
   lastSuggestion?: string
+  personaId?: StudentPersonaId
 }
 
 type SuggestStepsResponse =
@@ -32,13 +34,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
-  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected, lastSuggestion } =
+  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected, lastSuggestion, personaId } =
     req.body as SuggestStepsRequestBody
+
+  const persona = getStudentPersona(personaId)
 
   debug.trace('AI: suggest-steps request', {
     user: email,
     intentionId,
     intentionBucket,
+    persona: persona.shortLabel,
     acceptedCount: historyAccepted?.length || 0,
     rejectedCount: historyRejected?.length || 0
   })
@@ -49,7 +54,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       intentionBucket,
       historyAccepted,
       historyRejected,
-      lastSuggestion
+      lastSuggestion,
+      persona
     })
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []
@@ -58,7 +64,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     debug.info('AI: suggest-steps response', {
       model,
       count: suggestions.length,
-      example: suggestions[0]?.text || '(none)'
+      example: suggestions[0]?.text || '(none)',
+      persona: persona.shortLabel
     })
 
     return res.status(200).json({

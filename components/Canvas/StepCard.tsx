@@ -15,6 +15,7 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
+import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
 import type { Step } from '@/types/canvas'
 
@@ -43,12 +44,13 @@ type StepOpportunitiesSectionProps = {
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const { personaId } = useStudentPersona()
   const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
     refetch
-  } = useOpportunities(stepId)
+  } = useOpportunities(stepId, personaId)
 
   const opportunitiesCount = opportunities.length
   const isBusy = opportunitiesLoading

@@ -1,25 +1,41 @@
+import type { StudentPersona } from "@/lib/context/studentPersonas"
+
 export function buildSuggestionPromptV5({
   intentionText,
   targetBucket,
   historyAccepted = [],
   historyRejected = [],
-  lastSuggestion
+  lastSuggestion,
+  persona
 }: {
   intentionText: string;
   targetBucket: string;
   historyAccepted?: string[];
   historyRejected?: string[];
   lastSuggestion?: string;
+  persona?: StudentPersona;
 }) {
+  const personaSummary = persona
+    ? `
+Student persona:
+- Discipline: ${persona.discipline}
+- Programme type: ${persona.programmeType}
+- Course length and stage: year ${persona.currentYear} of ${persona.totalYears} (about ${persona.yearsRemaining} years remaining)
+- Study mode: ${persona.studyMode}
+- Key context: ${persona.notes.join("; ")}
+`
+    : `
+Assume a typical on-campus undergraduate student on a three year social science degree in their first year.
+`
+
   return `
 You are a university development advisor.
 
-You are helping a first year undergraduate student think about how to move towards one intention over the next few years of study and into life after graduation.
+${personaSummary}
 
-The student:
-- is at the beginning of a three year programme
-- is still exploring what they want from their degree and future
-- could have any kind of intention (personal, academic, professional, creative, entrepreneurial, civic, etc)
+You are helping a student think about how to move towards one intention over the next few years of study and into life after graduation.
+
+The student could have any kind of intention (personal, academic, professional, creative, entrepreneurial, civic, etc). Keep your advice realistic for the persona context above.
 
 Your job
 You suggest one short "developmental focus" at a time.

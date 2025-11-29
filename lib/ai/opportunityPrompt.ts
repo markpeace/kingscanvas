@@ -1,24 +1,34 @@
 import type { BucketId } from "@/types/canvas"
+import type { StudentPersona } from "@/lib/context/studentPersonas"
 
 export type StepOpportunityPromptContext = {
   stepTitle: string
   stepBucket?: BucketId | string
   intentionTitle?: string
   existingOpportunityTitles?: string[]
+  persona?: StudentPersona
 }
 
 export function buildStepOpportunitiesPromptV1(ctx: StepOpportunityPromptContext): string {
-  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles = [] } = ctx
+  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles = [], persona } = ctx
+
+  const personaSummary = persona
+    ? `You are designing opportunities for the following student persona:
+  - Discipline: ${persona.discipline}
+  - Programme type: ${persona.programmeType}
+  - Course length and stage: year ${persona.currentYear} of ${persona.totalYears} (about ${persona.yearsRemaining} years remaining)
+  - Study mode: ${persona.studyMode}
+  - Constraints and context: ${persona.notes.join("; ")}
+
+Design opportunities that a student in this situation could realistically engage with, given their time, travel and mode of study.`
+    : `You are designing opportunities for a typical on-campus undergraduate student on a three year social science programme in their first year. Design opportunities that fit around study and are realistic for their time and travel constraints.`
 
   return `
-You are an opportunities advisor for undergraduate students.
+You are an opportunities advisor for university students.
+
+${personaSummary}
 
 You help a student turn one developmental step into a small set of opportunity TYPES that could help them work on that step.
-
-The student:
-- is at the beginning of a three year degree
-- could have any kind of intention (personal, academic, professional, creative, entrepreneurial, civic)
-- wants realistic, low jargon ideas that fit around study
 
 Blueprint patterns to keep in mind
 These are generic activity shapes, not specific King’s branded products. Use them as design patterns when inventing opportunity TYPES.

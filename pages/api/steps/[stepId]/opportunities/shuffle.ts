@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 
 import { authOptions, createTestSession, isProd } from '@/lib/auth/config'
 import { debug } from '@/lib/debug'
+import { getStudentPersona } from '@/lib/context/studentPersonas'
 import { isStepEligibleForOpportunities } from '@/lib/opportunities/eligibility'
 import { findStepById, generateOpportunitiesForStep, StepNotFoundError } from '@/lib/opportunities/generation'
 import type { Opportunity } from '@/types/canvas'
@@ -35,7 +36,17 @@ export default async function handler(
     return res.status(400).json({ ok: false, error: 'Missing step id' })
   }
 
-  debug.info('Opportunities API: shuffle requested', { stepId: requestedStepId })
+  const persona = getStudentPersona(
+    typeof req.body?.personaId === 'string'
+      ? req.body.personaId
+      : Array.isArray(req.query.personaId)
+      ? req.query.personaId[0]
+      : typeof req.query.personaId === 'string'
+      ? req.query.personaId
+      : undefined
+  )
+
+  debug.info('Opportunities API: shuffle requested', { stepId: requestedStepId, persona: persona.shortLabel })
 
   try {
     const step = await findStepById(requestedStepId)
@@ -59,7 +70,7 @@ export default async function handler(
       return res.status(400).json({ ok: false, error: 'Step is not eligible for opportunities' })
     }
 
-    const opportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle' })
+    const opportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle', persona })
 
     const responseStepId =
       opportunities[0]?.stepId ??
@@ -73,7 +84,8 @@ export default async function handler(
 
     debug.info('Opportunities API: shuffle success', {
       stepId: responseStepId,
-      count: opportunities.length
+      count: opportunities.length,
+      persona: persona.shortLabel
     })
 
     return res.status(200).json({ ok: true, stepId: responseStepId, opportunities })

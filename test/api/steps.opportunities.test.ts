@@ -207,10 +207,13 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
 
     await handler(req, res)
 
-    expect(generateOpportunitiesForStep).toHaveBeenCalledWith({
-      stepId: objectId.toHexString(),
-      origin: "lazy-fetch"
-    })
+    expect(generateOpportunitiesForStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepId: objectId.toHexString(),
+        origin: "lazy-fetch",
+        persona: expect.objectContaining({ id: "social-science-ug-first-year" })
+      })
+    )
     expect(getStatus()).toBe(200)
     const payload = getJSON<{ ok: boolean; opportunities: Array<{ id: string }>; stepId: string }>()
     expect(payload.ok).toBe(true)

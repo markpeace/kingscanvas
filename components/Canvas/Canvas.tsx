@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { StudentPersonaProvider, useStudentPersona } from '@/context/StudentPersonaContext'
 import { useUser } from '@/context/UserContext'
 import {
   DndContext,
@@ -23,6 +24,7 @@ import type { BucketId, Intention, Step } from '@/types/canvas'
 import { concertinaSteps } from '@/lib/steps'
 import useAutosave from '@/hooks/useAutosave'
 import SaveStatus from '@/components/Canvas/SaveStatus'
+import StudentPersonaSelector from '@/components/StudentPersonaSelector'
 
 const DEFAULT_BUCKET: BucketId = 'do-now'
 
@@ -181,8 +183,9 @@ function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
   })
 }
 
-export function Canvas() {
+function CanvasContent() {
   const { user, status } = useUser()
+  const { personaId } = useStudentPersona()
   const [intentions, setIntentions] = useState<Intention[]>([])
   const [loadingIntentions, setLoadingIntentions] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -917,7 +920,8 @@ export function Canvas() {
             intentionBucket: bucket,
             historyAccepted: history.accepted,
             historyRejected: history.rejected,
-            lastSuggestion: lastSuggestionText
+            lastSuggestion: lastSuggestionText,
+            personaId
           })
         })
 
@@ -1073,7 +1077,7 @@ export function Canvas() {
         )
       }
     },
-    [getIntentionForBucket, user]
+    [getIntentionForBucket, personaId, user]
   )
 
   const mapBucketIdToDistributionBucket = useCallback((bucket: BucketId): DistributionBucket => {
@@ -1175,7 +1179,8 @@ export function Canvas() {
                 intentionText: intention.title,
                 intentionBucket: targetBucket,
                 historyAccepted: [],
-                historyRejected: []
+                historyRejected: [],
+                personaId
               })
             })
 
@@ -1326,7 +1331,7 @@ export function Canvas() {
 
       debug.info('Distribution complete', { intentionId: intention.id })
     },
-    [mapBucketIdToDistributionBucket, mapDistributionBucketToBucketId, userEmail]
+    [mapBucketIdToDistributionBucket, mapDistributionBucketToBucketId, personaId, userEmail]
   )
 
   const handleAddIntention = useCallback(
@@ -1591,7 +1596,8 @@ export function Canvas() {
       intentionText: 'Become a teacher',
       intentionBucket: 'after-graduation',
       historyAccepted: ['Apply for PGCE'],
-      historyRejected: ['Volunteer in a school']
+      historyRejected: ['Volunteer in a school'],
+      personaId
     }
 
     debug.trace('Canvas: manual AI suggestion test triggered', payload)
@@ -1617,7 +1623,7 @@ export function Canvas() {
       debug.error('Canvas: AI suggestion test errored', { message })
       alert('Unable to fetch AI suggestions')
     }
-  }, [])
+  }, [personaId])
 
   if (status === 'loading') {
     return <p>Loading…</p>
@@ -1653,7 +1659,10 @@ export function Canvas() {
           <header className="mb-12">
             {/* Title + Button Row */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
+              <div className="flex flex-col gap-3">
+                <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
+                <StudentPersonaSelector />
+              </div>
               <button
                 onClick={(event) => {
                   addIntentionTriggerRef.current = event.currentTarget
@@ -1723,6 +1732,14 @@ export function Canvas() {
         </div>
       ) : null}
     </>
+  )
+}
+
+export function Canvas() {
+  return (
+    <StudentPersonaProvider>
+      <CanvasContent />
+    </StudentPersonaProvider>
   )
 }
 

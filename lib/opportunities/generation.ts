@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb"
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
 import { runOpportunityWorkflow } from "@/lib/langgraph/workflow"
+import type { StudentPersona } from "@/lib/context/studentPersonas"
 import {
   createOpportunitiesForStep,
   deleteOpportunitiesForStep,
@@ -177,6 +178,7 @@ function sanitizeStatus(value: unknown): OpportunityStatus {
 export async function generateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
+  persona?: StudentPersona
 }): Promise<Opportunity[]> {
   const { stepId, origin } = params
 
@@ -212,7 +214,8 @@ export async function generateOpportunitiesForStep(params: {
       stepTitle,
       stepBucket: bucketId,
       intentionTitle,
-      existingOpportunityTitles: []
+      existingOpportunityTitles: [],
+      persona: params.persona
     })
 
     const drafts = Array.isArray(aiResult?.opportunities)
@@ -253,7 +256,8 @@ export async function generateOpportunitiesForStep(params: {
     if (filteredDrafts.length === 0) {
       debug.warn("Opportunities: no valid drafts to persist", {
         stepId: canonicalStepId,
-        origin
+        origin,
+        ...(params.persona ? { persona: params.persona.shortLabel } : {})
       })
       await deleteOpportunitiesForStep(step.user, canonicalStepId)
       return []
@@ -274,7 +278,8 @@ export async function generateOpportunitiesForStep(params: {
     debug.info("Opportunities: generate success", {
       stepId: canonicalStepId,
       origin,
-      count: created.length
+      count: created.length,
+      ...(params.persona ? { persona: params.persona.shortLabel } : {})
     })
 
     return created
@@ -291,12 +296,14 @@ export async function generateOpportunitiesForStep(params: {
 export async function safelyGenerateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
+  persona?: StudentPersona
 }): Promise<void> {
   const { stepId, origin } = params
 
   debug.debug("Opportunities: safelyGenerateOpportunitiesForStep start", {
     stepId,
-    origin
+    origin,
+    ...(params.persona ? { persona: params.persona.shortLabel } : {})
   })
 
   try {
@@ -310,7 +317,9 @@ export async function safelyGenerateOpportunitiesForStep(params: {
     debug.warn("Opportunities: safelyGenerateOpportunitiesForStep failed", {
       stepId,
       origin,
-      error
+      error,
+      errorName: error instanceof Error ? error.name : String(error),
+      errorMessage: error instanceof Error ? error.message : String(error)
     })
   }
 }
