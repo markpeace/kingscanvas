@@ -188,7 +188,16 @@ function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
 function CanvasContent() {
   const { user, status } = useUser()
   const { personaId } = useStudentPersona()
-  const { activeStepId, showStep, completeStep, skipAll, dismissStep, resetTutorial } = useTutorial()
+  const {
+    activeStepId,
+    skippedAll,
+    isStepCompleted,
+    showStep,
+    completeStep,
+    skipAll,
+    dismissStep,
+    resetTutorial
+  } = useTutorial()
   const [intentions, setIntentions] = useState<Intention[]>([])
   const [loadingIntentions, setLoadingIntentions] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -202,7 +211,8 @@ function CanvasContent() {
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
   const personaSelectorRef = useRef<HTMLDivElement | null>(null)
-  const addIntentionTriggerRef = useRef<HTMLElement | null>(null)
+  const addIntentionTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const stepsCalloutRef = useRef<HTMLElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(
     autosavePayload,
@@ -1368,7 +1378,16 @@ function CanvasContent() {
         updatedAt: timestamp
       }
 
-      setIntentions((prev) => [...prev, baseIntention])
+      setIntentions((prev) => {
+        const wasEmpty = prev.length === 0
+        const nextIntentions = [...prev, baseIntention]
+
+        if (wasEmpty && !skippedAll && !isStepCompleted('steps_and_suggestions')) {
+          showStep('steps_and_suggestions')
+        }
+
+        return nextIntentions
+      })
 
       debug.trace('Canvas: intention created', {
         id: intentionId,
@@ -1378,7 +1397,12 @@ function CanvasContent() {
 
       generateSuggestionsForIntention(baseIntention)
     },
-    [generateSuggestionsForIntention]
+    [
+      generateSuggestionsForIntention,
+      isStepCompleted,
+      showStep,
+      skippedAll
+    ]
   )
 
   const handleDeleteStep = useCallback(
@@ -1551,7 +1575,7 @@ function CanvasContent() {
 
   const renderedIntentions = useMemo(
     () =>
-      intentions.map((intention) => (
+      intentions.map((intention, index) => (
         <IntentionRow
           key={intention.id}
           intention={intention}
@@ -1567,6 +1591,7 @@ function CanvasContent() {
           trashSuccessId={trashSuccessId}
           trashSuccessType={trashSuccessType}
           ghostStyle={ghostStyle}
+          stepsCalloutRef={index === 0 ? stepsCalloutRef : undefined}
         />
       )),
     [
@@ -1580,6 +1605,7 @@ function CanvasContent() {
       intentions,
       moveIntentionWithKeyboard,
       moveStepWithKeyboard,
+      stepsCalloutRef,
       trashSuccessId,
       trashSuccessType
     ]
@@ -1658,6 +1684,18 @@ function CanvasContent() {
 
   const shouldShowPersonaIntro =
     tutorialReady && activeStepId === 'persona_intro' && Boolean(personaSelectorRef.current)
+  const shouldShowFirstIntentionCallout =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'first_intention' &&
+    !isStepCompleted('first_intention') &&
+    Boolean(addIntentionTriggerRef.current)
+  const shouldShowStepsAndSuggestionsCallout =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'steps_and_suggestions' &&
+    !isStepCompleted('steps_and_suggestions') &&
+    Boolean(stepsCalloutRef.current)
 
   return (
     <>
@@ -1695,8 +1733,8 @@ function CanvasContent() {
                 </div>
               </div>
               <button
-                onClick={(event) => {
-                  addIntentionTriggerRef.current = event.currentTarget
+                ref={addIntentionTriggerRef}
+                onClick={() => {
                   setModalOpen(true)
                 }}
                 className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-end sm:ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
@@ -1724,7 +1762,6 @@ function CanvasContent() {
               setModalOpen(false)
               if (addIntentionTriggerRef.current) {
                 addIntentionTriggerRef.current.focus()
-                addIntentionTriggerRef.current = null
               }
             }}
             onAdd={handleAddIntention}
@@ -1741,9 +1778,33 @@ function CanvasContent() {
         <TutorialCallout
           targetRef={personaSelectorRef}
           stepId={activeStepId}
-          onNext={() => completeStep('persona_intro')}
+          onNext={() => {
+            completeStep('persona_intro')
+            if (!skippedAll && !isStepCompleted('first_intention')) {
+              showStep('first_intention')
+            }
+          }}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('persona_intro')}
+        />
+      ) : null}
+      {shouldShowFirstIntentionCallout ? (
+        <TutorialCallout
+          targetRef={addIntentionTriggerRef}
+          stepId="first_intention"
+          onNext={() => completeStep('first_intention')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('first_intention')}
+          dimBackground={false}
+        />
+      ) : null}
+      {shouldShowStepsAndSuggestionsCallout ? (
+        <TutorialCallout
+          targetRef={stepsCalloutRef}
+          stepId="steps_and_suggestions"
+          onNext={() => completeStep('steps_and_suggestions')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('steps_and_suggestions')}
         />
       ) : null}
       {debugUiEnabled ? (

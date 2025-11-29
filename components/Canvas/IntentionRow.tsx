@@ -1,7 +1,7 @@
 'use client';
 
 import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useRef, useState, type CSSProperties, type MouseEvent } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent, type RefObject } from 'react';
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal';
 import { IntentionCard } from '@/components/Canvas/IntentionCard';
@@ -31,6 +31,7 @@ type IntentionRowProps = {
   trashSuccessId?: string | null;
   trashSuccessType?: 'step' | 'intention' | null;
   ghostStyle?: CSSProperties;
+  stepsCalloutRef?: RefObject<HTMLElement>;
 };
 
 type BucketColumnProps = {
@@ -172,6 +173,7 @@ export function IntentionRow({
   trashSuccessId,
   trashSuccessType,
   ghostStyle,
+  stepsCalloutRef,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
@@ -191,6 +193,7 @@ export function IntentionRow({
       <div className={`relative group${isDragging ? ' dragging' : ''}`}>
         <section
           id={intention.id}
+          ref={stepsCalloutRef}
           aria-label={`Intention: ${intention.title}`}
           className="scroll-mt-24 grid grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-10 gap-y-8 mb-12"
           style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}
