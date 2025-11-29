@@ -1,6 +1,9 @@
+import { StateGraph } from "@langchain/langgraph"
 import { getChatModel } from "@/lib/ai/client"
-import { buildSuggestionPromptV5 } from "../ai/promptBuilder"
+import { buildStepOpportunitiesPromptV1, type StepOpportunityPromptContext } from "@/lib/ai/opportunityPrompt"
+import { buildSuggestionPromptV5 } from "@/lib/ai/stepPrompt"
 import { debug } from "@/lib/debug"
+import { DEFAULT_STUDENT_PERSONA_ID, getStudentPersona, type StudentPersona } from "@/lib/context/studentPersonas"
 import type { BucketId } from "@/types/canvas"
 
 type SuggestStepsInput = {
@@ -8,13 +11,115 @@ type SuggestStepsInput = {
   intentionBucket?: string
   historyAccepted?: string[]
   historyRejected?: string[]
+  lastSuggestion?: string
+  persona?: StudentPersona
 }
 
 type Suggestion = { bucket: BucketId; text: string }
 
+// New workflows (e.g. opportunity recommendations) will be added here in future iterations.
 type WorkflowName = "suggest-step"
 
-type WorkflowResult = { suggestions: Suggestion[] }
+export type OpportunitySuggestion = {
+  title: string
+  summary: string
+  source?: string
+  form?: string
+  focus?: string
+}
+
+export type SuggestOpportunitiesInput = StepOpportunityPromptContext
+
+type WorkflowResult = { suggestions: Suggestion[]; model: string }
+
+type SuggestState = {
+  prompt: string
+  suggestionText?: string
+  model?: string
+}
+
+type WorkflowTrace = {
+  workflow: WorkflowName
+  model: string
+  durationMs: number
+  error?: string
+}
+
+const suggestStepGraph = (() => {
+  const graph = new StateGraph<SuggestState>({
+    channels: {
+      prompt: { value: null },
+      suggestionText: { value: null },
+      model: { value: null }
+    }
+  })
+
+  graph.addNode("call_model", async (state: SuggestState): Promise<SuggestState> => {
+    const llm = getChatModel()
+    const resolvedModel =
+      (typeof llm.model === "string" && llm.model.trim().length > 0
+        ? llm.model
+        : undefined) ??
+      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
+        ? llm.modelName
+        : undefined) ??
+      ((process.env.LLM ?? "").trim() || undefined) ??
+      "unknown"
+
+    debug.trace("AI: suggest-step using model", {
+      model: resolvedModel,
+      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
+      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
+      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+    })
+
+    try {
+      const response = await llm.invoke(state.prompt)
+      let rawContent = ""
+
+      const content = response?.content
+
+      if (typeof content === "string") {
+        rawContent = content
+      } else if (Array.isArray(content)) {
+        rawContent = content
+          .map((part) => {
+            if (typeof part === "string") {
+              return part
+            }
+
+            if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
+              return part.text
+            }
+
+            return ""
+          })
+          .join("")
+      } else if (content != null) {
+        rawContent = String(content)
+      }
+
+      const text = rawContent.trim()
+
+      return {
+        ...state,
+        suggestionText: text,
+        model: resolvedModel
+      }
+    } catch (error) {
+      if (error && typeof error === "object") {
+        ;(error as Record<string, unknown>).model = resolvedModel
+      }
+
+      throw error
+    }
+  })
+
+  graph.setEntryPoint("call_model")
+  graph.setFinishPoint("call_model")
+
+  return graph.compile()
+})()
 
 const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
 
@@ -54,83 +159,203 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
     throw new Error(`Unknown workflow: ${workflowName}`)
   }
 
+  const startedAt = Date.now()
+  let resolvedModel = "unknown"
+
   const bucket = normaliseBucket(payload.intentionBucket)
   const promptBucket = mapBucketToPromptTarget(bucket)
   const intentionText = (payload.intentionText ?? "").trim() || "your intention"
   const historyAccepted = sanitiseHistory(payload.historyAccepted).slice(-5)
   const historyRejected = sanitiseHistory(payload.historyRejected).slice(-5)
+  const lastSuggestionRaw = typeof payload.lastSuggestion === "string" ? payload.lastSuggestion.trim() : ""
+  const lastSuggestion = lastSuggestionRaw.length > 0 ? lastSuggestionRaw : undefined
+  const persona = payload.persona ?? getStudentPersona(DEFAULT_STUDENT_PERSONA_ID)
 
-  if (workflowName === "suggest-step") {
-    const prompt = buildSuggestionPromptV5({
-      intentionText,
-      targetBucket: promptBucket,
-      historyAccepted,
-      historyRejected
-    })
+  try {
+    if (workflowName === "suggest-step") {
+      const prompt = buildSuggestionPromptV5({
+        intentionText,
+        targetBucket: promptBucket,
+        historyAccepted,
+        historyRejected,
+        lastSuggestion,
+        persona
+      })
 
-    debug.trace("AI Prompt Builder v5: constructed prompt", {
-      bucket: payload.intentionBucket ?? bucket,
-      intention: intentionText
-    })
+      debug.trace("AI Prompt Builder v5: constructed prompt", {
+        bucket: payload.intentionBucket ?? bucket,
+        intention: intentionText,
+        ...(persona ? { persona: persona.shortLabel } : {})
+      })
 
-    const llm = getChatModel()
-    const resolvedModel =
-      (typeof llm.model === "string" && llm.model.trim().length > 0
-        ? llm.model
-        : undefined) ??
-      (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
-        ? llm.modelName
-        : undefined) ??
-      process.env.OPENAI_MODEL ??
-      "gpt-4o-mini"
+      const initialState: SuggestState = {
+        prompt,
+        suggestionText: "",
+        model: ""
+      }
 
-    debug.trace("AI: suggest-step using model", {
-      model: resolvedModel,
-      ...(llm.modelName && llm.modelName !== resolvedModel ? { modelName: llm.modelName } : {}),
-      ...(llm.model && llm.model !== resolvedModel ? { rawModel: llm.model } : {}),
-      ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
-    })
-    const response = await llm.invoke(prompt)
-    let rawContent = ""
+      const finalState = await suggestStepGraph.invoke(initialState)
 
-    const content = response?.content
+      resolvedModel = finalState.model ?? "unknown"
+      const text = (finalState.suggestionText ?? "").trim()
 
-    if (typeof content === "string") {
-      rawContent = content
-    } else if (Array.isArray(content)) {
-      rawContent = content
-        .map((part) => {
-          if (typeof part === "string") {
-            return part
+      debug.info("AI: model response (prompt v5)", {
+        bucket: payload.intentionBucket ?? bucket,
+        preview: text.slice(0, 120),
+        ...(persona ? { persona: persona.shortLabel } : {})
+      })
+
+      const workflowDuration = Date.now() - startedAt
+      const trace: WorkflowTrace = {
+        workflow: workflowName,
+        model: resolvedModel,
+        durationMs: workflowDuration
+      }
+
+      debug.info("AI workflow completed", {
+        ...trace,
+        ...(payload.intentionBucket ? { bucket: payload.intentionBucket } : {}),
+        ...(payload.intentionText ? { intention: intentionText } : {}),
+        ...(persona ? { persona: persona.shortLabel } : {})
+      })
+
+      return {
+        model: resolvedModel,
+        suggestions: [
+          {
+            bucket,
+            text
           }
-
-          if (part && typeof part === "object" && "text" in part && typeof part.text === "string") {
-            return part.text
-          }
-
-          return ""
-        })
-        .join("")
-    } else if (content != null) {
-      rawContent = String(content)
+        ]
+      }
     }
 
-    const text = rawContent.trim()
+    throw new Error(`Unhandled workflow: ${workflowName}`)
+  } catch (error) {
+    if (error && typeof error === "object" && "model" in error && typeof (error as Record<string, unknown>).model === "string") {
+      resolvedModel = (error as Record<string, string>).model
+    }
 
-    debug.info("AI: model response (prompt v5)", {
-      bucket: payload.intentionBucket ?? bucket,
-      preview: text.slice(0, 120)
+    const workflowDuration = Date.now() - startedAt
+    const trace: WorkflowTrace = {
+      workflow: workflowName,
+      model: resolvedModel,
+      durationMs: workflowDuration,
+      error: error instanceof Error ? error.message : String(error)
+    }
+
+    debug.error("AI workflow failed", {
+      ...trace,
+      ...(payload.intentionBucket ? { bucket: payload.intentionBucket } : {})
     })
 
+    throw error
+  }
+}
+
+export async function runOpportunityWorkflow(
+  payload: SuggestOpportunitiesInput
+): Promise<{ opportunities: OpportunitySuggestion[] }> {
+  const stepTitle = (payload.stepTitle || "").trim() || "your step"
+  const stepBucket = payload.stepBucket || "do-now"
+  const intentionTitle = payload.intentionTitle
+  const existingOpportunityTitles = Array.isArray(payload.existingOpportunityTitles)
+    ? payload.existingOpportunityTitles.filter((t) => typeof t === "string" && t.trim().length > 0).slice(-10)
+    : []
+
+  const persona = payload.persona ?? getStudentPersona(DEFAULT_STUDENT_PERSONA_ID)
+
+  const prompt = buildStepOpportunitiesPromptV1({
+    stepTitle,
+    stepBucket,
+    intentionTitle,
+    existingOpportunityTitles,
+    persona
+  })
+
+  const llm = getChatModel()
+
+  const resolvedModel =
+    (typeof (llm as any).model === "string" && (llm as any).model.trim().length > 0
+      ? (llm as any).model
+      : undefined) ??
+    (typeof (llm as any).modelName === "string" && (llm as any).modelName.trim().length > 0
+      ? (llm as any).modelName
+      : undefined) ??
+    process.env.OPENAI_MODEL ??
+    "gpt-4o-mini"
+
+  debug.trace("AI: suggest-opportunities using model", {
+    model: resolvedModel,
+    ...(persona ? { persona: persona.shortLabel } : {}),
+    ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
+  })
+
+  const response = await llm.invoke(prompt)
+  
+  let rawContent = ""
+  const content = (response as any)?.content
+
+  if (typeof content === "string") {
+    rawContent = content
+  } else if (Array.isArray(content)) {
+    rawContent = content
+      .map((part) => {
+        if (typeof part === "string") return part
+        if (part && typeof part === "object" && "text" in part && typeof (part as any).text === "string") {
+          return (part as any).text
+        }
+        return ""
+      })
+      .join("")
+  } else if (content != null) {
+    rawContent = String(content)
+  }
+
+  const trimmed = rawContent.trim()
+
+  debug.info("AI: raw suggest-opportunities response", {
+    preview: trimmed.slice(0, 200),
+    ...(persona ? { persona: persona.shortLabel } : {})
+  })
+
+  let parsed: any
+  try {
+    parsed = JSON.parse(trimmed)
+  } catch {
+    debug.warn("AI: suggest-opportunities returned non JSON, wrapping as single summary")
     return {
-      suggestions: [
+      opportunities: [
         {
-          bucket,
-          text
+          title: stepTitle,
+          summary: trimmed.slice(0, 240),
+          source: "independent",
+          form: "independent-action",
+          focus: "experience"
         }
       ]
     }
   }
 
-  throw new Error(`Unhandled workflow: ${workflowName}`)
+  const opportunities = Array.isArray(parsed?.opportunities)
+    ? parsed.opportunities
+        .filter((item: any) => item && typeof item.title === "string" && typeof item.summary === "string")
+        .map(
+          (item: any): OpportunitySuggestion => ({
+            title: String(item.title).trim(),
+            summary: String(item.summary).trim(),
+            source: typeof item.source === "string" ? item.source : undefined,
+            form: typeof item.form === "string" ? item.form : undefined,
+            focus: typeof item.focus === "string" ? item.focus : undefined
+          })
+        )
+    : []
+
+  debug.info("AI: suggest-opportunities parsed response", {
+    count: opportunities.length,
+    example: opportunities[0]?.title || "(none)",
+    ...(persona ? { persona: persona.shortLabel } : {})
+  })
+
+  return { opportunities }
 }

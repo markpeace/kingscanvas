@@ -110,7 +110,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
 
   it("returns 403 when the step belongs to another user", async () => {
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ user: "someone-else@example.com" })
+    findStepById.mockResolvedValue({ user: "someone-else@example.com", bucket: "do-now" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: "step-1" })
     const handler = (await import("@/pages/api/steps/[stepId]/opportunities")).default
@@ -125,7 +125,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns stored opportunities for the step", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active", bucket: "do-now" })
     getOpportunitiesByStep.mockResolvedValue([
       {
         id: "opp-1",
@@ -198,7 +198,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
     ]
 
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active", bucket: "do-now" })
     getOpportunitiesByStep.mockResolvedValue([])
     generateOpportunitiesForStep.mockResolvedValue(generated)
 
@@ -207,10 +207,13 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
 
     await handler(req, res)
 
-    expect(generateOpportunitiesForStep).toHaveBeenCalledWith({
-      stepId: objectId.toHexString(),
-      origin: "lazy-fetch"
-    })
+    expect(generateOpportunitiesForStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepId: objectId.toHexString(),
+        origin: "lazy-fetch",
+        persona: expect.objectContaining({ id: "social-science-ug-first-year" })
+      })
+    )
     expect(getStatus()).toBe(200)
     const payload = getJSON<{ ok: boolean; opportunities: Array<{ id: string }>; stepId: string }>()
     expect(payload.ok).toBe(true)
@@ -224,7 +227,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("rejects requests for ineligible steps", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "suggested" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "suggested", bucket: "do-now" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: objectId.toHexString() })
     const handler = (await import("@/pages/api/steps/[stepId]/opportunities")).default
@@ -243,7 +246,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns an empty array when lazy generation fails", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active", bucket: "do-now" })
     getOpportunitiesByStep.mockResolvedValue([])
     generateOpportunitiesForStep.mockRejectedValue(new Error("generation failed"))
 
@@ -262,7 +265,7 @@ describe("GET /api/steps/[stepId]/opportunities", () => {
   it("returns 500 when fetching fails", async () => {
     const objectId = makeObjectId()
     getServerSession.mockResolvedValue({ user: { email: "owner@example.com" } })
-    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: objectId, user: "owner@example.com", status: "active", bucket: "do-now" })
     getOpportunitiesByStep.mockRejectedValue(new Error("database offline"))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({ stepId: objectId.toHexString() })

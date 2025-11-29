@@ -33,7 +33,7 @@ jest.mock("@/lib/debug", () => ({
 const mockGetServerSession = getServerSession as jest.MockedFunction<typeof getServerSession>
 const { generateOpportunitiesForStep, findStepById } = jest.requireMock("@/lib/opportunities/generation") as {
   generateOpportunitiesForStep: jest.MockedFunction<(
-    params: { stepId: string; origin: "shuffle" }
+    params: { stepId: string; origin: "shuffle"; persona?: unknown }
   ) => Promise<
     Array<{
       id: string
@@ -103,7 +103,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns generated opportunities for the owner", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active", bucket: "do-now" })
     generateOpportunitiesForStep.mockResolvedValue([
       {
         id: "opp-1",
@@ -152,7 +152,13 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
     await handler(req, res)
 
     expect(findStepById).toHaveBeenCalledWith("step-123")
-    expect(generateOpportunitiesForStep).toHaveBeenCalledWith({ stepId: "step-123", origin: "shuffle" })
+    expect(generateOpportunitiesForStep).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepId: "step-123",
+        origin: "shuffle",
+        persona: expect.objectContaining({ id: "social-science-ug-first-year" })
+      })
+    )
     expect(getStatus()).toBe(200)
     const json = getJSON() as { ok: boolean; opportunities: Array<{ id: string }> }
     expect(json.ok).toBe(true)
@@ -179,7 +185,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 403 when the user does not own the step", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "different@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "different@example.com", status: "active", bucket: "do-now" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
 
@@ -209,7 +215,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 500 when generation fails", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "active", bucket: "do-now" })
     generateOpportunitiesForStep.mockRejectedValue(new Error("boom"))
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
@@ -224,7 +230,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
   it("returns 400 when the step status is not eligible", async () => {
     mockGetServerSession.mockResolvedValue({ user: { email: "owner@example.com" } } as any)
-    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "suggested" })
+    findStepById.mockResolvedValue({ _id: "step-123", user: "owner@example.com", status: "suggested", bucket: "do-now" })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse("POST", "step-123")
 

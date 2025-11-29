@@ -15,7 +15,8 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { useOpportunities } from '@/hooks/useOpportunities'
-import { isStepEligibleForOpportunities } from '@/lib/opportunities/eligibility'
+import { useStudentPersona } from '@/context/StudentPersonaContext'
+import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
 import type { Step } from '@/types/canvas'
 
 type StepCardProps = {
@@ -43,12 +44,13 @@ type StepOpportunitiesSectionProps = {
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const { personaId } = useStudentPersona()
   const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
     refetch
-  } = useOpportunities(stepId)
+  } = useOpportunities(stepId, personaId)
 
   const opportunitiesCount = opportunities.length
   const isBusy = opportunitiesLoading
@@ -126,9 +128,9 @@ export function StepCard({
 }: StepCardProps) {
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
-  const trimmedStepId = typeof step.id === 'string' ? step.id.trim() : '';
+  const persistedStepId = resolvePersistedStepId(step);
   const isEligibleForOpportunities = isStepEligibleForOpportunities(step);
-  const shouldRenderOpportunities = isEligibleForOpportunities;
+  const shouldRenderOpportunities = Boolean(isEligibleForOpportunities && persistedStepId);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.clientId,
     data: { type: 'step', step },
@@ -259,8 +261,8 @@ export function StepCard({
           }
         }}
       >
-        {shouldRenderOpportunities && (
-          <StepOpportunitiesSection stepId={trimmedStepId} stepTitle={displayText} />
+        {shouldRenderOpportunities && persistedStepId && (
+          <StepOpportunitiesSection stepId={persistedStepId} stepTitle={displayText} />
         )}
 
         {isSuggested && (

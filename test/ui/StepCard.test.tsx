@@ -1,8 +1,10 @@
+import React from 'react'
 import { render } from '@testing-library/react'
 
 import StepCard from '@/components/Canvas/StepCard'
 import type { Step } from '@/types/canvas'
 import { useOpportunities } from '@/hooks/useOpportunities'
+import { StudentPersonaProvider } from '@/context/StudentPersonaContext'
 
 jest.mock('@dnd-kit/core', () => ({
   useDraggable: () => ({
@@ -27,6 +29,8 @@ describe('StepCard opportunities integration', () => {
   const useOpportunitiesMock = useOpportunities as unknown as jest.Mock
   const noop = () => {}
 
+  const renderWithPersona = (node: React.ReactNode) => render(<StudentPersonaProvider>{node}</StudentPersonaProvider>)
+
   beforeEach(() => {
     useOpportunitiesMock.mockReturnValue({
       opportunities: [],
@@ -50,7 +54,7 @@ describe('StepCard opportunities integration', () => {
       title: 'Backend persisted step'
     }
 
-    render(
+    renderWithPersona(
       <StepCard
         step={step}
         onDelete={noop}
@@ -73,7 +77,7 @@ describe('StepCard opportunities integration', () => {
       title: 'Local only'
     }
 
-    render(
+    renderWithPersona(
       <StepCard
         step={step}
         onDelete={noop}
@@ -96,7 +100,7 @@ describe('StepCard opportunities integration', () => {
       status: 'suggested'
     }
 
-    render(
+    renderWithPersona(
       <StepCard
         step={step}
         onDelete={noop}

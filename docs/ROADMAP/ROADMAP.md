@@ -85,6 +85,13 @@ Connect to real King’s Edge data sources, handle secure data exchange, and gra
 
 ---
 
+### 🚧 Epoch 0010 — Prompt Refinement and AI Architecture
+**Status:** In progress. ([PLAN](./EPOCHS/0010-prompt-refinement/PLAN.md))
+
+Enforce explicit LLM selection with Debug Panel visibility, consolidate and contextualise the step and opportunity prompts, and thread student context through UI, API, and prompts to keep AI guidance transparent and trustworthy.
+
+---
+
 ## 🧩 Supporting Workstreams
 
 Ongoing parallel streams ensure each epoch ships responsibly:

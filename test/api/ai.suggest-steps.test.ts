@@ -64,7 +64,8 @@ describe('/api/ai/suggest-steps POST', () => {
 
   it('returns AI suggestions when the workflow resolves', async () => {
     mockRunWorkflow.mockResolvedValue({
-      suggestions: [{ bucket: 'do-now', text: 'Write your CV' }]
+      suggestions: [{ bucket: 'do-now', text: 'Write your CV' }],
+      model: 'gpt-4o-mini'
     })
 
     const { req, res, getStatus, getJSON } = createMockRequestResponse({
@@ -82,9 +83,11 @@ describe('/api/ai/suggest-steps POST', () => {
       intentionBucket: 'do-now'
     }))
     expect(getStatus()).toBe(200)
-    const json = getJSON() as { ok: boolean; suggestions: Array<{ bucket: string; text: string }> }
+    const json = getJSON() as { ok: boolean; suggestions: Array<{ bucket: string; text: string }>; model: string }
     expect(json.ok).toBe(true)
     expect(json.suggestions).toEqual([{ bucket: 'do-now', text: 'Write your CV' }])
+    expect(typeof json.model).toBe('string')
+    expect(json.model.length).toBeGreaterThan(0)
   })
 
   it('returns 503 when the AI client is misconfigured', async () => {
@@ -102,5 +105,20 @@ describe('/api/ai/suggest-steps POST', () => {
     const json = getJSON() as { ok: boolean; error: string }
     expect(json.ok).toBe(false)
     expect(json.error).toBe('AI is not configured')
+  })
+
+  it('returns 503 when LLM is not configured', async () => {
+    mockRunWorkflow.mockRejectedValue(new Error('LLM environment variable is not set'))
+
+    const { req, res, getStatus, getJSON } = createMockRequestResponse({
+      intentionText: 'Learn React'
+    })
+
+    await handler(req, res)
+
+    expect(getStatus()).toBe(503)
+    const json = getJSON() as { ok: boolean; error: string }
+    expect(json.ok).toBe(false)
+    expect(json.error).toBe('LLM environment variable is not set')
   })
 })

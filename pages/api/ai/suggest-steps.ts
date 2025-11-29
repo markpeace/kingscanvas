@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 
 import { debug } from '@/lib/debug'
 import { runWorkflow } from '@/lib/langgraph/workflow'
+import { getStudentPersona, type StudentPersonaId } from '@/lib/context/studentPersonas'
 
 import { authOptions } from '@/lib/auth/config'
 
@@ -12,10 +13,12 @@ type SuggestStepsRequestBody = {
   intentionBucket?: string
   historyAccepted?: string[]
   historyRejected?: string[]
+  lastSuggestion?: string
+  personaId?: StudentPersonaId
 }
 
 type SuggestStepsResponse =
-  | { ok: true; suggestions: Array<{ bucket: string; text: string }> }
+  | { ok: true; suggestions: Array<{ bucket: string; text: string }>; model: string }
   | { ok?: false; error: string }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<SuggestStepsResponse>) {
@@ -31,12 +34,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
-  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected } = req.body as SuggestStepsRequestBody
+  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected, lastSuggestion, personaId } =
+    req.body as SuggestStepsRequestBody
+
+  const persona = getStudentPersona(personaId)
 
   debug.trace('AI: suggest-steps request', {
     user: email,
     intentionId,
     intentionBucket,
+    persona: persona.shortLabel,
     acceptedCount: historyAccepted?.length || 0,
     rejectedCount: historyRejected?.length || 0
   })
@@ -46,17 +53,26 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       intentionText,
       intentionBucket,
       historyAccepted,
-      historyRejected
+      historyRejected,
+      lastSuggestion,
+      persona
     })
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []
+    const model = aiResponse?.model ?? 'unknown'
 
     debug.info('AI: suggest-steps response', {
+      model,
       count: suggestions.length,
-      example: suggestions[0]?.text || '(none)'
+      example: suggestions[0]?.text || '(none)',
+      persona: persona.shortLabel
     })
 
-    return res.status(200).json({ ok: true, suggestions })
+    return res.status(200).json({
+      ok: true,
+      suggestions,
+      model
+    })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     const context = {
@@ -70,7 +86,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(503).json({ ok: false, error: 'AI is not configured' })
     }
 
+    if (message.includes('LLM environment variable is not set')) {
+      debug.error('AI: suggest-steps misconfigured', { ...context, message })
+      return res.status(503).json({ ok: false, error: 'LLM environment variable is not set' })
+    }
+
     debug.error('AI: suggest-steps failed', { ...context, message })
-    return res.status(500).json({ ok: false, error: 'AI generation failed' })
+    return res.status(500).json({ ok: false, error: message })
   }
 }

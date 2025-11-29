@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { StudentPersonaProvider, useStudentPersona } from '@/context/StudentPersonaContext'
 import { useUser } from '@/context/UserContext'
 import {
   DndContext,
@@ -23,6 +24,7 @@ import type { BucketId, Intention, Step } from '@/types/canvas'
 import { concertinaSteps } from '@/lib/steps'
 import useAutosave from '@/hooks/useAutosave'
 import SaveStatus from '@/components/Canvas/SaveStatus'
+import StudentPersonaSelector from '@/components/StudentPersonaSelector'
 
 const DEFAULT_BUCKET: BucketId = 'do-now'
 
@@ -181,8 +183,9 @@ function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
   })
 }
 
-export function Canvas() {
+function CanvasContent() {
   const { user, status } = useUser()
+  const { personaId } = useStudentPersona()
   const [intentions, setIntentions] = useState<Intention[]>([])
   const [loadingIntentions, setLoadingIntentions] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -873,7 +876,40 @@ export function Canvas() {
 
       try {
         type SuggestionEntry = { _id?: string; text?: string }
-        type SuggestionResponse = { suggestions?: SuggestionEntry[]; error?: string }
+        type SuggestionResponse = {
+          suggestions?: SuggestionEntry[]
+          error?: string
+          model?: string
+        }
+
+        const lastSuggestedStep = intention.steps
+          .filter(
+            (step) =>
+              step.bucket === bucket &&
+              step.source === 'ai' &&
+              step.status === 'suggested' &&
+              typeof (step.text ?? step.title) === 'string'
+          )
+          .reduce<Step | undefined>((latest, step) => {
+            if (!latest) return step
+
+            const latestTimestamp = latest.createdAt ? new Date(latest.createdAt).getTime() : -Infinity
+            const stepTimestamp = step.createdAt ? new Date(step.createdAt).getTime() : -Infinity
+
+            if (stepTimestamp !== latestTimestamp) {
+              return stepTimestamp > latestTimestamp ? step : latest
+            }
+
+            const latestOrder = typeof latest.order === 'number' ? latest.order : -Infinity
+            const stepOrder = typeof step.order === 'number' ? step.order : -Infinity
+
+            return stepOrder >= latestOrder ? step : latest
+          }, undefined)
+
+        const lastSuggestionText =
+          (lastSuggestedStep?.text || lastSuggestedStep?.title)?.trim().length
+            ? (lastSuggestedStep?.text || lastSuggestedStep?.title)
+            : undefined
 
         const aiRes = await fetch('/api/ai/suggest-steps', {
           method: 'POST',
@@ -883,7 +919,9 @@ export function Canvas() {
             intentionText: intention.title,
             intentionBucket: bucket,
             historyAccepted: history.accepted,
-            historyRejected: history.rejected
+            historyRejected: history.rejected,
+            lastSuggestion: lastSuggestionText,
+            personaId
           })
         })
 
@@ -897,8 +935,10 @@ export function Canvas() {
 
         const suggestions = Array.isArray(data?.suggestions) ? data.suggestions : []
         const suggestion = suggestions[0]
+        const model = data?.model
 
         debug.info('Canvas: AI on-demand suggestion received', {
+          model: model || null,
           text: suggestion?.text || null
         })
 
@@ -1037,7 +1077,7 @@ export function Canvas() {
         )
       }
     },
-    [getIntentionForBucket, user]
+    [getIntentionForBucket, personaId, user]
   )
 
   const mapBucketIdToDistributionBucket = useCallback((bucket: BucketId): DistributionBucket => {
@@ -1139,18 +1179,22 @@ export function Canvas() {
                 intentionText: intention.title,
                 intentionBucket: targetBucket,
                 historyAccepted: [],
-                historyRejected: []
+                historyRejected: [],
+                personaId
               })
             })
 
-            const data = await res.json()
+            const data: { suggestions?: Array<{ _id?: string; text?: string }>; model?: string } =
+              await res.json()
             if (!res.ok || !data.suggestions?.length) {
               throw new Error('No suggestion returned')
             }
 
             suggestion = data.suggestions[0]
+            const model = data?.model
 
             debug.info('Suggestion received', {
+              model: model ?? null,
               intentionId: intention.id,
               bucket: targetBucket,
               preview: suggestion?.text?.slice(0, 80)
@@ -1287,7 +1331,7 @@ export function Canvas() {
 
       debug.info('Distribution complete', { intentionId: intention.id })
     },
-    [mapBucketIdToDistributionBucket, mapDistributionBucketToBucketId, userEmail]
+    [mapBucketIdToDistributionBucket, mapDistributionBucketToBucketId, personaId, userEmail]
   )
 
   const handleAddIntention = useCallback(
@@ -1552,7 +1596,8 @@ export function Canvas() {
       intentionText: 'Become a teacher',
       intentionBucket: 'after-graduation',
       historyAccepted: ['Apply for PGCE'],
-      historyRejected: ['Volunteer in a school']
+      historyRejected: ['Volunteer in a school'],
+      personaId
     }
 
     debug.trace('Canvas: manual AI suggestion test triggered', payload)
@@ -1578,7 +1623,7 @@ export function Canvas() {
       debug.error('Canvas: AI suggestion test errored', { message })
       alert('Unable to fetch AI suggestions')
     }
-  }, [])
+  }, [personaId])
 
   if (status === 'loading') {
     return <p>Loading…</p>
@@ -1614,7 +1659,10 @@ export function Canvas() {
           <header className="mb-12">
             {/* Title + Button Row */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
+              <div className="flex flex-col gap-3">
+                <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
+                <StudentPersonaSelector />
+              </div>
               <button
                 onClick={(event) => {
                   addIntentionTriggerRef.current = event.currentTarget
@@ -1684,6 +1732,14 @@ export function Canvas() {
         </div>
       ) : null}
     </>
+  )
+}
+
+export function Canvas() {
+  return (
+    <StudentPersonaProvider>
+      <CanvasContent />
+    </StudentPersonaProvider>
   )
 }
 

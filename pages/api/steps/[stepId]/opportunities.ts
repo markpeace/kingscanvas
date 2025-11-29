@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
+import { STUDENT_PERSONAS, getStudentPersona, type StudentPersonaId } from "@/lib/context/studentPersonas"
 import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
 import { getOpportunitiesByStep } from "@/lib/userData"
@@ -52,7 +53,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(400).json({ ok: false, error: "Missing step id" })
   }
 
-  debug.trace("Opportunities API: fetch", { user: email, stepId: requestedStepId })
+  const personaIdParam = req.query.personaId
+  const personaId = Array.isArray(personaIdParam) ? personaIdParam[0] : personaIdParam
+  const resolvedPersonaId =
+    typeof personaId === "string" && STUDENT_PERSONAS.some((persona) => persona.id === personaId)
+      ? (personaId as StudentPersonaId)
+      : undefined
+  const persona = getStudentPersona(resolvedPersonaId)
+
+  debug.trace("Opportunities API: fetch", {
+    user: email,
+    stepId: requestedStepId,
+    persona: persona.shortLabel
+  })
 
   try {
     const step = await findStepById(requestedStepId)
@@ -84,7 +97,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     if (opportunities.length > 0) {
       debug.debug("Opportunities API: returning existing opportunities", {
         stepId: canonicalStepId,
-        count: opportunities.length
+        count: opportunities.length,
+        persona: persona.shortLabel
       })
       return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
     }
@@ -92,10 +106,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     let generated: Opportunity[] = []
 
     try {
-      generated = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "lazy-fetch" })
+      generated = await generateOpportunitiesForStep({
+        stepId: canonicalStepId,
+        origin: "lazy-fetch",
+        persona
+      })
       debug.info("Opportunities API: generated on demand", {
         stepId: canonicalStepId,
-        count: generated.length
+        count: generated.length,
+        persona: persona.shortLabel
       })
     } catch (error) {
       debug.error("Opportunities API: on-demand generation failed", {
