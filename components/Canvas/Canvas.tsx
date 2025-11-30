@@ -1722,7 +1722,7 @@ function CanvasContent() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex flex-col gap-3">
                 <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
-                <div ref={personaSelectorRef}>
+                <div ref={personaSelectorRef} tabIndex={-1}>
                   <StudentPersonaSelector />
                   <button
                     type="button"
