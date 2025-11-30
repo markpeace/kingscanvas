@@ -191,6 +191,7 @@ function CanvasContent() {
   const {
     activeStepId,
     skippedAll,
+    isHydrated,
     isStepCompleted,
     showStep,
     completeStep,
@@ -225,8 +226,8 @@ function CanvasContent() {
   const userEmail = user?.email ?? 'test@test.com'
 
   useEffect(() => {
-    setTutorialReady(true)
-  }, [])
+    setTutorialReady(isHydrated)
+  }, [isHydrated])
 
   useEffect(() => {
     if (!tutorialReady || activeStepId || hasShownPersonaIntro) {

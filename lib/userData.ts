@@ -3,6 +3,7 @@ import type { Document, InsertManyResult, WithId } from "mongodb";
 
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
+import type { TutorialState } from "./tutorial/state";
 import type { Opportunity } from "@/types/canvas";
 
 type OpportunityDocument = {
@@ -20,6 +21,15 @@ type OpportunityDocument = {
 };
 
 export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "createdAt" | "updatedAt">;
+
+type UserIntentionsDocument = {
+  _id?: ObjectId;
+  user: string;
+  intentions?: any[];
+  tutorialState?: TutorialState;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
 
 type StepDocument = Document & {
   _id?: string | ObjectId;
@@ -62,7 +72,7 @@ function mapOpportunity(doc: OpportunityDocument): Opportunity {
  * Fetch intentions for a given user.
  */
 export async function getUserIntentions(email: string) {
-  const col = await getCollection("intentions");
+  const col = await getCollection<UserIntentionsDocument>("intentions");
   debug.trace("MongoDB: fetching intentions", { user: email });
   const doc = await col.findOne({ user: email });
   debug.info("MongoDB: fetch complete", { found: !!doc });
@@ -73,7 +83,7 @@ export async function getUserIntentions(email: string) {
  * Save or update intentions for a given user.
  */
 export async function saveUserIntentions(email: string, data: any) {
-  const col = await getCollection("intentions");
+  const col = await getCollection<UserIntentionsDocument>("intentions");
   debug.trace("MongoDB: upserting intentions", {
     user: email,
     keys: Object.keys(data || {}),
@@ -88,6 +98,26 @@ export async function saveUserIntentions(email: string, data: any) {
     modified: result.modifiedCount,
     upserted: result.upsertedId,
   });
+}
+
+export async function getUserTutorialState(email: string): Promise<TutorialState | undefined> {
+  const col = await getCollection<UserIntentionsDocument>("intentions");
+  debug.trace("MongoDB: fetching tutorial state", { user: email });
+  const doc = await col.findOne({ user: email }, { projection: { tutorialState: 1 } });
+  debug.info("MongoDB: tutorial state fetch complete", { found: !!doc?.tutorialState });
+  return doc?.tutorialState;
+}
+
+export async function saveUserTutorialState(email: string, tutorialState: TutorialState) {
+  const col = await getCollection<UserIntentionsDocument>("intentions");
+  debug.trace("MongoDB: updating tutorial state", { user: email });
+  const result = await col.updateOne(
+    { user: email },
+    { $set: { tutorialState, updatedAt: new Date() } },
+    { upsert: true }
+  );
+  debug.info("MongoDB: tutorial state update result", { matched: result.matchedCount });
+  return result;
 }
 
 /**
