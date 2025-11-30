@@ -320,6 +320,7 @@ export function StepOpportunitiesModal({
             <div
               id={descriptionId}
               ref={opportunitiesListRef}
+              tabIndex={-1}
               className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-6 pb-6 pt-2 text-left text-sm text-kings-black"
             >
               {showInitialError ? (
@@ -345,6 +346,7 @@ export function StepOpportunitiesModal({
           }}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('opportunities_intro')}
+          dimBackground={false}
         />
       ) : null}
       {shouldShowOpportunitiesShuffleCallout ? (
@@ -354,6 +356,7 @@ export function StepOpportunitiesModal({
           onNext={() => completeStep('opportunities_shuffle')}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('opportunities_shuffle')}
+          dimBackground={false}
         />
       ) : null}
     </>
