@@ -1,7 +1,14 @@
 'use client';
 
 import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useRef, useState, type CSSProperties, type MouseEvent, type RefObject } from 'react';
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type MutableRefObject,
+  type RefObject
+} from 'react';
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal';
 import { IntentionCard } from '@/components/Canvas/IntentionCard';
@@ -33,7 +40,7 @@ type IntentionRowProps = {
   ghostStyle?: CSSProperties;
   stepsCalloutRef?: RefObject<HTMLElement>;
   trashTutorialRef?: RefObject<HTMLDivElement>;
-  addStepTutorialRef?: RefObject<HTMLButtonElement | null>;
+  addStepTutorialRef?: MutableRefObject<HTMLButtonElement | null>;
 };
 
 type BucketColumnProps = {
@@ -54,7 +61,7 @@ type BucketColumnProps = {
   onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
   ghostStyle?: CSSProperties;
-  addStepTutorialRef?: RefObject<HTMLButtonElement | null>;
+  addStepTutorialRef?: MutableRefObject<HTMLButtonElement | null>;
 };
 
 function BucketColumn({
@@ -137,11 +144,7 @@ function BucketColumn({
             className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             onClick={(event) => onAddStepClick(event)}
             type="button"
-            ref={addStepTutorialRef ? (node) => {
-              if (node && !addStepTutorialRef.current) {
-                addStepTutorialRef.current = node;
-              }
-            } : undefined}
+            ref={addStepTutorialRef}
           >
             + Add Step
           </button>
