@@ -1,6 +1,15 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState, useId, type KeyboardEvent as ReactKeyboardEvent } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useId,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type MouseEvent as ReactMouseEvent
+} from "react"
 import { createPortal } from "react-dom"
 
 import { getTutorialMessage, type TutorialMessageId } from "@/lib/tutorial/messages"
@@ -120,6 +129,10 @@ export function TutorialCallout({
     }
   }, [position])
 
+  const stopPointerPropagation = useCallback((event: ReactMouseEvent) => {
+    event.stopPropagation()
+  }, [])
+
   const handleNext = () => {
     onNext()
     returnFocusToAnchor()
@@ -150,7 +163,7 @@ export function TutorialCallout({
   const calloutContent = (
     <div className="pointer-events-none fixed inset-0 z-[60]">
       {dimBackground ? (
-        <div className="absolute inset-0 bg-black/40" aria-hidden="true" />
+        <div className="pointer-events-none absolute inset-0 bg-black/40" aria-hidden="true" />
       ) : null}
       <div
         ref={calloutRef}
@@ -161,6 +174,9 @@ export function TutorialCallout({
         className="pointer-events-auto absolute w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-white p-4 shadow-xl ring-1 ring-black/5"
         style={{ top: `${position.top}px`, left: `${position.left}px` }}
         onKeyDown={handleKeyDown}
+        onClick={stopPointerPropagation}
+        onMouseDown={stopPointerPropagation}
+        onMouseUp={stopPointerPropagation}
       >
         <div className="flex flex-col gap-3">
           <h2 id={headingId} className="text-base font-semibold text-kings-black">
@@ -174,21 +190,30 @@ export function TutorialCallout({
               ref={nextButtonRef}
               type="button"
               className="rounded-md bg-kings-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-kings-red/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onClick={handleNext}
+              onClick={(event) => {
+                stopPointerPropagation(event)
+                handleNext()
+              }}
             >
               Next
             </button>
             <button
               type="button"
               className="rounded-md border border-kings-grey-light px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onClick={handleSkipAll}
+              onClick={(event) => {
+                stopPointerPropagation(event)
+                handleSkipAll()
+              }}
             >
               Skip all tips
             </button>
             <button
               type="button"
               className="rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onClick={handleRemindLater}
+              onClick={(event) => {
+                stopPointerPropagation(event)
+                handleRemindLater()
+              }}
             >
               Remind me later
             </button>

@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +15,8 @@ import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+import { TutorialCallout } from '@/components/tutorial/TutorialCallout'
+import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
@@ -41,10 +44,22 @@ type StepOpportunitiesSectionProps = {
   stepTitle: string
 }
 
+let hasTriggeredOpportunitiesAutogenTipThisSession = false
+
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const prevLoadingRef = useRef(false)
   const { personaId } = useStudentPersona()
+  const {
+    activeStepId,
+    completeStep,
+    dismissStep,
+    skipAll,
+    showStep,
+    isStepCompleted,
+    skippedAll
+  } = useTutorial()
   const {
     opportunities,
     isLoading: opportunitiesLoading,
@@ -78,6 +93,36 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     }
   }
 
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current
+    const isLoadingNow = opportunitiesLoading
+    prevLoadingRef.current = isLoadingNow
+
+    if (!isLoadingNow || wasLoading) {
+      return
+    }
+
+    if (hasTriggeredOpportunitiesAutogenTipThisSession) {
+      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'already triggered this session' })
+      return
+    }
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
+      return
+    }
+
+    hasTriggeredOpportunitiesAutogenTipThisSession = true
+    logTutorialDebug('opportunities_autogenerating showStep')
+    showStep('opportunities_autogenerating')
+  }, [isStepCompleted, opportunitiesLoading, showStep, skippedAll])
+
+  const shouldShowOpportunitiesAutogeneratingCallout =
+    !skippedAll &&
+    activeStepId === 'opportunities_autogenerating' &&
+    !isStepCompleted('opportunities_autogenerating') &&
+    Boolean(opportunitiesTriggerRef.current)
+
   return (
     <>
       <div className="absolute top-0 right-0 translate-x-[40%] -translate-y-[40%] z-10">
@@ -102,6 +147,17 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
           {badgeContent}
         </button>
       </div>
+
+      {shouldShowOpportunitiesAutogeneratingCallout ? (
+        <TutorialCallout
+          stepId="opportunities_autogenerating"
+          targetRef={opportunitiesTriggerRef}
+          onNext={() => completeStep('opportunities_autogenerating')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_autogenerating')}
+          dimBackground={false}
+        />
+      ) : null}
 
       <StepOpportunitiesModal
         stepId={stepId}

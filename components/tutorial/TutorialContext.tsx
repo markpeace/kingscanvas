@@ -5,6 +5,20 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 import { tutorialMessageIdList, type TutorialMessageId } from "@/lib/tutorial/messages"
 import type { TutorialState } from "@/lib/tutorial/state"
 
+const introSequence: TutorialMessageId[] = [
+  "canvas_intro_1",
+  "canvas_intro_2",
+  "canvas_intro_3",
+  "persona_intro"
+]
+const canvasIntroIds: TutorialMessageId[] = ["canvas_intro_1", "canvas_intro_2", "canvas_intro_3"]
+
+export function logTutorialDebug(message: string, payload?: unknown) {
+  if (process.env.NODE_ENV !== "development") return
+  // eslint-disable-next-line no-console
+  console.debug("[tutorial]", message, payload)
+}
+
 export type TutorialContextValue = {
   activeStepId: TutorialMessageId | null
   skippedAll: boolean
@@ -41,8 +55,21 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const firstIncompleteStep = tutorialMessageIdList.find((id) => !nextCompletedSteps.has(id)) ?? null
-    setActiveStepId(firstIncompleteStep)
+    const hasCompletedAnyStep = nextCompletedSteps.size > 0
+    const hasStartedCanvasIntro = canvasIntroIds.some((id) => nextCompletedSteps.has(id))
+
+    if (!hasCompletedAnyStep) {
+      setActiveStepId("canvas_intro_1")
+      return
+    }
+
+    if (hasStartedCanvasIntro) {
+      const nextSequenceStep = introSequence.find((id) => !nextCompletedSteps.has(id)) ?? null
+      setActiveStepId(nextSequenceStep)
+      return
+    }
+
+    setActiveStepId(null)
   }, [])
 
   useEffect(() => {
@@ -89,25 +116,49 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   const showStep = useCallback(
     (id: TutorialMessageId) => {
-      if (skippedAll) {
+      logTutorialDebug("showStep called", { id, skippedAll, activeStepId })
+
+      if (skippedAll || completedSteps.has(id)) {
+        logTutorialDebug("showStep blocked", { id, reason: "skippedAll or completed" })
         return
       }
 
+      logTutorialDebug("showStep activating", { id })
       setActiveStepId(id)
     },
-    [skippedAll]
+    [activeStepId, completedSteps, skippedAll]
   )
 
-  const completeStep = useCallback((id: TutorialMessageId) => {
-    setCompletedSteps((prev) => {
-      const updated = new Set(prev)
-      updated.add(id)
-      return updated
-    })
+  const completeStep = useCallback(
+    (id: TutorialMessageId) => {
+      setCompletedSteps((prev) => {
+        const updated = new Set(prev)
+        updated.add(id)
 
-    setActiveStepId((current) => (current === id ? null : current))
-    persistState({ action: "completeStep", stepId: id })
-  }, [persistState])
+        setActiveStepId((current) => {
+          if (current !== id) {
+            return current
+          }
+
+          if (skippedAll) {
+            return null
+          }
+
+          const nextSequenceStep = introSequence.includes(id)
+            ? introSequence.find((stepId) => !updated.has(stepId)) ?? null
+            : null
+
+          return nextSequenceStep ?? null
+        })
+
+        return updated
+      })
+
+      persistState({ action: "completeStep", stepId: id })
+      logTutorialDebug("completeStep", { id })
+    },
+    [persistState, skippedAll]
+  )
 
   const dismissStep = useCallback(
     (id: TutorialMessageId) => {
@@ -126,8 +177,9 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   const resetTutorial = useCallback(() => {
     setCompletedSteps(new Set())
     setSkippedAll(false)
-    setActiveStepId("persona_intro")
+    setActiveStepId("canvas_intro_1")
     persistState({ action: "resetAll" })
+    logTutorialDebug("resetTutorial")
   }, [persistState])
 
   const isStepCompleted = useCallback(

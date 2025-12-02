@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEv
 import { createPortal } from 'react-dom'
 
 import TutorialCallout from '@/components/tutorial/TutorialCallout'
-import { useTutorial } from '@/components/tutorial/TutorialContext'
+import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
@@ -125,18 +125,28 @@ export function StepOpportunitiesModal({
   }, [isOpen])
 
   useEffect(() => {
-    if (
-      !isOpen ||
-      !hasOpportunities ||
-      skippedAll ||
-      isStepCompleted('opportunities_intro') ||
-      activeStepId !== null
-    ) {
+    if (!isOpen) {
       return
     }
 
+    if (!hasOpportunities) {
+      logTutorialDebug('opportunities_intro blocked', { reason: 'no opportunities' })
+      return
+    }
+
+    if (skippedAll) {
+      logTutorialDebug('opportunities_intro blocked', { reason: 'skippedAll' })
+      return
+    }
+
+    if (isStepCompleted('opportunities_intro')) {
+      logTutorialDebug('opportunities_intro blocked', { reason: 'already completed' })
+      return
+    }
+
+    logTutorialDebug('opportunities_intro showStep')
     showStep('opportunities_intro')
-  }, [activeStepId, hasOpportunities, isOpen, isStepCompleted, showStep, skippedAll])
+  }, [hasOpportunities, isOpen, isStepCompleted, showStep, skippedAll])
 
   if (!isOpen) {
     return null
