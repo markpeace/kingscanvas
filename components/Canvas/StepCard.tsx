@@ -49,7 +49,6 @@ let opportunitiesAutogenTipOwnerStepId: string | null = null
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
-  const prevLoadingRef = useRef(false)
   const { personaId } = useStudentPersona()
   const {
     activeStepId,
@@ -95,11 +94,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
   }
 
   useEffect(() => {
-    const wasLoading = prevLoadingRef.current
-    const isLoadingNow = isLoadingEarVisible
-    prevLoadingRef.current = isLoadingNow
-
-    if (!isLoadingNow || wasLoading) {
+    if (!isLoadingEarVisible) {
       return
     }
 
@@ -116,11 +111,10 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       return
     }
 
-    logTutorialDebug('opportunities_autogenerating ear appeared', {
+    logTutorialDebug('opportunities_autogenerating ear visible', {
       owner: opportunitiesAutogenTipOwnerStepId,
       skippedAll,
-      completed: isStepCompleted('opportunities_autogenerating'),
-      activeStepId
+      completed: isStepCompleted('opportunities_autogenerating')
     })
 
     if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
@@ -130,7 +124,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
     logTutorialDebug('opportunities_autogenerating showStep', { stepId })
     showStep('opportunities_autogenerating')
-  }, [activeStepId, isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
+  }, [isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
 
   const shouldShowOpportunitiesAutogeneratingCallout =
     !skippedAll &&
