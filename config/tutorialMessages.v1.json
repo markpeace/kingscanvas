@@ -23,10 +23,6 @@
     "headline": "We are generating steps for this intention",
     "body": "You will see suggested steps appear here. You can accept, edit, or reject them, and you can always add your own steps as well."
   },
-  "opportunity_generation_started": {
-    "headline": "We are looking for opportunities",
-    "body": "For this step we will now generate possible opportunities you could explore. You can keep working while this runs in the background."
-  },
   "opportunities_intro": {
     "headline": "Here are ways to move this step forward",
     "body": "These are simulated King's Edge style and independent opportunities that match this step. You can scan them for ideas and adapt them to your situation."

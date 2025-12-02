@@ -74,7 +74,6 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     ? 'Could not load opportunities'
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
   const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
-  const previousLoadingRef = useRef(false)
   const previousCountRef = useRef(opportunitiesCount)
 
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
@@ -95,25 +94,6 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       opportunitiesTriggerRef.current?.focus()
     }
   }
-
-  useEffect(() => {
-    const wasLoading = previousLoadingRef.current
-    const isLoadingNow = opportunitiesLoading
-
-    if (
-      tutorialReady &&
-      !skippedAll &&
-      !isStepCompleted('opportunity_generation_started') &&
-      activeStepId === null &&
-      !wasLoading &&
-      isLoadingNow &&
-      opportunitiesTriggerRef.current
-    ) {
-      showStep('opportunity_generation_started')
-    }
-
-    previousLoadingRef.current = isLoadingNow
-  }, [activeStepId, isStepCompleted, opportunitiesLoading, showStep, skippedAll, tutorialReady])
 
   useEffect(() => {
     const previousCount = previousCountRef.current
@@ -168,20 +148,6 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
         error={opportunitiesError}
         refetch={refetch}
       />
-      {tutorialReady &&
-        !skippedAll &&
-        activeStepId === 'opportunity_generation_started' &&
-        !isStepCompleted('opportunity_generation_started') &&
-        opportunitiesTriggerRef.current ? (
-        <TutorialCallout
-          targetRef={opportunitiesTriggerRef}
-          stepId="opportunity_generation_started"
-          onNext={() => completeStep('opportunity_generation_started')}
-          onSkipAll={skipAll}
-          onRemindLater={() => dismissStep('opportunity_generation_started')}
-          dimBackground={false}
-        />
-      ) : null}
       {tutorialReady &&
         !skippedAll &&
         activeStepId === 'click_opportunity_dot' &&
