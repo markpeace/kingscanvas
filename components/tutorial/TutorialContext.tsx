@@ -9,8 +9,7 @@ const introSequence: TutorialMessageId[] = [
   "canvas_intro_1",
   "canvas_intro_2",
   "canvas_intro_3",
-  "persona_intro",
-  "first_intention"
+  "persona_intro"
 ]
 const canvasIntroIds: TutorialMessageId[] = ["canvas_intro_1", "canvas_intro_2", "canvas_intro_3"]
 
