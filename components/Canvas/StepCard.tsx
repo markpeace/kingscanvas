@@ -198,15 +198,17 @@ export function StepCard({
   onReject,
   ghostStyle
 }: StepCardProps) {
+  const { activeStepId } = useTutorial();
   const isGhost = step.status === 'ghost';
   const isSuggested = step.status === 'suggested';
   const persistedStepId = resolvePersistedStepId(step);
   const isEligibleForOpportunities = isStepEligibleForOpportunities(step);
   const shouldRenderOpportunities = Boolean(isEligibleForOpportunities && persistedStepId);
+  const dragDisabledByTutorial = activeStepId === 'opportunities_autogenerating';
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: step.clientId,
     data: { type: 'step', step },
-    disabled: isGhost,
+    disabled: isGhost || dragDisabledByTutorial,
   });
   const { active } = useDndContext();
   const [data, setData] = useState(step);
