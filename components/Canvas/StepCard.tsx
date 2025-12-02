@@ -68,7 +68,8 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
   } = useOpportunities(stepId, personaId)
 
   const opportunitiesCount = opportunities.length
-  const isBusy = opportunitiesLoading
+  const isLoadingEarVisible = opportunitiesLoading
+  const isBusy = isLoadingEarVisible
   const badgeContent = isBusy ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString()
   const badgeLabel = isBusy
     ? 'Loading opportunities'
@@ -95,12 +96,19 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   useEffect(() => {
     const wasLoading = prevLoadingRef.current
-    const isLoadingNow = opportunitiesLoading
+    const isLoadingNow = isLoadingEarVisible
     prevLoadingRef.current = isLoadingNow
 
     if (!isLoadingNow || wasLoading) {
       return
     }
+
+    logTutorialDebug("opportunities_autogenerating ear appeared", {
+      hasTriggeredOpportunitiesAutogenTipThisSession,
+      skippedAll,
+      completed: isStepCompleted("opportunities_autogenerating"),
+      activeStepId
+    })
 
     if (hasTriggeredOpportunitiesAutogenTipThisSession) {
       logTutorialDebug('opportunities_autogenerating blocked', { reason: 'already triggered this session' })
@@ -115,7 +123,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     hasTriggeredOpportunitiesAutogenTipThisSession = true
     logTutorialDebug('opportunities_autogenerating showStep')
     showStep('opportunities_autogenerating')
-  }, [isStepCompleted, opportunitiesLoading, showStep, skippedAll])
+  }, [activeStepId, isLoadingEarVisible, isStepCompleted, showStep, skippedAll])
 
   const shouldShowOpportunitiesAutogeneratingCallout =
     !skippedAll &&
