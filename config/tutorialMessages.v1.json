@@ -34,9 +34,5 @@
   "delete_steps_and_intentions": {
     "headline": "You can remove steps or intentions",
     "body": "If a step or intention is no longer useful, you can delete it. Use the delete controls or drag items to the bin so your Canvas stays focused."
-  },
-  "click_opportunity_dot": {
-    "headline": "You have new opportunities to review",
-    "body": "The red dot shows that new opportunities are ready for this step. Click it to open them and see what might be a good fit."
   }
 }

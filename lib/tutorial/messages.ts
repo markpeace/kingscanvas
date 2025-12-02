@@ -10,7 +10,6 @@ export type TutorialMessageId =
   | "opportunities_intro"
   | "opportunities_shuffle"
   | "delete_steps_and_intentions"
-  | "click_opportunity_dot"
 
 export type TutorialMessage = {
   id: TutorialMessageId
@@ -30,8 +29,7 @@ const tutorialMessageIds = [
   "steps_and_suggestions",
   "opportunities_intro",
   "opportunities_shuffle",
-  "delete_steps_and_intentions",
-  "click_opportunity_dot"
+  "delete_steps_and_intentions"
 ] as const satisfies TutorialMessageId[]
 
 const isProduction = process.env.NODE_ENV === "production"
