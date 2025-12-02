@@ -1,14 +1,30 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, type ChangeEvent } from 'react'
 
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { STUDENT_PERSONAS } from '@/lib/context/studentPersonas'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 
 export function StudentPersonaSelector() {
   const { personaId, setPersonaId, persona } = useStudentPersona()
+  const { activeStepId, skippedAll, isStepCompleted, showStep } = useTutorial()
 
   const options = useMemo(() => STUDENT_PERSONAS.map((item) => ({ id: item.id, label: item.label })), [])
+
+  const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const nextPersonaId = event.target.value as typeof personaId
+    setPersonaId(nextPersonaId)
+
+    if (
+      !skippedAll &&
+      isStepCompleted('persona_intro') &&
+      !isStepCompleted('first_intention') &&
+      activeStepId === null
+    ) {
+      showStep('first_intention')
+    }
+  }
 
   return (
     <div className="flex flex-col gap-2 text-sm">
@@ -23,7 +39,7 @@ export function StudentPersonaSelector() {
         id="student-persona-select"
         className="w-full min-w-[16rem] rounded-md border border-kings-grey-light bg-white px-3 py-2 text-sm text-kings-black shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
         value={personaId}
-        onChange={(event) => setPersonaId(event.target.value as typeof personaId)}
+        onChange={handleChange}
       >
         {options.map((option) => (
           <option key={option.id} value={option.id}>

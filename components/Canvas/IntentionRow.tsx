@@ -1,7 +1,14 @@
 'use client';
 
 import { useDndContext, useDroppable } from '@dnd-kit/core';
-import { useRef, useState, type CSSProperties, type MouseEvent, type RefObject } from 'react';
+import {
+  useRef,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type MutableRefObject,
+  type RefObject
+} from 'react';
 
 import { AddStepModal } from '@/components/Canvas/AddStepModal';
 import { IntentionCard } from '@/components/Canvas/IntentionCard';
@@ -32,6 +39,8 @@ type IntentionRowProps = {
   trashSuccessType?: 'step' | 'intention' | null;
   ghostStyle?: CSSProperties;
   stepsCalloutRef?: RefObject<HTMLElement>;
+  trashTutorialRef?: RefObject<HTMLDivElement>;
+  addStepTutorialRef?: MutableRefObject<HTMLButtonElement | null>;
 };
 
 type BucketColumnProps = {
@@ -52,6 +61,7 @@ type BucketColumnProps = {
   onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
   ghostStyle?: CSSProperties;
+  addStepTutorialRef?: MutableRefObject<HTMLButtonElement | null>;
 };
 
 function BucketColumn({
@@ -72,6 +82,7 @@ function BucketColumn({
   onRejectSuggestion,
   bucketTitle,
   ghostStyle,
+  addStepTutorialRef,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -133,6 +144,7 @@ function BucketColumn({
             className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             onClick={(event) => onAddStepClick(event)}
             type="button"
+            ref={addStepTutorialRef}
           >
             + Add Step
           </button>
@@ -174,6 +186,8 @@ export function IntentionRow({
   trashSuccessType,
   ghostStyle,
   stepsCalloutRef,
+  trashTutorialRef,
+  addStepTutorialRef,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
@@ -234,7 +248,7 @@ export function IntentionRow({
           })}
         </section>
 
-        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-50">
+        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-50" ref={trashTutorialRef}>
           <TrashZone
             intentionId={intention.id}
             didDrop={trashSuccessId === intention.id ? trashSuccessType ?? null : null}

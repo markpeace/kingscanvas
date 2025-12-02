@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +15,8 @@ import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+import { TutorialCallout } from '@/components/tutorial/TutorialCallout'
+import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
@@ -41,10 +44,22 @@ type StepOpportunitiesSectionProps = {
   stepTitle: string
 }
 
+let opportunitiesAutogenTipOwnerStepId: string | null = null
+
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
+  const prevLoadingRef = useRef(false)
   const { personaId } = useStudentPersona()
+  const {
+    activeStepId,
+    completeStep,
+    dismissStep,
+    skipAll,
+    showStep,
+    isStepCompleted,
+    skippedAll
+  } = useTutorial()
   const {
     opportunities,
     isLoading: opportunitiesLoading,
@@ -53,7 +68,8 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
   } = useOpportunities(stepId, personaId)
 
   const opportunitiesCount = opportunities.length
-  const isBusy = opportunitiesLoading
+  const isLoadingEarVisible = opportunitiesLoading
+  const isBusy = isLoadingEarVisible
   const badgeContent = isBusy ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString()
   const badgeLabel = isBusy
     ? 'Loading opportunities'
@@ -77,6 +93,51 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       opportunitiesTriggerRef.current?.focus()
     }
   }
+
+  useEffect(() => {
+    const wasLoading = prevLoadingRef.current
+    const isLoadingNow = isLoadingEarVisible
+    prevLoadingRef.current = isLoadingNow
+
+    if (!isLoadingNow || wasLoading) {
+      return
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      logTutorialDebug('opportunities_autogenerating blocked', {
+        reason: 'different owner',
+        owner: opportunitiesAutogenTipOwnerStepId,
+        stepId
+      })
+      return
+    }
+
+    logTutorialDebug('opportunities_autogenerating ear appeared', {
+      owner: opportunitiesAutogenTipOwnerStepId,
+      skippedAll,
+      completed: isStepCompleted('opportunities_autogenerating'),
+      activeStepId
+    })
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
+      return
+    }
+
+    logTutorialDebug('opportunities_autogenerating showStep', { stepId })
+    showStep('opportunities_autogenerating')
+  }, [activeStepId, isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
+
+  const shouldShowOpportunitiesAutogeneratingCallout =
+    !skippedAll &&
+    opportunitiesAutogenTipOwnerStepId === stepId &&
+    activeStepId === 'opportunities_autogenerating' &&
+    !isStepCompleted('opportunities_autogenerating') &&
+    Boolean(opportunitiesTriggerRef.current)
 
   return (
     <>
@@ -102,6 +163,17 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
           {badgeContent}
         </button>
       </div>
+
+      {shouldShowOpportunitiesAutogeneratingCallout ? (
+        <TutorialCallout
+          stepId="opportunities_autogenerating"
+          targetRef={opportunitiesTriggerRef}
+          onNext={() => completeStep('opportunities_autogenerating')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_autogenerating')}
+          dimBackground={false}
+        />
+      ) : null}
 
       <StepOpportunitiesModal
         stepId={stepId}
