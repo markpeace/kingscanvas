@@ -7,8 +7,10 @@ export type TutorialMessageId =
   | "persona_intro"
   | "first_intention"
   | "steps_and_suggestions"
+  | "manual_add_step"
   | "opportunities_intro"
   | "opportunities_shuffle"
+  | "opportunities_autogenerating"
   | "delete_steps_and_intentions"
 
 export type TutorialMessage = {
@@ -27,8 +29,10 @@ const tutorialMessageIds = [
   "persona_intro",
   "first_intention",
   "steps_and_suggestions",
+  "manual_add_step",
   "opportunities_intro",
   "opportunities_shuffle",
+  "opportunities_autogenerating",
   "delete_steps_and_intentions"
 ] as const satisfies TutorialMessageId[]
 

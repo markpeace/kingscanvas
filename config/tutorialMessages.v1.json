@@ -23,6 +23,10 @@
     "headline": "We are generating steps for this intention",
     "body": "You will see suggested steps appear here. You can accept, edit, or reject them, and you can always add your own steps as well."
   },
+  "manual_add_step": {
+    "headline": "You can always add your own steps",
+    "body": "If our suggestions miss something important, use this control to add your own step to this intention."
+  },
   "opportunities_intro": {
     "headline": "Here are ways to move this step forward",
     "body": "These are simulated King's Edge style and independent opportunities that match this step. You can scan them for ideas and adapt them to your situation."
@@ -30,6 +34,10 @@
   "opportunities_shuffle": {
     "headline": "Shuffle to see different ideas",
     "body": "If these suggestions do not feel quite right, you can shuffle to see another set of opportunities for this step."
+  },
+  "opportunities_autogenerating": {
+    "headline": "We are generating opportunities for this step",
+    "body": "For this step we are now looking for possible opportunities you could explore. You can close this tip and carry on while that loads."
   },
   "delete_steps_and_intentions": {
     "headline": "You can remove steps or intentions",

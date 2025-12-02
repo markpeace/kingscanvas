@@ -214,6 +214,7 @@ function CanvasContent() {
   const personaSelectorRef = useRef<HTMLDivElement | null>(null)
   const addIntentionTriggerRef = useRef<HTMLButtonElement | null>(null)
   const stepsCalloutRef = useRef<HTMLElement | null>(null)
+  const manualAddStepRef = useRef<HTMLButtonElement | null>(null)
   const trashTutorialRef = useRef<HTMLDivElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(
@@ -1615,6 +1616,7 @@ function CanvasContent() {
           ghostStyle={ghostStyle}
           stepsCalloutRef={index === 0 ? stepsCalloutRef : undefined}
           trashTutorialRef={index === 0 ? trashTutorialRef : undefined}
+          addStepTutorialRef={index === 0 ? manualAddStepRef : undefined}
         />
       )),
     [
@@ -1631,7 +1633,8 @@ function CanvasContent() {
       stepsCalloutRef,
       trashTutorialRef,
       trashSuccessId,
-      trashSuccessType
+      trashSuccessType,
+      manualAddStepRef
     ]
   )
 
@@ -1742,6 +1745,12 @@ function CanvasContent() {
     activeStepId === 'steps_and_suggestions' &&
     !isStepCompleted('steps_and_suggestions') &&
     Boolean(stepsCalloutRef.current)
+  const shouldShowManualAddStepCallout =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'manual_add_step' &&
+    !isStepCompleted('manual_add_step') &&
+    Boolean(manualAddStepRef.current)
   const shouldShowDeleteCallout =
     tutorialReady &&
     !skippedAll &&
@@ -1877,9 +1886,24 @@ function CanvasContent() {
         <TutorialCallout
           targetRef={stepsCalloutRef}
           stepId="steps_and_suggestions"
-          onNext={() => completeStep('steps_and_suggestions')}
+          onNext={() => {
+            completeStep('steps_and_suggestions')
+            if (!skippedAll && !isStepCompleted('manual_add_step')) {
+              showStep('manual_add_step')
+            }
+          }}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('steps_and_suggestions')}
+        />
+      ) : null}
+      {shouldShowManualAddStepCallout ? (
+        <TutorialCallout
+          targetRef={manualAddStepRef}
+          stepId="manual_add_step"
+          onNext={() => completeStep('manual_add_step')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('manual_add_step')}
+          dimBackground={false}
         />
       ) : null}
       {shouldShowDeleteCallout ? (

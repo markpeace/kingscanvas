@@ -33,6 +33,7 @@ type IntentionRowProps = {
   ghostStyle?: CSSProperties;
   stepsCalloutRef?: RefObject<HTMLElement>;
   trashTutorialRef?: RefObject<HTMLDivElement>;
+  addStepTutorialRef?: RefObject<HTMLButtonElement | null>;
 };
 
 type BucketColumnProps = {
@@ -53,6 +54,7 @@ type BucketColumnProps = {
   onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
   ghostStyle?: CSSProperties;
+  addStepTutorialRef?: RefObject<HTMLButtonElement | null>;
 };
 
 function BucketColumn({
@@ -73,6 +75,7 @@ function BucketColumn({
   onRejectSuggestion,
   bucketTitle,
   ghostStyle,
+  addStepTutorialRef,
 }: BucketColumnProps) {
   const dropId = `${intention.id}:${bucketId}`;
   const { setNodeRef, isOver } = useDroppable({
@@ -134,6 +137,11 @@ function BucketColumn({
             className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             onClick={(event) => onAddStepClick(event)}
             type="button"
+            ref={addStepTutorialRef ? (node) => {
+              if (node && !addStepTutorialRef.current) {
+                addStepTutorialRef.current = node;
+              }
+            } : undefined}
           >
             + Add Step
           </button>
@@ -176,6 +184,7 @@ export function IntentionRow({
   ghostStyle,
   stepsCalloutRef,
   trashTutorialRef,
+  addStepTutorialRef,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
