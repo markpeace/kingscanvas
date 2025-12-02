@@ -131,6 +131,7 @@ export function TutorialCallout({
 
   const stopPointerPropagation = useCallback((event: ReactMouseEvent) => {
     event.stopPropagation()
+    event.preventDefault()
   }, [])
 
   const handleNext = () => {
@@ -190,6 +191,7 @@ export function TutorialCallout({
               ref={nextButtonRef}
               type="button"
               className="rounded-md bg-kings-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-kings-red/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              onMouseDown={stopPointerPropagation}
               onClick={(event) => {
                 stopPointerPropagation(event)
                 handleNext()
@@ -200,6 +202,7 @@ export function TutorialCallout({
             <button
               type="button"
               className="rounded-md border border-kings-grey-light px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              onMouseDown={stopPointerPropagation}
               onClick={(event) => {
                 stopPointerPropagation(event)
                 handleSkipAll()
@@ -210,6 +213,7 @@ export function TutorialCallout({
             <button
               type="button"
               className="rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              onMouseDown={stopPointerPropagation}
               onClick={(event) => {
                 stopPointerPropagation(event)
                 handleRemindLater()

@@ -44,7 +44,7 @@ type StepOpportunitiesSectionProps = {
   stepTitle: string
 }
 
-let hasTriggeredOpportunitiesAutogenTipThisSession = false
+let opportunitiesAutogenTipOwnerStepId: string | null = null
 
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
@@ -103,30 +103,38 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       return
     }
 
-    logTutorialDebug("opportunities_autogenerating ear appeared", {
-      hasTriggeredOpportunitiesAutogenTipThisSession,
-      skippedAll,
-      completed: isStepCompleted("opportunities_autogenerating"),
-      activeStepId
-    })
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
 
-    if (hasTriggeredOpportunitiesAutogenTipThisSession) {
-      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'already triggered this session' })
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      logTutorialDebug('opportunities_autogenerating blocked', {
+        reason: 'different owner',
+        owner: opportunitiesAutogenTipOwnerStepId,
+        stepId
+      })
       return
     }
+
+    logTutorialDebug('opportunities_autogenerating ear appeared', {
+      owner: opportunitiesAutogenTipOwnerStepId,
+      skippedAll,
+      completed: isStepCompleted('opportunities_autogenerating'),
+      activeStepId
+    })
 
     if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
       logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
       return
     }
 
-    hasTriggeredOpportunitiesAutogenTipThisSession = true
-    logTutorialDebug('opportunities_autogenerating showStep')
+    logTutorialDebug('opportunities_autogenerating showStep', { stepId })
     showStep('opportunities_autogenerating')
-  }, [activeStepId, isLoadingEarVisible, isStepCompleted, showStep, skippedAll])
+  }, [activeStepId, isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
 
   const shouldShowOpportunitiesAutogeneratingCallout =
     !skippedAll &&
+    opportunitiesAutogenTipOwnerStepId === stepId &&
     activeStepId === 'opportunities_autogenerating' &&
     !isStepCompleted('opportunities_autogenerating') &&
     Boolean(opportunitiesTriggerRef.current)
