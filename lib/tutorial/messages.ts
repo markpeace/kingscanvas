@@ -1,11 +1,17 @@
 import rawMessages from "@/config/tutorialMessages.v1.json"
 
 export type TutorialMessageId =
+  | "canvas_intro_1"
+  | "canvas_intro_2"
+  | "canvas_intro_3"
   | "persona_intro"
   | "first_intention"
   | "steps_and_suggestions"
+  | "opportunity_generation_started"
   | "opportunities_intro"
   | "opportunities_shuffle"
+  | "delete_steps_and_intentions"
+  | "click_opportunity_dot"
 
 export type TutorialMessage = {
   id: TutorialMessageId
@@ -17,11 +23,17 @@ type RawMessage = { headline: string; body: string }
 type RawMessageMap = Record<string, RawMessage>
 
 const tutorialMessageIds = [
+  "canvas_intro_1",
+  "canvas_intro_2",
+  "canvas_intro_3",
   "persona_intro",
   "first_intention",
   "steps_and_suggestions",
+  "opportunity_generation_started",
   "opportunities_intro",
-  "opportunities_shuffle"
+  "opportunities_shuffle",
+  "delete_steps_and_intentions",
+  "click_opportunity_dot"
 ] as const satisfies TutorialMessageId[]
 
 const isProduction = process.env.NODE_ENV === "production"

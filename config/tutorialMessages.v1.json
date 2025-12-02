@@ -1,4 +1,16 @@
 {
+  "canvas_intro_1": {
+    "headline": "Welcome to your King’s Canvas",
+    "body": "This is your space to map intentions, break them into steps, and connect those steps to opportunities that can move you forward."
+  },
+  "canvas_intro_2": {
+    "headline": "Intentions and steps",
+    "body": "You start with intentions like \"Get lab experience\" or \"Explore digital law\". Then you break them into concrete steps that sit in the time buckets on your Canvas."
+  },
+  "canvas_intro_3": {
+    "headline": "Buckets and time horizons",
+    "body": "Steps sit in buckets such as Do now, Do later, Before I graduate and After I graduate, so you can see what needs your attention now and what can wait."
+  },
   "persona_intro": {
     "headline": "Pick the student profile that fits you",
     "body": "Your student profile helps shape the suggestions you see. You can change it at any time using this menu."
@@ -11,6 +23,10 @@
     "headline": "We are generating steps for this intention",
     "body": "You will see suggested steps appear here. You can accept, edit, or reject them, and you can always add your own steps as well."
   },
+  "opportunity_generation_started": {
+    "headline": "We are looking for opportunities",
+    "body": "For this step we will now generate possible opportunities you could explore. You can keep working while this runs in the background."
+  },
   "opportunities_intro": {
     "headline": "Here are ways to move this step forward",
     "body": "These are simulated King's Edge style and independent opportunities that match this step. You can scan them for ideas and adapt them to your situation."
@@ -18,5 +34,13 @@
   "opportunities_shuffle": {
     "headline": "Shuffle to see different ideas",
     "body": "If these suggestions do not feel quite right, you can shuffle to see another set of opportunities for this step."
+  },
+  "delete_steps_and_intentions": {
+    "headline": "You can remove steps or intentions",
+    "body": "If a step or intention is no longer useful, you can delete it. Use the delete controls or drag items to the bin so your Canvas stays focused."
+  },
+  "click_opportunity_dot": {
+    "headline": "You have new opportunities to review",
+    "body": "The red dot shows that new opportunities are ready for this step. Click it to open them and see what might be a good fit."
   }
 }

@@ -2,6 +2,7 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +15,8 @@ import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+import TutorialCallout from '@/components/tutorial/TutorialCallout'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
@@ -51,6 +54,16 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     error: opportunitiesError,
     refetch
   } = useOpportunities(stepId, personaId)
+  const {
+    activeStepId,
+    skippedAll,
+    isHydrated: tutorialReady,
+    isStepCompleted,
+    showStep,
+    completeStep,
+    skipAll,
+    dismissStep
+  } = useTutorial()
 
   const opportunitiesCount = opportunities.length
   const isBusy = opportunitiesLoading
@@ -61,9 +74,14 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     ? 'Could not load opportunities'
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
   const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
+  const previousLoadingRef = useRef(opportunitiesLoading)
+  const previousCountRef = useRef(opportunitiesCount)
 
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
+    if (activeStepId === 'click_opportunity_dot') {
+      completeStep('click_opportunity_dot')
+    }
     setOpportunitiesOpen(true)
   }
 
@@ -77,6 +95,41 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       opportunitiesTriggerRef.current?.focus()
     }
   }
+
+  useEffect(() => {
+    const wasLoading = previousLoadingRef.current
+    if (
+      tutorialReady &&
+      !skippedAll &&
+      !isStepCompleted('opportunity_generation_started') &&
+      activeStepId === null &&
+      !wasLoading &&
+      opportunitiesLoading &&
+      opportunitiesTriggerRef.current
+    ) {
+      showStep('opportunity_generation_started')
+    }
+
+    previousLoadingRef.current = opportunitiesLoading
+  }, [activeStepId, isStepCompleted, opportunitiesLoading, showStep, skippedAll, tutorialReady])
+
+  useEffect(() => {
+    const previousCount = previousCountRef.current
+
+    if (
+      tutorialReady &&
+      !skippedAll &&
+      !isStepCompleted('click_opportunity_dot') &&
+      activeStepId === null &&
+      previousCount === 0 &&
+      opportunitiesCount > 0 &&
+      opportunitiesTriggerRef.current
+    ) {
+      showStep('click_opportunity_dot')
+    }
+
+    previousCountRef.current = opportunitiesCount
+  }, [activeStepId, isStepCompleted, opportunitiesCount, showStep, skippedAll, tutorialReady])
 
   return (
     <>
@@ -113,6 +166,34 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
         error={opportunitiesError}
         refetch={refetch}
       />
+      {tutorialReady &&
+        !skippedAll &&
+        activeStepId === 'opportunity_generation_started' &&
+        !isStepCompleted('opportunity_generation_started') &&
+        opportunitiesTriggerRef.current ? (
+        <TutorialCallout
+          targetRef={opportunitiesTriggerRef}
+          stepId="opportunity_generation_started"
+          onNext={() => completeStep('opportunity_generation_started')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunity_generation_started')}
+          dimBackground={false}
+        />
+      ) : null}
+      {tutorialReady &&
+        !skippedAll &&
+        activeStepId === 'click_opportunity_dot' &&
+        !isStepCompleted('click_opportunity_dot') &&
+        opportunitiesTriggerRef.current ? (
+        <TutorialCallout
+          targetRef={opportunitiesTriggerRef}
+          stepId="click_opportunity_dot"
+          onNext={() => completeStep('click_opportunity_dot')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('click_opportunity_dot')}
+          dimBackground={false}
+        />
+      ) : null}
     </>
   )
 }

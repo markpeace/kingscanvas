@@ -130,7 +130,7 @@ export function StepOpportunitiesModal({
       !hasOpportunities ||
       skippedAll ||
       isStepCompleted('opportunities_intro') ||
-      activeStepId !== null
+      (activeStepId !== null && activeStepId !== 'click_opportunity_dot')
     ) {
       return
     }

@@ -32,6 +32,7 @@ type IntentionRowProps = {
   trashSuccessType?: 'step' | 'intention' | null;
   ghostStyle?: CSSProperties;
   stepsCalloutRef?: RefObject<HTMLElement>;
+  trashTutorialRef?: RefObject<HTMLDivElement>;
 };
 
 type BucketColumnProps = {
@@ -174,6 +175,7 @@ export function IntentionRow({
   trashSuccessType,
   ghostStyle,
   stepsCalloutRef,
+  trashTutorialRef,
 }: IntentionRowProps) {
   const [modalBucket, setModalBucket] = useState<Step['bucket'] | null>(null);
   const { active } = useDndContext();
@@ -234,7 +236,7 @@ export function IntentionRow({
           })}
         </section>
 
-        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-50">
+        <div className="absolute top-1/2 -translate-y-1/2 right-4 z-50" ref={trashTutorialRef}>
           <TrashZone
             intentionId={intention.id}
             didDrop={trashSuccessId === intention.id ? trashSuccessType ?? null : null}

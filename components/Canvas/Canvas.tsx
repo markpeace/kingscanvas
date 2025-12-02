@@ -207,13 +207,14 @@ function CanvasContent() {
   const [trashSuccessType, setTrashSuccessType] = useState<'step' | 'intention' | null>(null)
   const [announcement, setAnnouncement] = useState('')
   const [tutorialReady, setTutorialReady] = useState(false)
-  const [hasShownPersonaIntro, setHasShownPersonaIntro] = useState(false)
   const highlightTimeoutRef = useRef<number | null>(null)
   const trashTimeoutRef = useRef<number | null>(null)
   const announcementTimeoutRef = useRef<number | null>(null)
+  const canvasIntroRef = useRef<HTMLDivElement | null>(null)
   const personaSelectorRef = useRef<HTMLDivElement | null>(null)
   const addIntentionTriggerRef = useRef<HTMLButtonElement | null>(null)
   const stepsCalloutRef = useRef<HTMLElement | null>(null)
+  const trashTutorialRef = useRef<HTMLDivElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(
     autosavePayload,
@@ -224,19 +225,15 @@ function CanvasContent() {
   const debugUiEnabled =
     process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
   const userEmail = user?.email ?? 'test@test.com'
+  const totalSteps = useMemo(
+    () => intentions.reduce((count, intention) => count + intention.steps.length, 0),
+    [intentions]
+  )
 
   useEffect(() => {
     setTutorialReady(isHydrated)
   }, [isHydrated])
 
-  useEffect(() => {
-    if (!tutorialReady || activeStepId || hasShownPersonaIntro) {
-      return
-    }
-
-    showStep('persona_intro')
-    setHasShownPersonaIntro(true)
-  }, [activeStepId, hasShownPersonaIntro, showStep, tutorialReady])
   useEffect(() => {
     return () => {
       if (highlightTimeoutRef.current) {
@@ -309,6 +306,30 @@ function CanvasContent() {
       ignore = true
     }
   }, [status])
+
+  useEffect(() => {
+    if (
+      !tutorialReady ||
+      skippedAll ||
+      isStepCompleted('delete_steps_and_intentions') ||
+      activeStepId !== null ||
+      !trashTutorialRef.current
+    ) {
+      return
+    }
+
+    if (intentions.length > 0 && totalSteps > 0) {
+      showStep('delete_steps_and_intentions')
+    }
+  }, [
+    activeStepId,
+    intentions.length,
+    isStepCompleted,
+    showStep,
+    skippedAll,
+    totalSteps,
+    tutorialReady
+  ])
 
   const triggerHighlight = useCallback((bucket: BucketId | null) => {
     if (highlightTimeoutRef.current) {
@@ -1593,6 +1614,7 @@ function CanvasContent() {
           trashSuccessType={trashSuccessType}
           ghostStyle={ghostStyle}
           stepsCalloutRef={index === 0 ? stepsCalloutRef : undefined}
+          trashTutorialRef={index === 0 ? trashTutorialRef : undefined}
         />
       )),
     [
@@ -1607,6 +1629,7 @@ function CanvasContent() {
       moveIntentionWithKeyboard,
       moveStepWithKeyboard,
       stepsCalloutRef,
+      trashTutorialRef,
       trashSuccessId,
       trashSuccessType
     ]
@@ -1683,8 +1706,30 @@ function CanvasContent() {
     return <p style={{ textAlign: 'center' }}>Loading your intentions…</p>
   }
 
+  const shouldShowCanvasIntro1 =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'canvas_intro_1' &&
+    !isStepCompleted('canvas_intro_1') &&
+    Boolean(canvasIntroRef.current)
+  const shouldShowCanvasIntro2 =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'canvas_intro_2' &&
+    !isStepCompleted('canvas_intro_2') &&
+    Boolean(canvasIntroRef.current)
+  const shouldShowCanvasIntro3 =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'canvas_intro_3' &&
+    !isStepCompleted('canvas_intro_3') &&
+    Boolean(canvasIntroRef.current)
   const shouldShowPersonaIntro =
-    tutorialReady && activeStepId === 'persona_intro' && Boolean(personaSelectorRef.current)
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'persona_intro' &&
+    !isStepCompleted('persona_intro') &&
+    Boolean(personaSelectorRef.current)
   const shouldShowFirstIntentionCallout =
     tutorialReady &&
     !skippedAll &&
@@ -1697,6 +1742,12 @@ function CanvasContent() {
     activeStepId === 'steps_and_suggestions' &&
     !isStepCompleted('steps_and_suggestions') &&
     Boolean(stepsCalloutRef.current)
+  const shouldShowDeleteCallout =
+    tutorialReady &&
+    !skippedAll &&
+    activeStepId === 'delete_steps_and_intentions' &&
+    !isStepCompleted('delete_steps_and_intentions') &&
+    Boolean(trashTutorialRef.current)
 
   return (
     <>
@@ -1717,35 +1768,27 @@ function CanvasContent() {
         </div>
         <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
           {/* HEADER GROUP */}
-          <header className="mb-12">
-            {/* Title + Button Row */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex flex-col gap-3">
-                <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
-                <div ref={personaSelectorRef} tabIndex={-1}>
+          <header ref={canvasIntroRef} className="mb-8">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <h1 className="text-2xl sm:text-3xl font-semibold text-kings-red leading-tight tracking-tight">Your Intentions</h1>
+              <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4 lg:justify-end">
+                <div ref={personaSelectorRef} tabIndex={-1} className="w-full sm:w-auto">
                   <StudentPersonaSelector />
-                  <button
-                    type="button"
-                    onClick={() => resetTutorial()}
-                    className="mt-2 text-xs text-kings-red underline underline-offset-2"
-                  >
-                    Reset tutorial tips
-                  </button>
                 </div>
+                <button
+                  ref={addIntentionTriggerRef}
+                  onClick={() => {
+                    setModalOpen(true)
+                  }}
+                  className="w-full sm:w-auto border border-kings-red text-kings-red text-sm px-3 py-2 rounded-md hover:bg-kings-red hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+                >
+                  ＋ Add Intention
+                </button>
               </div>
-              <button
-                ref={addIntentionTriggerRef}
-                onClick={() => {
-                  setModalOpen(true)
-                }}
-                className="border border-kings-red text-kings-red text-sm px-3 py-1.5 rounded-md hover:bg-kings-red hover:text-white transition-colors w-fit self-start sm:self-end sm:ml-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              >
-                ＋ Add Intention
-              </button>
             </div>
 
             {/* Column Headers */}
-            <div className="mt-6 grid grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-10 mb-2">
+            <div className="mt-4 grid grid-cols-4 gap-x-4 sm:gap-x-8 lg:gap-x-10 mb-2">
               {BUCKETS.map((b) => (
                 <div key={b.id} className="flex justify-center">
                   <span className="text-sm font-semibold uppercase tracking-[0.2em] text-kings-red/90 leading-tight text-center select-none">
@@ -1768,6 +1811,15 @@ function CanvasContent() {
             onAdd={handleAddIntention}
           />
         </main>
+        <footer className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 pb-8 text-right">
+          <button
+            type="button"
+            onClick={() => resetTutorial()}
+            className="text-sm text-kings-red underline underline-offset-2 hover:text-kings-red/80"
+          >
+            Reset tutorial tips
+          </button>
+        </footer>
         <SaveStatus
           saving={saving}
           error={error}
@@ -1775,16 +1827,38 @@ function CanvasContent() {
           retryCount={retryCount}
         />
       </DndContext>
+      {shouldShowCanvasIntro1 ? (
+        <TutorialCallout
+          targetRef={canvasIntroRef}
+          stepId="canvas_intro_1"
+          onNext={() => completeStep('canvas_intro_1')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('canvas_intro_1')}
+        />
+      ) : null}
+      {shouldShowCanvasIntro2 ? (
+        <TutorialCallout
+          targetRef={canvasIntroRef}
+          stepId="canvas_intro_2"
+          onNext={() => completeStep('canvas_intro_2')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('canvas_intro_2')}
+        />
+      ) : null}
+      {shouldShowCanvasIntro3 ? (
+        <TutorialCallout
+          targetRef={canvasIntroRef}
+          stepId="canvas_intro_3"
+          onNext={() => completeStep('canvas_intro_3')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('canvas_intro_3')}
+        />
+      ) : null}
       {shouldShowPersonaIntro ? (
         <TutorialCallout
           targetRef={personaSelectorRef}
-          stepId={activeStepId}
-          onNext={() => {
-            completeStep('persona_intro')
-            if (!skippedAll && !isStepCompleted('first_intention')) {
-              showStep('first_intention')
-            }
-          }}
+          stepId="persona_intro"
+          onNext={() => completeStep('persona_intro')}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('persona_intro')}
         />
@@ -1806,6 +1880,16 @@ function CanvasContent() {
           onNext={() => completeStep('steps_and_suggestions')}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('steps_and_suggestions')}
+        />
+      ) : null}
+      {shouldShowDeleteCallout ? (
+        <TutorialCallout
+          targetRef={trashTutorialRef}
+          stepId="delete_steps_and_intentions"
+          onNext={() => completeStep('delete_steps_and_intentions')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('delete_steps_and_intentions')}
+          dimBackground={false}
         />
       ) : null}
       {debugUiEnabled ? (
