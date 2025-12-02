@@ -74,7 +74,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     ? 'Could not load opportunities'
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
   const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
-  const previousLoadingRef = useRef(opportunitiesLoading)
+  const previousLoadingRef = useRef(false)
   const previousCountRef = useRef(opportunitiesCount)
 
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
@@ -98,19 +98,21 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   useEffect(() => {
     const wasLoading = previousLoadingRef.current
+    const isLoadingNow = opportunitiesLoading
+
     if (
       tutorialReady &&
       !skippedAll &&
       !isStepCompleted('opportunity_generation_started') &&
       activeStepId === null &&
       !wasLoading &&
-      opportunitiesLoading &&
+      isLoadingNow &&
       opportunitiesTriggerRef.current
     ) {
       showStep('opportunity_generation_started')
     }
 
-    previousLoadingRef.current = opportunitiesLoading
+    previousLoadingRef.current = isLoadingNow
   }, [activeStepId, isStepCompleted, opportunitiesLoading, showStep, skippedAll, tutorialReady])
 
   useEffect(() => {
