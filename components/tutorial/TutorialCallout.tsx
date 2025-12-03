@@ -8,7 +8,7 @@ import {
   useState,
   useId,
   type KeyboardEvent as ReactKeyboardEvent,
-  type MouseEvent as ReactMouseEvent
+  type SyntheticEvent
 } from "react"
 import { createPortal } from "react-dom"
 
@@ -129,9 +129,12 @@ export function TutorialCallout({
     }
   }, [position])
 
-  const stopPointerPropagation = useCallback((event: ReactMouseEvent) => {
+  const stopAllPointerLikeEvents = useCallback((event: SyntheticEvent) => {
     event.stopPropagation()
-    event.preventDefault()
+
+    if (typeof event.preventDefault === "function") {
+      event.preventDefault()
+    }
   }, [])
 
   const handleNext = () => {
@@ -173,11 +176,17 @@ export function TutorialCallout({
         aria-labelledby={headingId}
         aria-describedby={bodyId}
         className="pointer-events-auto absolute w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-white p-4 shadow-xl ring-1 ring-black/5"
-        style={{ top: `${position.top}px`, left: `${position.left}px` }}
+        style={{ top: `${position.top}px`, left: `${position.left}px`, touchAction: "none" }}
         onKeyDown={handleKeyDown}
-        onClick={stopPointerPropagation}
-        onMouseDown={stopPointerPropagation}
-        onMouseUp={stopPointerPropagation}
+        onPointerDown={stopAllPointerLikeEvents}
+        onPointerUp={stopAllPointerLikeEvents}
+        onPointerMove={stopAllPointerLikeEvents}
+        onMouseDown={stopAllPointerLikeEvents}
+        onMouseUp={stopAllPointerLikeEvents}
+        onClick={stopAllPointerLikeEvents}
+        onTouchStart={stopAllPointerLikeEvents}
+        onTouchEnd={stopAllPointerLikeEvents}
+        onTouchMove={stopAllPointerLikeEvents}
       >
         <div className="flex flex-col gap-3">
           <h2 id={headingId} className="text-base font-semibold text-kings-black">
@@ -191,9 +200,16 @@ export function TutorialCallout({
               ref={nextButtonRef}
               type="button"
               className="rounded-md bg-kings-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-kings-red/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onMouseDown={stopPointerPropagation}
+              onPointerDown={stopAllPointerLikeEvents}
+              onPointerUp={stopAllPointerLikeEvents}
+              onMouseDown={stopAllPointerLikeEvents}
               onClick={(event) => {
-                stopPointerPropagation(event)
+                stopAllPointerLikeEvents(event)
+                handleNext()
+              }}
+              onTouchStart={stopAllPointerLikeEvents}
+              onTouchEnd={(event) => {
+                stopAllPointerLikeEvents(event)
                 handleNext()
               }}
             >
@@ -202,9 +218,16 @@ export function TutorialCallout({
             <button
               type="button"
               className="rounded-md border border-kings-grey-light px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onMouseDown={stopPointerPropagation}
+              onPointerDown={stopAllPointerLikeEvents}
+              onPointerUp={stopAllPointerLikeEvents}
+              onMouseDown={stopAllPointerLikeEvents}
               onClick={(event) => {
-                stopPointerPropagation(event)
+                stopAllPointerLikeEvents(event)
+                handleSkipAll()
+              }}
+              onTouchStart={stopAllPointerLikeEvents}
+              onTouchEnd={(event) => {
+                stopAllPointerLikeEvents(event)
                 handleSkipAll()
               }}
             >
@@ -213,9 +236,16 @@ export function TutorialCallout({
             <button
               type="button"
               className="rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onMouseDown={stopPointerPropagation}
+              onPointerDown={stopAllPointerLikeEvents}
+              onPointerUp={stopAllPointerLikeEvents}
+              onMouseDown={stopAllPointerLikeEvents}
               onClick={(event) => {
-                stopPointerPropagation(event)
+                stopAllPointerLikeEvents(event)
+                handleRemindLater()
+              }}
+              onTouchStart={stopAllPointerLikeEvents}
+              onTouchEnd={(event) => {
+                stopAllPointerLikeEvents(event)
                 handleRemindLater()
               }}
             >

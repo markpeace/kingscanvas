@@ -13,11 +13,21 @@ type UseOpportunitiesResult = {
   refetch: () => Promise<Opportunity[]>
 }
 
-export function useOpportunities(stepId?: string | null, personaId?: StudentPersonaId): UseOpportunitiesResult {
+type UseOpportunitiesOptions = {
+  onFirstAutoGenerateStart?: () => void
+}
+
+export function useOpportunities(
+  stepId?: string | null,
+  personaId?: StudentPersonaId,
+  options?: UseOpportunitiesOptions
+): UseOpportunitiesResult {
+  const onFirstAutoGenerateStart = options?.onFirstAutoGenerateStart
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const fetchIdRef = useRef(0)
+  const hasStartedRef = useRef(false)
 
   const fetchOpportunities = useCallback(async (): Promise<Opportunity[]> => {
     if (!stepId) {
@@ -29,6 +39,14 @@ export function useOpportunities(stepId?: string | null, personaId?: StudentPers
     }
 
     const currentFetchId = ++fetchIdRef.current
+
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true
+      if (onFirstAutoGenerateStart) {
+        onFirstAutoGenerateStart()
+      }
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -88,7 +106,7 @@ export function useOpportunities(stepId?: string | null, personaId?: StudentPers
         setIsLoading(false)
       }
     }
-  }, [personaId, stepId])
+  }, [onFirstAutoGenerateStart, personaId, stepId])
 
   useEffect(() => {
     fetchOpportunities().catch(() => {

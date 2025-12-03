@@ -2,7 +2,8 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
-  useEffect,
+  useCallback,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -16,7 +17,7 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { TutorialCallout } from '@/components/tutorial/TutorialCallout'
-import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
@@ -49,7 +50,6 @@ let opportunitiesAutogenTipOwnerStepId: string | null = null
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
-  const prevLoadingRef = useRef(false)
   const { personaId } = useStudentPersona()
   const {
     activeStepId,
@@ -60,12 +60,33 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     isStepCompleted,
     skippedAll
   } = useTutorial()
+  const handleFirstAutoGenerateStart = useCallback(() => {
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      return
+    }
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      return
+    }
+
+    showStep('opportunities_autogenerating')
+  }, [isStepCompleted, showStep, skippedAll, stepId])
+
+  const opportunitiesOptions = useMemo(
+    () => ({ onFirstAutoGenerateStart: handleFirstAutoGenerateStart }),
+    [handleFirstAutoGenerateStart]
+  )
+
   const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
     refetch
-  } = useOpportunities(stepId, personaId)
+  } = useOpportunities(stepId, personaId, opportunitiesOptions)
 
   const opportunitiesCount = opportunities.length
   const isLoadingEarVisible = opportunitiesLoading
@@ -93,44 +114,6 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       opportunitiesTriggerRef.current?.focus()
     }
   }
-
-  useEffect(() => {
-    const wasLoading = prevLoadingRef.current
-    const isLoadingNow = isLoadingEarVisible
-    prevLoadingRef.current = isLoadingNow
-
-    if (!isLoadingNow || wasLoading) {
-      return
-    }
-
-    if (opportunitiesAutogenTipOwnerStepId === null) {
-      opportunitiesAutogenTipOwnerStepId = stepId
-    }
-
-    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
-      logTutorialDebug('opportunities_autogenerating blocked', {
-        reason: 'different owner',
-        owner: opportunitiesAutogenTipOwnerStepId,
-        stepId
-      })
-      return
-    }
-
-    logTutorialDebug('opportunities_autogenerating ear appeared', {
-      owner: opportunitiesAutogenTipOwnerStepId,
-      skippedAll,
-      completed: isStepCompleted('opportunities_autogenerating'),
-      activeStepId
-    })
-
-    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
-      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
-      return
-    }
-
-    logTutorialDebug('opportunities_autogenerating showStep', { stepId })
-    showStep('opportunities_autogenerating')
-  }, [activeStepId, isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
 
   const shouldShowOpportunitiesAutogeneratingCallout =
     !skippedAll &&

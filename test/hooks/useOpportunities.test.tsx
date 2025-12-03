@@ -126,4 +126,36 @@ describe('useOpportunities', () => {
     expect(result.current.error).toBeNull()
     expect(result.current.opportunities).toEqual([refreshedOpportunity])
   })
+
+  it('invokes onFirstAutoGenerateStart once when fetching begins', async () => {
+    const opportunities = [
+      {
+        id: 'opp-1',
+        stepId: 'step-123',
+        title: 'Opportunity',
+        summary: 'Summary',
+        source: 'kings-edge-simulated',
+        form: 'workshop',
+        focus: 'skills',
+        status: 'suggested'
+      }
+    ]
+
+    ;(global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ ok: true, opportunities })
+    })
+
+    const onFirstAutoGenerateStart = jest.fn()
+    const { result } = renderHook(() =>
+      useOpportunities('step-123', undefined, { onFirstAutoGenerateStart })
+    )
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    expect(onFirstAutoGenerateStart).toHaveBeenCalledTimes(1)
+  })
 })
