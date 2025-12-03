@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEv
 import { createPortal } from 'react-dom'
 
 import TutorialCallout from '@/components/tutorial/TutorialCallout'
-import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
@@ -91,6 +91,7 @@ export function StepOpportunitiesModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const opportunitiesListRef = useRef<HTMLDivElement>(null)
   const shuffleButtonRef = useRef<HTMLButtonElement>(null)
+  const hasTriggeredIntroRef = useRef(false)
   const headingId = useId()
   const descriptionId = useId()
   const [isShuffling, setIsShuffling] = useState(false)
@@ -130,21 +131,22 @@ export function StepOpportunitiesModal({
     }
 
     if (!hasOpportunities) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'no opportunities' })
       return
     }
 
     if (skippedAll) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'skippedAll' })
       return
     }
 
     if (isStepCompleted('opportunities_intro')) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'already completed' })
       return
     }
 
-    logTutorialDebug('opportunities_intro showStep')
+    if (hasTriggeredIntroRef.current) {
+      return
+    }
+
+    hasTriggeredIntroRef.current = true
     showStep('opportunities_intro')
   }, [hasOpportunities, isOpen, isStepCompleted, showStep, skippedAll])
 
