@@ -129,11 +129,6 @@ export function StepOpportunitiesModal({
       return
     }
 
-    if (!hasOpportunities) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'no opportunities' })
-      return
-    }
-
     if (skippedAll) {
       logTutorialDebug('opportunities_intro blocked', { reason: 'skippedAll' })
       return
@@ -146,7 +141,7 @@ export function StepOpportunitiesModal({
 
     logTutorialDebug('opportunities_intro showStep')
     showStep('opportunities_intro')
-  }, [hasOpportunities, isOpen, isStepCompleted, showStep, skippedAll])
+  }, [isOpen, isStepCompleted, showStep, skippedAll])
 
   if (!isOpen) {
     return null
@@ -158,7 +153,6 @@ export function StepOpportunitiesModal({
 
   const shouldShowOpportunitiesIntroCallout =
     isOpen &&
-    hasOpportunities &&
     !skippedAll &&
     activeStepId === 'opportunities_intro' &&
     !isStepCompleted('opportunities_intro') &&

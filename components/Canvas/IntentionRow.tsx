@@ -40,7 +40,7 @@ type IntentionRowProps = {
   ghostStyle?: CSSProperties;
   stepsCalloutRef?: RefObject<HTMLElement>;
   trashTutorialRef?: RefObject<HTMLDivElement>;
-  addStepTutorialRef?: MutableRefObject<HTMLButtonElement | null>;
+  addStepTutorialRef?: MutableRefObject<HTMLDivElement | null>;
 };
 
 type BucketColumnProps = {
@@ -61,7 +61,7 @@ type BucketColumnProps = {
   onRejectSuggestion: (step: Step) => void;
   bucketTitle: string;
   ghostStyle?: CSSProperties;
-  addStepTutorialRef?: MutableRefObject<HTMLButtonElement | null>;
+  addStepTutorialRef?: MutableRefObject<HTMLDivElement | null>;
 };
 
 function BucketColumn({
@@ -139,12 +139,11 @@ function BucketColumn({
       )}
 
       {isEarlier && (
-        <div className="flex flex-row items-center gap-2 mb-2 mt-auto">
+        <div ref={addStepTutorialRef} className="flex flex-row items-center gap-2 mb-2 mt-auto">
           <button
             className="text-xs underline focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
             onClick={(event) => onAddStepClick(event)}
             type="button"
-            ref={addStepTutorialRef}
           >
             + Add Step
           </button>

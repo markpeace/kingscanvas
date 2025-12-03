@@ -214,7 +214,7 @@ function CanvasContent() {
   const personaSelectorRef = useRef<HTMLDivElement | null>(null)
   const addIntentionTriggerRef = useRef<HTMLButtonElement | null>(null)
   const stepsCalloutRef = useRef<HTMLElement | null>(null)
-  const manualAddStepRef = useRef<HTMLButtonElement | null>(null)
+  const manualAddStepRef = useRef<HTMLDivElement | null>(null)
   const trashTutorialRef = useRef<HTMLDivElement | null>(null)
   const autosavePayload = useMemo(() => ({ intentions }), [intentions])
   const { saving, error, lastSavedAt, retryCount } = useAutosave(

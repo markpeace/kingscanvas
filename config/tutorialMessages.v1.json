@@ -24,12 +24,12 @@
     "body": "You will see suggested steps appear here. You can accept, edit, or reject them, and you can always add your own steps as well."
   },
   "manual_add_step": {
-    "headline": "You can always add your own steps",
-    "body": "If our suggestions miss something important, use this control to add your own step to this intention."
+    "headline": "Add or generate steps yourself",
+    "body": "If our suggestions miss something, use these controls to add a step or ask Canvas to generate more. This bar lets you shape the plan in your own words."
   },
   "opportunities_intro": {
-    "headline": "Here are ways to move this step forward",
-    "body": "These are simulated King's Edge style and independent opportunities that match this step. You can scan them for ideas and adapt them to your situation."
+    "headline": "This panel shows opportunities for this step",
+    "body": "When opportunities are available for this step, they will appear here with details and next actions. You can scan them, pick a few, or close the panel and come back later."
   },
   "opportunities_shuffle": {
     "headline": "Shuffle to see different ideas",
