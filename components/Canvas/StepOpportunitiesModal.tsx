@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEv
 import { createPortal } from 'react-dom'
 
 import TutorialCallout from '@/components/tutorial/TutorialCallout'
-import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
@@ -91,6 +91,7 @@ export function StepOpportunitiesModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const opportunitiesListRef = useRef<HTMLDivElement>(null)
   const shuffleButtonRef = useRef<HTMLButtonElement>(null)
+  const hasTriggeredIntroRef = useRef(false)
   const headingId = useId()
   const descriptionId = useId()
   const [isShuffling, setIsShuffling] = useState(false)
@@ -129,19 +130,17 @@ export function StepOpportunitiesModal({
       return
     }
 
-    if (skippedAll) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'skippedAll' })
+    if (hasTriggeredIntroRef.current) {
       return
     }
 
-    if (isStepCompleted('opportunities_intro')) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'already completed' })
+    if (skippedAll || isStepCompleted('opportunities_intro')) {
       return
     }
 
-    logTutorialDebug('opportunities_intro showStep')
+    hasTriggeredIntroRef.current = true
     showStep('opportunities_intro')
-  }, [isOpen, isStepCompleted, showStep, skippedAll])
+  }, [isOpen, skippedAll, isStepCompleted, showStep])
 
   if (!isOpen) {
     return null
@@ -152,11 +151,7 @@ export function StepOpportunitiesModal({
   const showRefreshError = Boolean(error && hasOpportunities)
 
   const shouldShowOpportunitiesIntroCallout =
-    isOpen &&
-    !skippedAll &&
-    activeStepId === 'opportunities_intro' &&
-    !isStepCompleted('opportunities_intro') &&
-    Boolean(opportunitiesListRef.current)
+    activeStepId === 'opportunities_intro' && Boolean(opportunitiesListRef.current)
 
   const shouldShowOpportunitiesShuffleCallout =
     isOpen &&
