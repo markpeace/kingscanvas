@@ -39,6 +39,10 @@
     "headline": "We are generating opportunities for this step",
     "body": "For this step we are now looking for possible opportunities you could explore. You can close this tip and carry on while that loads."
   },
+  "opportunities_ready": {
+    "headline": "Opportunities are ready to review",
+    "body": "We have found some opportunities that match this step. Use this control to open them and see what might be a good fit."
+  },
   "delete_steps_and_intentions": {
     "headline": "You can remove steps or intentions",
     "body": "If a step or intention is no longer useful, you can delete it. Use the delete controls or drag items to the bin so your Canvas stays focused."
