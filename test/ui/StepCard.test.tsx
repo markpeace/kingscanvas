@@ -72,7 +72,10 @@ describe('StepCard opportunities integration', () => {
     expect(useOpportunitiesMock).toHaveBeenCalled()
     expect(useOpportunitiesMock.mock.calls[0][0]).toBe('abc123')
     expect(useOpportunitiesMock.mock.calls[0][2]).toEqual(
-      expect.objectContaining({ onFirstAutoGenerateStart: expect.any(Function) })
+      expect.objectContaining({
+        onFirstAutoGenerateStart: expect.any(Function),
+        onFirstAutoGenerateComplete: expect.any(Function)
+      })
     )
   })
 

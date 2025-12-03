@@ -46,6 +46,7 @@ type StepOpportunitiesSectionProps = {
 }
 
 let opportunitiesAutogenTipOwnerStepId: string | null = null
+let opportunitiesReadyTipOwnerStepId: string | null = null
 
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
@@ -76,9 +77,29 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     showStep('opportunities_autogenerating')
   }, [isStepCompleted, showStep, skippedAll, stepId])
 
+  const handleFirstAutoGenerateComplete = useCallback(() => {
+    if (opportunitiesReadyTipOwnerStepId === null) {
+      opportunitiesReadyTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesReadyTipOwnerStepId !== stepId) {
+      // Another step already owns this "ready" tip
+      return
+    }
+
+    if (skippedAll || isStepCompleted('opportunities_ready')) {
+      return
+    }
+
+    showStep('opportunities_ready')
+  }, [isStepCompleted, showStep, skippedAll, stepId])
+
   const opportunitiesOptions = useMemo(
-    () => ({ onFirstAutoGenerateStart: handleFirstAutoGenerateStart }),
-    [handleFirstAutoGenerateStart]
+    () => ({
+      onFirstAutoGenerateStart: handleFirstAutoGenerateStart,
+      onFirstAutoGenerateComplete: handleFirstAutoGenerateComplete
+    }),
+    [handleFirstAutoGenerateComplete, handleFirstAutoGenerateStart]
   )
 
   const {
@@ -122,6 +143,13 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     !isStepCompleted('opportunities_autogenerating') &&
     Boolean(opportunitiesTriggerRef.current)
 
+  const shouldShowOpportunitiesReadyCallout =
+    !skippedAll &&
+    opportunitiesReadyTipOwnerStepId === stepId &&
+    activeStepId === 'opportunities_ready' &&
+    !isStepCompleted('opportunities_ready') &&
+    Boolean(opportunitiesTriggerRef.current)
+
   return (
     <>
       <div className="absolute top-0 right-0 translate-x-[40%] -translate-y-[40%] z-10">
@@ -154,6 +182,17 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
           onNext={() => completeStep('opportunities_autogenerating')}
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('opportunities_autogenerating')}
+          dimBackground={false}
+        />
+      ) : null}
+
+      {shouldShowOpportunitiesReadyCallout ? (
+        <TutorialCallout
+          stepId="opportunities_ready"
+          targetRef={opportunitiesTriggerRef}
+          onNext={() => completeStep('opportunities_ready')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_ready')}
           dimBackground={false}
         />
       ) : null}
