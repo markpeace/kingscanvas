@@ -165,7 +165,7 @@ export function TutorialCallout({
   }
 
   const calloutContent = (
-    <div className="pointer-events-none fixed inset-0 z-[60]">
+    <div className="pointer-events-none fixed inset-0 z-[200]">
       {dimBackground ? (
         <div className="pointer-events-none absolute inset-0 bg-black/40" aria-hidden="true" />
       ) : null}

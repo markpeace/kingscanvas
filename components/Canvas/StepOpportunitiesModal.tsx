@@ -153,10 +153,10 @@ export function StepOpportunitiesModal({
 
   const shouldShowOpportunitiesIntroCallout =
     isOpen &&
+    hasOpportunities &&
     !skippedAll &&
     activeStepId === 'opportunities_intro' &&
-    !isStepCompleted('opportunities_intro') &&
-    Boolean(opportunitiesListRef.current)
+    !isStepCompleted('opportunities_intro')
 
   const shouldShowOpportunitiesShuffleCallout =
     isOpen &&
