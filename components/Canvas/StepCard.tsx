@@ -2,6 +2,8 @@
 
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
+  useCallback,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +16,8 @@ import toast from 'react-hot-toast'
 
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
+import { TutorialCallout } from '@/components/tutorial/TutorialCallout'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
@@ -41,19 +45,73 @@ type StepOpportunitiesSectionProps = {
   stepTitle: string
 }
 
+let opportunitiesAutogenTipOwnerStepId: string | null = null
+let opportunitiesReadyTipOwnerStepId: string | null = null
+
 function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectionProps) {
   const [opportunitiesOpen, setOpportunitiesOpen] = useState(false)
   const opportunitiesTriggerRef = useRef<HTMLButtonElement | null>(null)
   const { personaId } = useStudentPersona()
   const {
+    activeStepId,
+    completeStep,
+    dismissStep,
+    skipAll,
+    showStep,
+    isStepCompleted,
+    skippedAll
+  } = useTutorial()
+  const handleFirstAutoGenerateStart = useCallback(() => {
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      return
+    }
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      return
+    }
+
+    showStep('opportunities_autogenerating')
+  }, [isStepCompleted, showStep, skippedAll, stepId])
+
+  const handleFirstAutoGenerateComplete = useCallback(() => {
+    if (opportunitiesReadyTipOwnerStepId === null) {
+      opportunitiesReadyTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesReadyTipOwnerStepId !== stepId) {
+      // Another step already owns this "ready" tip
+      return
+    }
+
+    if (skippedAll || isStepCompleted('opportunities_ready')) {
+      return
+    }
+
+    showStep('opportunities_ready')
+  }, [isStepCompleted, showStep, skippedAll, stepId])
+
+  const opportunitiesOptions = useMemo(
+    () => ({
+      onFirstAutoGenerateStart: handleFirstAutoGenerateStart,
+      onFirstAutoGenerateComplete: handleFirstAutoGenerateComplete
+    }),
+    [handleFirstAutoGenerateComplete, handleFirstAutoGenerateStart]
+  )
+
+  const {
     opportunities,
     isLoading: opportunitiesLoading,
     error: opportunitiesError,
     refetch
-  } = useOpportunities(stepId, personaId)
+  } = useOpportunities(stepId, personaId, opportunitiesOptions)
 
   const opportunitiesCount = opportunities.length
-  const isBusy = opportunitiesLoading
+  const isLoadingEarVisible = opportunitiesLoading
+  const isBusy = isLoadingEarVisible
   const badgeContent = isBusy ? '…' : opportunitiesError ? '!' : opportunitiesCount.toString()
   const badgeLabel = isBusy
     ? 'Loading opportunities'
@@ -77,6 +135,20 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
       opportunitiesTriggerRef.current?.focus()
     }
   }
+
+  const shouldShowOpportunitiesAutogeneratingCallout =
+    !skippedAll &&
+    opportunitiesAutogenTipOwnerStepId === stepId &&
+    activeStepId === 'opportunities_autogenerating' &&
+    !isStepCompleted('opportunities_autogenerating') &&
+    Boolean(opportunitiesTriggerRef.current)
+
+  const shouldShowOpportunitiesReadyCallout =
+    !skippedAll &&
+    opportunitiesReadyTipOwnerStepId === stepId &&
+    activeStepId === 'opportunities_ready' &&
+    !isStepCompleted('opportunities_ready') &&
+    Boolean(opportunitiesTriggerRef.current)
 
   return (
     <>
@@ -102,6 +174,28 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
           {badgeContent}
         </button>
       </div>
+
+      {shouldShowOpportunitiesAutogeneratingCallout ? (
+        <TutorialCallout
+          stepId="opportunities_autogenerating"
+          targetRef={opportunitiesTriggerRef}
+          onNext={() => completeStep('opportunities_autogenerating')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_autogenerating')}
+          dimBackground={false}
+        />
+      ) : null}
+
+      {shouldShowOpportunitiesReadyCallout ? (
+        <TutorialCallout
+          stepId="opportunities_ready"
+          targetRef={opportunitiesTriggerRef}
+          onNext={() => completeStep('opportunities_ready')}
+          onSkipAll={skipAll}
+          onRemindLater={() => dismissStep('opportunities_ready')}
+          dimBackground={false}
+        />
+      ) : null}
 
       <StepOpportunitiesModal
         stepId={stepId}

@@ -5,6 +5,7 @@ import StepCard from '@/components/Canvas/StepCard'
 import type { Step } from '@/types/canvas'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { StudentPersonaProvider } from '@/context/StudentPersonaContext'
+import { TutorialProvider } from '@/components/tutorial/TutorialContext'
 
 jest.mock('@dnd-kit/core', () => ({
   useDraggable: () => ({
@@ -29,7 +30,12 @@ describe('StepCard opportunities integration', () => {
   const useOpportunitiesMock = useOpportunities as unknown as jest.Mock
   const noop = () => {}
 
-  const renderWithPersona = (node: React.ReactNode) => render(<StudentPersonaProvider>{node}</StudentPersonaProvider>)
+  const renderWithPersona = (node: React.ReactNode) =>
+    render(
+      <TutorialProvider>
+        <StudentPersonaProvider>{node}</StudentPersonaProvider>
+      </TutorialProvider>
+    )
 
   beforeEach(() => {
     useOpportunitiesMock.mockReturnValue({
@@ -65,6 +71,12 @@ describe('StepCard opportunities integration', () => {
 
     expect(useOpportunitiesMock).toHaveBeenCalled()
     expect(useOpportunitiesMock.mock.calls[0][0]).toBe('abc123')
+    expect(useOpportunitiesMock.mock.calls[0][2]).toEqual(
+      expect.objectContaining({
+        onFirstAutoGenerateStart: expect.any(Function),
+        onFirstAutoGenerateComplete: expect.any(Function)
+      })
+    )
   })
 
   it('does not call useOpportunities when no backend id exists', () => {

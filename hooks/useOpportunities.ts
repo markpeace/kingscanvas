@@ -13,11 +13,24 @@ type UseOpportunitiesResult = {
   refetch: () => Promise<Opportunity[]>
 }
 
-export function useOpportunities(stepId?: string | null, personaId?: StudentPersonaId): UseOpportunitiesResult {
+type UseOpportunitiesOptions = {
+  onFirstAutoGenerateStart?: () => void
+  onFirstAutoGenerateComplete?: () => void
+}
+
+export function useOpportunities(
+  stepId?: string | null,
+  personaId?: StudentPersonaId,
+  options?: UseOpportunitiesOptions
+): UseOpportunitiesResult {
+  const onFirstAutoGenerateStart = options?.onFirstAutoGenerateStart
+  const onFirstAutoGenerateComplete = options?.onFirstAutoGenerateComplete
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const fetchIdRef = useRef(0)
+  const hasStartedRef = useRef(false)
+  const hasCompletedRef = useRef(false)
 
   const fetchOpportunities = useCallback(async (): Promise<Opportunity[]> => {
     if (!stepId) {
@@ -29,6 +42,14 @@ export function useOpportunities(stepId?: string | null, personaId?: StudentPers
     }
 
     const currentFetchId = ++fetchIdRef.current
+
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true
+      if (onFirstAutoGenerateStart) {
+        onFirstAutoGenerateStart()
+      }
+    }
+
     setIsLoading(true)
     setError(null)
 
@@ -64,16 +85,24 @@ export function useOpportunities(stepId?: string | null, personaId?: StudentPers
         throw new Error(message)
       }
 
-      const items = Array.isArray(payload?.opportunities) ? payload?.opportunities : []
+      const newOpportunities = Array.isArray(payload?.opportunities) ? payload?.opportunities : []
 
       if (currentFetchId !== fetchIdRef.current) {
-        return items
+        return newOpportunities
       }
 
-      setOpportunities(items)
+      setOpportunities(newOpportunities)
       setError(null)
-      debug.info('Opportunities hook: fetched', { stepId, count: items.length })
-      return items
+      debug.info('Opportunities hook: fetched', { stepId, count: newOpportunities.length })
+
+      if (!hasCompletedRef.current && newOpportunities.length > 0) {
+        hasCompletedRef.current = true
+        if (onFirstAutoGenerateComplete) {
+          onFirstAutoGenerateComplete()
+        }
+      }
+
+      return newOpportunities
     } catch (err) {
       if (currentFetchId !== fetchIdRef.current) {
         return []
@@ -88,7 +117,7 @@ export function useOpportunities(stepId?: string | null, personaId?: StudentPers
         setIsLoading(false)
       }
     }
-  }, [personaId, stepId])
+  }, [onFirstAutoGenerateComplete, onFirstAutoGenerateStart, personaId, stepId])
 
   useEffect(() => {
     fetchOpportunities().catch(() => {

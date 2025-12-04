@@ -1,11 +1,11 @@
-epoch_id: "0010-prompt-refinement"
-title: "Epoch 0010 — Prompt Refinement and AI Architecture"
-status: "completed"
-started_at: "2025-11-23T08:06:27Z"
+epoch_id: "epoch-0011-tutorial-guidance"
+title: "Epoch 0011 — Contextual tutorial and guidance system"
+status: "in_planning"
+started_at: "2025-11-29T17:15:48Z"
 parent_roadmap: "/docs/ROADMAP/ROADMAP.md"
 last_completed_epoch: "0010-prompt-refinement"
-current_epoch: null
-active_epoch: null
+current_epoch: "epoch-0011-tutorial-guidance"
+active_epoch: "epoch-0011-tutorial-guidance"
 epochs:
   - id: "0005-langgraph-ai-step-suggestions"
     status: "completed"
@@ -22,10 +22,14 @@ epochs:
   - id: "0010-prompt-refinement"
     status: "completed"
     description: "Prompt refinement and AI architecture for King’s Canvas"
+  - id: "epoch-0011-tutorial-guidance"
+    status: "in_planning"
+    description: "Contextual tutorial callouts with JSON copy and per-user persistence"
 summary: |
-  Epoch 0010 — Prompt Refinement and AI Architecture completed with explicit LLM
-  selection and provenance, consolidated step and opportunity prompts aligned to
-  King’s Edge, threaded student personas through both workflows, and improved
-  Debug Panel visibility for AI outputs. Epoch 0009 — Real Edge Integration
-  remains in planning pending live API access and governance approvals.
+  Transitioned to Epoch 0011 — Contextual tutorial and guidance system to plan
+  JSON-driven callouts with per-user persistence that guide students through
+  personas, intentions, steps, and opportunities. Epoch 0010 — Prompt
+  Refinement and AI Architecture remains the most recent completion, and Epoch
+  0009 — Real Edge Integration stays in planning pending live API access and
+  governance approvals.
 expected_prs: []

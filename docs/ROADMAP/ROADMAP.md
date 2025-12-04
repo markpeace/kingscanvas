@@ -123,17 +123,21 @@ Add simple interactive buttons and actions to dashboards, enabling controlled us
 
 ---
 
-### 🚧 Epoch 0014 — Tools v1 (Foundations)
-_Status: Planned — not started._
-
-Introduce the first set of tools with clear contracts, guardrails, and observability, keeping scope narrow to validate flows.
+### ✅ Epoch 0010 — Prompt Refinement and AI Architecture
+**Status:** Completed. ([STATUS](./EPOCHS/0010-prompt-refinement/STATUS.yaml))
 
 **Outcome:** Tooling hooks are available in the graph with auditing and safety controls.
 
 ---
 
-### 🚧 Epoch 0015 — Tools v2 (Validated Actions)
-_Status: Planned — not started._
+### 🧭 Epoch 0011 — Contextual tutorial and guidance system
+**Status:** In planning. ([PLAN](./EPOCHS/epoch-0011-tutorial-guidance/PLAN.md))
+
+Add a contextual, event-driven tutorial with JSON-driven copy, tooltip-style callouts, and per-user state in the database so students can pick up guidance across devices without blocking their flow.
+
+---
+
+## 🧩 Supporting Workstreams
 
 Expand tool coverage with validation steps, confirmation prompts, and rollback strategies to ensure safe execution.
 
