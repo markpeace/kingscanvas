@@ -91,7 +91,6 @@ export function StepOpportunitiesModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const opportunitiesListRef = useRef<HTMLDivElement>(null)
   const shuffleButtonRef = useRef<HTMLButtonElement>(null)
-  const hasTriggeredPanelIntroRef = useRef(false)
   const headingId = useId()
   const descriptionId = useId()
   const [isShuffling, setIsShuffling] = useState(false)
@@ -124,23 +123,6 @@ export function StepOpportunitiesModal({
     const focusTarget = headingRef.current ?? closeButtonRef.current
     focusTarget?.focus()
   }, [isOpen])
-
-  useEffect(() => {
-    if (!isOpen) {
-      return
-    }
-
-    if (hasTriggeredPanelIntroRef.current) {
-      return
-    }
-
-    if (skippedAll || isStepCompleted('opportunities_panel_intro')) {
-      return
-    }
-
-    hasTriggeredPanelIntroRef.current = true
-    showStep('opportunities_panel_intro')
-  }, [isOpen, skippedAll, isStepCompleted, showStep])
 
   if (!isOpen) {
     return null

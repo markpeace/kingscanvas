@@ -17,7 +17,7 @@ import toast from 'react-hot-toast'
 import { EditModal } from '@/components/Canvas/EditModal'
 import { StepOpportunitiesModal } from '@/components/Canvas/StepOpportunitiesModal'
 import { TutorialCallout } from '@/components/tutorial/TutorialCallout'
-import { useTutorial } from '@/components/tutorial/TutorialContext'
+import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
 import { useOpportunities } from '@/hooks/useOpportunities'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import { isStepEligibleForOpportunities, resolvePersistedStepId } from '@/lib/opportunities/eligibility'
@@ -122,6 +122,12 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
+
+    if (!skippedAll && !isStepCompleted('opportunities_panel_intro')) {
+      logTutorialDebug('opportunities_panel_intro showStep', { stepId })
+      showStep('opportunities_panel_intro')
+    }
+
     setOpportunitiesOpen(true)
   }
 
