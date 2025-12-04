@@ -1,94 +1,132 @@
-# Roadmap — King’s Canvas
+# Roadmap — Lumin
 
-This roadmap outlines the development epochs for **King’s Canvas**. Each epoch is a focused, user-visible slice that moves the product closer to the long-term vision: helping King’s College London students map intentions, actionable steps, and real-world opportunities.
+This roadmap charts the delivery path for **Lumin**, organised into numbered epochs. Each epoch ships a user-visible slice while keeping documentation and observability aligned.
 
-Detailed implementation plans for each epoch live under `/docs/ROADMAP/EPOCHS/<epoch-slug>/`.
+Detailed implementation plans for active epochs live under `/docs/ROADMAP/EPOCHS/<epoch-slug>/`.
 
 ---
 
 ## 🧭 Overview
 
-- **Product Vision:** Students use King’s Canvas to design their life journey, breaking intentions into steps and connecting them to actionable opportunities.
+- **Product Vision:** Provide Luminary workspaces that surface Core Knowledge, conversational guidance, and context-aware tools in a transparent, inspectable way.
 - **Approach:** Ship incrementally through tightly scoped epochs, keeping documentation, state, and UX in sync at every milestone.
 
 ---
 
 ## 📅 Epoch Timeline
 
-### ✅ Epoch 0001 — Canvas Columns and Layout
-**Status:** Completed.
+### ✅ Epoch 0001 — Foundation and Scaffolding
+_Status: Completed._
 
-Established the four-column Canvas layout (Do Now / Do Later / Before I Graduate / After I Graduate), applied King’s branding and accessibility foundations, and delivered a responsive static prototype for review.
-
----
-
-### ✅ Epoch 0002 — Intentions, Steps and Swim Lanes
-**Status:** Completed.
-
-Added CRUD flows, drag-and-drop swim lanes, card styling, accessibility affordances, and feedback toasts so students can manage intentions and steps interactively.
+Established the initial Lumin shell, baseline navigation, and guardrails for environment setup so later epochs can layer features safely.
 
 ---
 
-### ✅ Epoch 0003 — Authentication and Session Handling
-**Status:** Completed.
+### ✅ Epoch 0002 — Canvas Layout and Interaction Basics
+_Status: Completed._
 
-Implemented Google OAuth via NextAuth, route guards, session UI, and local/preview bypasses to secure the Canvas while supporting rapid iteration.
-
----
-
-### ✅ Epoch 0004 — Persistence and Autosave
-**Status:** Completed.
-
-Connected the Canvas to MongoDB with autosave, background sync reliability, and debug instrumentation so edits persist automatically across sessions.
+Delivered the first Luminary workspace layout, including navigation affordances, panel scaffolding, and interaction patterns for subsequent data and AI features.
 
 ---
 
-### ✅ Epoch 0005 — LangGraph AI Step Suggestions
-**Status:** Completed.
+### ✅ Epoch 0003 — Data Plumbing and Persistence
+_Status: Completed._
 
-Integrated LangGraph workflows to generate suggested steps, added prompt builder iterations, and refined the UX for reviewing, accepting, or rejecting AI-generated steps.
-
----
-
-### ✅ Epoch 0006 — Roadmap and UX Refresh
-**Status:** Completed. ([PLAN](./EPOCHS/0006-roadmap-ux-refresh/PLAN.md))
-
-Delivered: Synced STATE and ROADMAP artefacts, refreshed changelog coverage,
-and shipped Canvas UX polish across layout, modals, saving feedback, and
-drag-and-drop cues informed by Epoch 0005 learnings.
+Introduced storage foundations, schema conventions, and persistence hooks to enable Luminary state to be loaded and saved predictably.
 
 ---
 
-### ✅ Epoch 0007 — Opportunities Model and UI
-**Status:** Completed. ([STATUS](./EPOCHS/0007-opportunities-model-ui/STATUS.yaml))
+### ✅ Epoch 0004 — Observability and Debugging Hooks
+_Status: Completed._
 
-- **Model:** Opportunity entity linked to steps with source, form, focus, and status metadata.
-- **Storage & API:** Persistence layer and `GET /api/steps/[stepId]/opportunities` endpoint for read-only access.
-- **UI:** Opportunity badges on real step cards and a modal with loading, empty, and populated states. Ghost AI suggestions intentionally omit opportunity UI.
+Added debug panels, logging conventions, and visibility toggles so developers can trace Luminary behaviour while building new capabilities.
 
 ---
 
-### ✅ Epoch 0008 — Opportunity AI Simulation
-**Status:** Completed. ([STATUS](./EPOCHS/0008-opportunity-ai-simulation/STATUS.yaml))
+### ✅ Epoch 0005 — Luminary Prompt Wiring
+_Status: Completed._
 
-- Shipped simulated King’s Edge style opportunities for every real step, with eligibility rules scoped to manual and accepted AI steps.
-- Added shuffle controls and API support so students can refresh suggestions on demand.
-- Updated the ear badge and modal UI to show counts plus Edge vs independent groupings with reliable scrolling and controls.
-- Hardened the flow with structured logging, error handling, and tests covering the generator, eligibility, and endpoints.
+Connected prompt flows into the Luminary workspace with consistent wiring, ensuring core interactions and debugging affordances function end to end.
 
 ---
 
-### 🧠 Epoch 0009 — Future Real Edge Integration
-**Status:** In planning.
+### 🚧 Epoch 0007 — Shared LangGraph Path (No Tools, No Reflection)
+_Status: Planned — not started._
 
-Connect to real King’s Edge data sources, handle secure data exchange, and graduate the simulated opportunity experience into production-ready integrations once data governance clears the path.
+- Unify the LangGraph path used by all Luminary runs while keeping user-visible behaviour equivalent to Epoch 0005.
+- Keep tools and reflection disabled to stabilise the shared path before layering new behaviours.
+- Ensure prompt inputs, context injection, and logging stay consistent across runs.
+
+**Outcome:** A single, stable LangGraph path that mirrors Epoch 0005 behaviour from the user’s perspective and is ready for additional capabilities.
+
+---
+
+### 🚧 Epoch 0008 — Core Knowledge Schema Plumbing and Storage
+_Status: Planned — not started._
+
+- Define and validate a `coreKnowledge` schema scoped by `(userId, luminaryId)`.
+- Persist Core Knowledge as a collection and load it into the graph as read-only context for each run.
+- In the UI:
+  - Add a small developer view in each Luminary workspace that shows the current Core Knowledge JSON for that user.
+  - Add a simple read-only “Core Knowledge summary” card in each Luminary workspace that surfaces one or two key fields (for example name and a couple of profile or state facts) in a human-friendly way. This card is intentionally not the full schema-driven dashboard system and is dev oriented.
+- Debug Panel:
+  - Shows whether Core Knowledge exists for the current Luminary and user.
+  - Shows creation and last read timestamps.
+  - Shows a compact preview of the Core Knowledge document.
+
+**Outcome:** Core Knowledge exists as a first-class data model wired into the graph, is read only, and can be inspected both as raw JSON and via a small summary card in the workspace.
+
+---
+
+### 🚧 Epoch 0009 — Reflection v1
+_Status: Planned — not started._
+
+Introduce a lightweight reflection step that summarises recent Luminary activity and highlights issues, without altering graph flow or invoking tools.
+
+**Outcome:** Basic reflection summaries appear alongside runs to aid debugging and iteration.
+
+---
+
+### 🚧 Epoch 0010 — Reflection v2
+_Status: Planned — not started._
+
+Expand reflection with richer context capture, prioritisation of follow-ups, and clearer visibility in the workspace while keeping actions read only.
+
+**Outcome:** Reflection insights become actionable guidance for subsequent prompts without direct mutation of state.
+
+---
+
+### 🚧 Epoch 0011 — Dashboards v1 (Schema-Driven Display)
+_Status: Planned — not started._
+
+Render schema-driven dashboard panels that surface Core Knowledge and run metadata in a consistent layout using existing bindings.
+
+**Outcome:** Users can view structured Luminary and Core Knowledge data in-dashboard without interaction controls.
+
+---
+
+### 🚧 Epoch 0012 — Dashboards v2 (Visibility and Roles)
+_Status: Planned — not started._
+
+Layer visibility rules, role-aware sections, and more flexible layouts onto the dashboard system while keeping schema-driven rendering intact.
+
+**Outcome:** Dashboards respect role-based visibility and layout needs across Luminary workspaces.
+
+---
+
+### 🚧 Epoch 0013 — Dashboards v3 (Interactive Buttons)
+_Status: Planned — not started._
+
+Add simple interactive buttons and actions to dashboards, enabling controlled user interactions without introducing full toolchains.
+
+**Outcome:** Dashboards support light interactivity while adhering to schema and visibility rules.
 
 ---
 
 ### ✅ Epoch 0010 — Prompt Refinement and AI Architecture
 **Status:** Completed. ([STATUS](./EPOCHS/0010-prompt-refinement/STATUS.yaml))
 
-Enforce explicit LLM selection with Debug Panel visibility, consolidate and contextualise the step and opportunity prompts, and thread student context through UI, API, and prompts to keep AI guidance transparent and trustworthy.
+**Outcome:** Tooling hooks are available in the graph with auditing and safety controls.
 
 ---
 
@@ -101,20 +139,15 @@ Add a contextual, event-driven tutorial with JSON-driven copy, tooltip-style cal
 
 ## 🧩 Supporting Workstreams
 
-Ongoing parallel streams ensure each epoch ships responsibly:
+Expand tool coverage with validation steps, confirmation prompts, and rollback strategies to ensure safe execution.
 
-- **Brand & UX Alignment:** Continual collaboration with King’s Brand and Marketing for visual consistency.
-- **Accessibility (WCAG AA+):** Verification and remediation alongside each feature shipment.
-- **Security & GDPR:** Privacy and compliance reviews for authentication, data storage, and AI workflows.
-- **Documentation & Observability:** Keep `/docs/STATE/`, `/docs/ROADMAP/`, and debug tooling up to date as functionality evolves.
+**Outcome:** Tools operate with stronger correctness checks and user confirmations.
 
 ---
 
-## ✅ Definition of Done (MVP)
+### 🚧 Epoch 0016 — Tidy Up and Production Hardening
+_Status: Planned — not started._
 
-The King’s Canvas MVP is complete when:
+Consolidate learnings from earlier epochs, close documentation gaps, refine observability, and harden the system for production readiness.
 
-1. Students can authenticate, create, and manage a persistent Canvas.
-2. AI workflows generate, match, and explain suggestions with actionable insights.
-3. Opportunity discovery and conversational coaching are available, brand-compliant, and accessible.
-4. The platform is production-ready, observability is in place, and compliance requirements are satisfied.
+**Outcome:** The Luminary experience is stable, observable, and ready for broader rollout.
