@@ -27,6 +27,10 @@
     "headline": "Add or generate steps yourself",
     "body": "If our suggestions miss something, use these controls to add a step or ask Canvas to generate more. This bar lets you shape the plan in your own words."
   },
+  "opportunities_panel_intro": {
+    "headline": "This panel shows opportunities for your step",
+    "body": "When opportunities are available, they will appear here with details and suggested next actions. You can scan them, pick a few to act on, or close this panel and come back later."
+  },
   "opportunities_intro": {
     "headline": "This panel shows opportunities for this step",
     "body": "When opportunities are available for this step, they will appear here with details and next actions. You can scan them, pick a few, or close the panel and come back later."

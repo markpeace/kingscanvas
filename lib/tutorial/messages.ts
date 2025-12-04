@@ -8,6 +8,7 @@ export type TutorialMessageId =
   | "first_intention"
   | "steps_and_suggestions"
   | "manual_add_step"
+  | "opportunities_panel_intro"
   | "opportunities_intro"
   | "opportunities_shuffle"
   | "opportunities_autogenerating"
@@ -31,6 +32,7 @@ const tutorialMessageIds = [
   "first_intention",
   "steps_and_suggestions",
   "manual_add_step",
+  "opportunities_panel_intro",
   "opportunities_intro",
   "opportunities_shuffle",
   "opportunities_autogenerating",

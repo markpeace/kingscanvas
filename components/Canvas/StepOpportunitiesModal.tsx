@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type PointerEvent as ReactPointerEv
 import { createPortal } from 'react-dom'
 
 import TutorialCallout from '@/components/tutorial/TutorialCallout'
-import { logTutorialDebug, useTutorial } from '@/components/tutorial/TutorialContext'
+import { useTutorial } from '@/components/tutorial/TutorialContext'
 import { useStudentPersona } from '@/context/StudentPersonaContext'
 import type { Opportunity } from '@/types/canvas'
 import { debug } from '@/lib/debug'
@@ -91,6 +91,7 @@ export function StepOpportunitiesModal({
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const opportunitiesListRef = useRef<HTMLDivElement>(null)
   const shuffleButtonRef = useRef<HTMLButtonElement>(null)
+  const hasTriggeredPanelIntroRef = useRef(false)
   const headingId = useId()
   const descriptionId = useId()
   const [isShuffling, setIsShuffling] = useState(false)
@@ -129,19 +130,17 @@ export function StepOpportunitiesModal({
       return
     }
 
-    if (skippedAll) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'skippedAll' })
+    if (hasTriggeredPanelIntroRef.current) {
       return
     }
 
-    if (isStepCompleted('opportunities_intro')) {
-      logTutorialDebug('opportunities_intro blocked', { reason: 'already completed' })
+    if (skippedAll || isStepCompleted('opportunities_panel_intro')) {
       return
     }
 
-    logTutorialDebug('opportunities_intro showStep')
-    showStep('opportunities_intro')
-  }, [isOpen, isStepCompleted, showStep, skippedAll])
+    hasTriggeredPanelIntroRef.current = true
+    showStep('opportunities_panel_intro')
+  }, [isOpen, skippedAll, isStepCompleted, showStep])
 
   if (!isOpen) {
     return null
@@ -151,11 +150,11 @@ export function StepOpportunitiesModal({
   const showInitialError = Boolean(error && !hasOpportunities)
   const showRefreshError = Boolean(error && hasOpportunities)
 
-  const shouldShowOpportunitiesIntroCallout =
+  const shouldShowOpportunitiesPanelIntroCallout =
     isOpen &&
     !skippedAll &&
-    activeStepId === 'opportunities_intro' &&
-    !isStepCompleted('opportunities_intro') &&
+    activeStepId === 'opportunities_panel_intro' &&
+    !isStepCompleted('opportunities_panel_intro') &&
     Boolean(opportunitiesListRef.current)
 
   const shouldShowOpportunitiesShuffleCallout =
@@ -338,18 +337,18 @@ export function StepOpportunitiesModal({
         </div>,
         document.body
       )}
-      {shouldShowOpportunitiesIntroCallout ? (
+      {shouldShowOpportunitiesPanelIntroCallout ? (
         <TutorialCallout
           targetRef={opportunitiesListRef}
-          stepId="opportunities_intro"
+          stepId="opportunities_panel_intro"
           onNext={() => {
-            completeStep('opportunities_intro')
+            completeStep('opportunities_panel_intro')
             if (!skippedAll && !isStepCompleted('opportunities_shuffle')) {
               showStep('opportunities_shuffle')
             }
           }}
           onSkipAll={skipAll}
-          onRemindLater={() => dismissStep('opportunities_intro')}
+          onRemindLater={() => dismissStep('opportunities_panel_intro')}
           dimBackground={false}
         />
       ) : null}
