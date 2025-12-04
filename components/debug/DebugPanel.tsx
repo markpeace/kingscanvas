@@ -158,6 +158,7 @@ function EntryCard({ entry }: { entry: Entry }) {
   const [raw, setRaw] = useState(false)
 
   const { ts, label, level, channel, payload, ...rest } = entry
+  const coreKnowledge = payload?.coreKnowledge ?? rest.coreKnowledge
 
   return (
     <div className="rounded border p-2 border-zinc-200 dark:border-zinc-700">
@@ -181,6 +182,21 @@ function EntryCard({ entry }: { entry: Entry }) {
           </button>
         </div>
       </div>
+
+      {coreKnowledge ? (
+        <section className="mt-2 rounded border p-2 border-blue-100 bg-blue-50/70 dark:border-blue-900 dark:bg-blue-950/40">
+          <p className="text-xs font-semibold text-blue-900 dark:text-blue-100">Core Knowledge</p>
+          <ul className="text-xs text-blue-900 dark:text-blue-100 space-y-0.5 mt-1">
+            <li>Exists: {coreKnowledge.exists ? "yes" : "no"}</li>
+            <li>Seeded this run: {coreKnowledge.seededThisRun ? "yes" : "no"}</li>
+            {coreKnowledge.createdAt ? <li>Created: {coreKnowledge.createdAt}</li> : null}
+            {coreKnowledge.updatedAt ? <li>Updated: {coreKnowledge.updatedAt}</li> : null}
+            {coreKnowledge.domainKeys?.length ? (
+              <li>Domains: {coreKnowledge.domainKeys.join(", ")}</li>
+            ) : null}
+          </ul>
+        </section>
+      ) : null}
 
       {payload !== undefined ? (
         <section className="mt-1">

@@ -1,0 +1,6 @@
+epoch_id: "epoch-0008-core-knowledge"
+phase: "in_progress"
+percent_complete: 90
+owner: "backend-ai"
+notes:
+  - "PR4 added a Core Knowledge summary card to the Temp Luminary workspace and surfaced Core Knowledge existence and timestamps in the Debug Panel via a small snapshot attached to Luminary run events. Core Knowledge remains read only."
