@@ -3,6 +3,7 @@
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -61,21 +62,6 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     isStepCompleted,
     skippedAll
   } = useTutorial()
-  const handleFirstAutoGenerateStart = useCallback(() => {
-    if (opportunitiesAutogenTipOwnerStepId === null) {
-      opportunitiesAutogenTipOwnerStepId = stepId
-    }
-
-    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
-      return
-    }
-
-    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
-      return
-    }
-
-    showStep('opportunities_autogenerating')
-  }, [isStepCompleted, showStep, skippedAll, stepId])
 
   const handleFirstAutoGenerateComplete = useCallback(() => {
     if (opportunitiesReadyTipOwnerStepId === null) {
@@ -96,10 +82,9 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   const opportunitiesOptions = useMemo(
     () => ({
-      onFirstAutoGenerateStart: handleFirstAutoGenerateStart,
       onFirstAutoGenerateComplete: handleFirstAutoGenerateComplete
     }),
-    [handleFirstAutoGenerateComplete, handleFirstAutoGenerateStart]
+    [handleFirstAutoGenerateComplete]
   )
 
   const {
@@ -119,6 +104,40 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     ? 'Could not load opportunities'
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
   const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
+
+  useEffect(() => {
+    if (!isLoadingEarVisible) {
+      return
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      logTutorialDebug('opportunities_autogenerating blocked', {
+        reason: 'different owner',
+        owner: opportunitiesAutogenTipOwnerStepId,
+        stepId
+      })
+      return
+    }
+
+    logTutorialDebug('opportunities_autogenerating ear loading', {
+      owner: opportunitiesAutogenTipOwnerStepId,
+      skippedAll,
+      completed: isStepCompleted('opportunities_autogenerating'),
+      stepId
+    })
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
+      return
+    }
+
+    logTutorialDebug('opportunities_autogenerating showStep', { stepId })
+    showStep('opportunities_autogenerating')
+  }, [isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
 
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
