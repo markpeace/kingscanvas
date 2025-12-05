@@ -146,8 +146,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     !skippedAll &&
     opportunitiesAutogenTipOwnerStepId === stepId &&
     activeStepId === 'opportunities_autogenerating' &&
-    !isStepCompleted('opportunities_autogenerating') &&
-    Boolean(opportunitiesTriggerRef.current)
+    !isStepCompleted('opportunities_autogenerating')
 
   const shouldShowOpportunitiesReadyCallout =
     !skippedAll &&

@@ -37,7 +37,7 @@ describe('useOpportunities', () => {
       json: async () => ({ ok: true, opportunities })
     })
 
-    const { result } = renderHook(() => useOpportunities('step-123'))
+    const { result } = renderHook(() => useOpportunities('step-123', 'persona-1'))
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
@@ -54,7 +54,7 @@ describe('useOpportunities', () => {
       json: async () => ({ ok: false, error: 'Step not found' })
     })
 
-    const { result } = renderHook(() => useOpportunities('step-404'))
+    const { result } = renderHook(() => useOpportunities('step-404', 'persona-1'))
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
@@ -71,7 +71,7 @@ describe('useOpportunities', () => {
       json: async () => ({ ok: false, error: 'Server error' })
     })
 
-    const { result } = renderHook(() => useOpportunities('step-500'))
+    const { result } = renderHook(() => useOpportunities('step-500', 'persona-1'))
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
@@ -110,7 +110,7 @@ describe('useOpportunities', () => {
         json: async () => ({ ok: true, opportunities: [refreshedOpportunity] })
       })
 
-    const { result } = renderHook(() => useOpportunities('step-123'))
+    const { result } = renderHook(() => useOpportunities('step-123', 'persona-1'))
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
@@ -122,7 +122,7 @@ describe('useOpportunities', () => {
       await result.current.refetch()
     })
 
-    expect(global.fetch).toHaveBeenLastCalledWith('/api/steps/step-123/opportunities')
+    expect(global.fetch).toHaveBeenLastCalledWith('/api/steps/step-123/opportunities?personaId=persona-1')
     expect(result.current.error).toBeNull()
     expect(result.current.opportunities).toEqual([refreshedOpportunity])
   })
@@ -149,7 +149,7 @@ describe('useOpportunities', () => {
 
     const onFirstAutoGenerateStart = jest.fn()
     const { result } = renderHook(() =>
-      useOpportunities('step-123', undefined, { onFirstAutoGenerateStart })
+      useOpportunities('step-123', 'persona-1', { onFirstAutoGenerateStart })
     )
 
     await waitFor(() => {
@@ -181,7 +181,7 @@ describe('useOpportunities', () => {
 
     const onFirstAutoGenerateComplete = jest.fn()
     const { result } = renderHook(() =>
-      useOpportunities('step-123', undefined, { onFirstAutoGenerateComplete })
+      useOpportunities('step-123', 'persona-1', { onFirstAutoGenerateComplete })
     )
 
     await waitFor(() => {
@@ -200,7 +200,7 @@ describe('useOpportunities', () => {
 
     const onFirstAutoGenerateComplete = jest.fn()
     const { result } = renderHook(() =>
-      useOpportunities('step-123', undefined, { onFirstAutoGenerateComplete })
+      useOpportunities('step-123', 'persona-1', { onFirstAutoGenerateComplete })
     )
 
     await waitFor(() => {
