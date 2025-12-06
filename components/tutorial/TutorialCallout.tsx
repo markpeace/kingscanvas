@@ -175,7 +175,7 @@ export function TutorialCallout({
         aria-modal="false"
         aria-labelledby={headingId}
         aria-describedby={bodyId}
-        className="pointer-events-auto absolute w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-white p-4 shadow-xl ring-1 ring-black/5"
+        className="pointer-events-auto absolute w-[320px] max-w-[calc(100vw-32px)] rounded-lg bg-red-700 text-white p-4 shadow-xl ring-1 ring-red-900/60"
         style={{ top: `${position.top}px`, left: `${position.left}px`, touchAction: "none" }}
         onKeyDown={handleKeyDown}
         onPointerDown={stopAllPointerLikeEvents}
@@ -189,17 +189,17 @@ export function TutorialCallout({
         onTouchMove={stopAllPointerLikeEvents}
       >
         <div className="flex flex-col gap-3">
-          <h2 id={headingId} className="text-base font-semibold text-kings-black">
+          <h2 id={headingId} className="text-base font-semibold text-white">
             {message.headline}
           </h2>
-          <p id={bodyId} className="text-sm text-kings-grey-dark">
+          <p id={bodyId} className="text-sm text-red-50">
             {message.body}
           </p>
           <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
             <button
               ref={nextButtonRef}
               type="button"
-              className="rounded-md bg-kings-red px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-kings-red/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-red-700 shadow-sm hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:ring-offset-red-700"
               onPointerDown={stopAllPointerLikeEvents}
               onPointerUp={stopAllPointerLikeEvents}
               onMouseDown={stopAllPointerLikeEvents}
@@ -217,25 +217,7 @@ export function TutorialCallout({
             </button>
             <button
               type="button"
-              className="rounded-md border border-kings-grey-light px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
-              onPointerDown={stopAllPointerLikeEvents}
-              onPointerUp={stopAllPointerLikeEvents}
-              onMouseDown={stopAllPointerLikeEvents}
-              onClick={(event) => {
-                stopAllPointerLikeEvents(event)
-                handleSkipAll()
-              }}
-              onTouchStart={stopAllPointerLikeEvents}
-              onTouchEnd={(event) => {
-                stopAllPointerLikeEvents(event)
-                handleSkipAll()
-              }}
-            >
-              Skip all tips
-            </button>
-            <button
-              type="button"
-              className="rounded-md border border-transparent px-3 py-2 text-sm font-semibold text-kings-black hover:bg-kings-grey-light/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-kings-red/40 focus-visible:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-md border border-white/70 px-3 py-1.5 text-sm font-semibold text-white/90 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white focus:ring-offset-red-700"
               onPointerDown={stopAllPointerLikeEvents}
               onPointerUp={stopAllPointerLikeEvents}
               onMouseDown={stopAllPointerLikeEvents}
@@ -250,6 +232,24 @@ export function TutorialCallout({
               }}
             >
               Remind me later
+            </button>
+            <button
+              type="button"
+              className="text-xs underline text-red-100 hover:text-white"
+              onPointerDown={stopAllPointerLikeEvents}
+              onPointerUp={stopAllPointerLikeEvents}
+              onMouseDown={stopAllPointerLikeEvents}
+              onClick={(event) => {
+                stopAllPointerLikeEvents(event)
+                handleSkipAll()
+              }}
+              onTouchStart={stopAllPointerLikeEvents}
+              onTouchEnd={(event) => {
+                stopAllPointerLikeEvents(event)
+                handleSkipAll()
+              }}
+            >
+              Skip all tips
             </button>
           </div>
         </div>
