@@ -3,7 +3,6 @@
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -63,6 +62,34 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     skippedAll
   } = useTutorial()
 
+  const handleFirstAutoGenerateStart = useCallback(() => {
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      logTutorialDebug('opportunities_autogenerating blocked', {
+        reason: 'different owner',
+        owner: opportunitiesAutogenTipOwnerStepId,
+        stepId
+      })
+      return
+    }
+
+    logTutorialDebug('opportunities_autogenerating start', {
+      owner: opportunitiesAutogenTipOwnerStepId,
+      skippedAll,
+      completed: isStepCompleted('opportunities_autogenerating')
+    })
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
+      return
+    }
+
+    showStep('opportunities_autogenerating')
+  }, [isStepCompleted, showStep, skippedAll, stepId])
+
   const handleFirstAutoGenerateComplete = useCallback(() => {
     if (opportunitiesReadyTipOwnerStepId === null) {
       opportunitiesReadyTipOwnerStepId = stepId
@@ -82,9 +109,10 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
   const opportunitiesOptions = useMemo(
     () => ({
+      onFirstAutoGenerateStart: handleFirstAutoGenerateStart,
       onFirstAutoGenerateComplete: handleFirstAutoGenerateComplete
     }),
-    [handleFirstAutoGenerateComplete]
+    [handleFirstAutoGenerateComplete, handleFirstAutoGenerateStart]
   )
 
   const {
@@ -104,41 +132,6 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     ? 'Could not load opportunities'
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
   const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
-
-  // Hotfix: trigger the autogenerating tutorial tip as soon as this step shows the loading ear.
-  useEffect(() => {
-    if (!isLoadingEarVisible) {
-      return
-    }
-
-    if (opportunitiesAutogenTipOwnerStepId === null) {
-      opportunitiesAutogenTipOwnerStepId = stepId
-    }
-
-    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
-      logTutorialDebug('opportunities_autogenerating blocked', {
-        reason: 'different owner',
-        owner: opportunitiesAutogenTipOwnerStepId,
-        stepId
-      })
-      return
-    }
-
-    logTutorialDebug('opportunities_autogenerating ear loading', {
-      owner: opportunitiesAutogenTipOwnerStepId,
-      skippedAll,
-      completed: isStepCompleted('opportunities_autogenerating'),
-      stepId
-    })
-
-    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
-      logTutorialDebug('opportunities_autogenerating blocked', { reason: 'skippedAll or completed' })
-      return
-    }
-
-    logTutorialDebug('opportunities_autogenerating showStep', { stepId })
-    showStep('opportunities_autogenerating')
-  }, [isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
 
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()

@@ -23,8 +23,7 @@ export function useOpportunities(
   personaId?: StudentPersonaId,
   options?: UseOpportunitiesOptions
 ): UseOpportunitiesResult {
-  const onFirstAutoGenerateStart = options?.onFirstAutoGenerateStart
-  const onFirstAutoGenerateComplete = options?.onFirstAutoGenerateComplete
+  const { onFirstAutoGenerateStart, onFirstAutoGenerateComplete } = options ?? {}
   const [opportunities, setOpportunities] = useState<Opportunity[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
