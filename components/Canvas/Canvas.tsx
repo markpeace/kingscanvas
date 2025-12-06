@@ -27,6 +27,7 @@ import SaveStatus from '@/components/Canvas/SaveStatus'
 import StudentPersonaSelector from '@/components/StudentPersonaSelector'
 import TutorialCallout from '@/components/tutorial/TutorialCallout'
 import { TutorialProvider, useTutorial } from '@/components/tutorial/TutorialContext'
+import type { TutorialMessageId } from '@/lib/tutorial/messages'
 
 const DEFAULT_BUCKET: BucketId = 'do-now'
 
@@ -183,6 +184,45 @@ function normaliseIntentionsFromApi(intentions: RawIntention[]): Intention[] {
       updatedAt: intention.updatedAt ?? new Date().toISOString(),
     }
   })
+}
+
+type TutorialNavigationDeps = {
+  completeStep: (id: TutorialMessageId) => void
+  showStep: (id: TutorialMessageId) => void
+  isStepCompleted: (id: TutorialMessageId) => boolean
+  skippedAll: boolean
+}
+
+export function handleStepsAndSuggestionsNext({
+  completeStep,
+  showStep,
+  isStepCompleted,
+  skippedAll
+}: TutorialNavigationDeps) {
+  completeStep('steps_and_suggestions')
+
+  if (skippedAll) {
+    return
+  }
+
+  if (!isStepCompleted('delete_steps_and_intentions')) {
+    showStep('delete_steps_and_intentions')
+  } else if (!isStepCompleted('manual_add_step')) {
+    showStep('manual_add_step')
+  }
+}
+
+export function handleDeleteStepsAndIntentionsNext({
+  completeStep,
+  showStep,
+  isStepCompleted,
+  skippedAll
+}: TutorialNavigationDeps) {
+  completeStep('delete_steps_and_intentions')
+
+  if (!skippedAll && !isStepCompleted('manual_add_step')) {
+    showStep('manual_add_step')
+  }
 }
 
 function CanvasContent() {
@@ -1886,12 +1926,14 @@ function CanvasContent() {
         <TutorialCallout
           targetRef={stepsCalloutRef}
           stepId="steps_and_suggestions"
-          onNext={() => {
-            completeStep('steps_and_suggestions')
-            if (!skippedAll && !isStepCompleted('manual_add_step')) {
-              showStep('manual_add_step')
-            }
-          }}
+          onNext={() =>
+            handleStepsAndSuggestionsNext({
+              completeStep,
+              showStep,
+              isStepCompleted,
+              skippedAll
+            })
+          }
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('steps_and_suggestions')}
         />
@@ -1910,7 +1952,14 @@ function CanvasContent() {
         <TutorialCallout
           targetRef={trashTutorialRef}
           stepId="delete_steps_and_intentions"
-          onNext={() => completeStep('delete_steps_and_intentions')}
+          onNext={() =>
+            handleDeleteStepsAndIntentionsNext({
+              completeStep,
+              showStep,
+              isStepCompleted,
+              skippedAll
+            })
+          }
           onSkipAll={skipAll}
           onRemindLater={() => dismissStep('delete_steps_and_intentions')}
           dimBackground={false}

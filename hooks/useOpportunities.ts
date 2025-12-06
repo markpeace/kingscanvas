@@ -33,8 +33,8 @@ export function useOpportunities(
   const hasCompletedRef = useRef(false)
 
   const fetchOpportunities = useCallback(async (): Promise<Opportunity[]> => {
-    if (!stepId) {
-      debug.debug('Opportunities hook: skipping fetch (missing step id)')
+    if (!stepId || !personaId) {
+      debug.debug('Opportunities hook: skipping fetch (missing step id or persona)')
       setOpportunities([])
       setError(null)
       setIsLoading(false)
@@ -43,17 +43,17 @@ export function useOpportunities(
 
     const currentFetchId = ++fetchIdRef.current
 
-    if (!hasStartedRef.current) {
-      hasStartedRef.current = true
-      if (onFirstAutoGenerateStart) {
-        onFirstAutoGenerateStart()
-      }
-    }
-
-    setIsLoading(true)
-    setError(null)
-
     try {
+      if (!hasStartedRef.current) {
+        hasStartedRef.current = true
+        if (onFirstAutoGenerateStart) {
+          onFirstAutoGenerateStart()
+        }
+      }
+
+      setIsLoading(true)
+      setError(null)
+
       debug.trace('Opportunities hook: fetching', { stepId, personaId: personaId ?? 'default' })
 
       const personaQuery = personaId ? `?personaId=${encodeURIComponent(personaId)}` : ''
