@@ -3,6 +3,7 @@
 import { useDraggable, useDndContext } from '@dnd-kit/core'
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -165,6 +166,36 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
 
     setOpportunitiesOpen(true)
   }
+
+  useEffect(() => {
+    if (!isLoadingEarVisible) {
+      return
+    }
+
+    if (skippedAll || isStepCompleted('opportunities_autogenerating')) {
+      return
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId === null) {
+      opportunitiesAutogenTipOwnerStepId = stepId
+    }
+
+    if (opportunitiesAutogenTipOwnerStepId !== stepId) {
+      logTutorialDebug('opportunities_autogenerating blocked', {
+        reason: 'different owner',
+        owner: opportunitiesAutogenTipOwnerStepId,
+        stepId
+      })
+      return
+    }
+
+    logTutorialDebug('opportunities_autogenerating ensure from loading', {
+      owner: opportunitiesAutogenTipOwnerStepId,
+      stepId
+    })
+
+    showStep('opportunities_autogenerating')
+  }, [isLoadingEarVisible, isStepCompleted, showStep, skippedAll, stepId])
 
   const handleCloseOpportunities = () => {
     setOpportunitiesOpen(false)
