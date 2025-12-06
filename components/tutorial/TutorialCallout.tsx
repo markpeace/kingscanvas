@@ -8,6 +8,7 @@ import {
   useState,
   useId,
   type KeyboardEvent as ReactKeyboardEvent,
+  type CSSProperties,
   type SyntheticEvent
 } from "react"
 import { createPortal } from "react-dom"
@@ -38,6 +39,8 @@ export function TutorialCallout({
 }: TutorialCalloutProps) {
   const [position, setPosition] = useState<Position | null>(null)
   const [mounted, setMounted] = useState(false)
+  const [arrowSide, setArrowSide] = useState<"top" | "bottom" | "left" | "right">("top")
+  const [arrowOffset, setArrowOffset] = useState(0)
   const calloutRef = useRef<HTMLDivElement | null>(null)
   const nextButtonRef = useRef<HTMLButtonElement | null>(null)
   const headingId = useId()
@@ -98,6 +101,47 @@ export function TutorialCallout({
     }
 
     setPosition({ top, left })
+
+    if (!calloutRect) {
+      return
+    }
+
+    try {
+      const targetCenterX = rect.left + rect.width / 2
+      const targetCenterY = rect.top + rect.height / 2
+
+      const panelLeft = left
+      const panelTop = top
+      const panelRight = panelLeft + calloutWidth
+      const panelBottom = panelTop + calloutHeight
+      const panelCenterX = (panelLeft + panelRight) / 2
+      const panelCenterY = (panelTop + panelBottom) / 2
+
+      const dx = targetCenterX - panelCenterX
+      const dy = targetCenterY - panelCenterY
+
+      let nextArrowSide: "top" | "bottom" | "left" | "right"
+
+      if (Math.abs(dy) >= Math.abs(dx)) {
+        nextArrowSide = dy < 0 ? "top" : "bottom"
+      } else {
+        nextArrowSide = dx < 0 ? "left" : "right"
+      }
+
+      if (nextArrowSide === "top" || nextArrowSide === "bottom") {
+        const rawOffset = targetCenterX - panelLeft
+        const clampedOffset = Math.max(12, Math.min(rawOffset, panelRight - panelLeft - 12))
+        setArrowOffset(clampedOffset)
+      } else {
+        const rawOffset = targetCenterY - panelTop
+        const clampedOffset = Math.max(12, Math.min(rawOffset, panelBottom - panelTop - 12))
+        setArrowOffset(clampedOffset)
+      }
+
+      setArrowSide(nextArrowSide)
+    } catch (error) {
+      // Ignore arrow positioning errors so the callout can still render.
+    }
   }, [targetRef])
 
   useEffect(() => {
@@ -164,6 +208,24 @@ export function TutorialCallout({
     return null
   }
 
+  const arrowBaseClass = "pointer-events-none absolute w-3 h-3 bg-red-700 rotate-45 shadow"
+  let arrowClassName = arrowBaseClass
+  const arrowStyle: CSSProperties = {}
+
+  if (arrowSide === "top") {
+    arrowClassName += " -top-1.5"
+    arrowStyle.left = `${arrowOffset}px`
+  } else if (arrowSide === "bottom") {
+    arrowClassName += " -bottom-1.5"
+    arrowStyle.left = `${arrowOffset}px`
+  } else if (arrowSide === "left") {
+    arrowClassName += " -left-1.5"
+    arrowStyle.top = `${arrowOffset}px`
+  } else if (arrowSide === "right") {
+    arrowClassName += " -right-1.5"
+    arrowStyle.top = `${arrowOffset}px`
+  }
+
   const calloutContent = (
     <div className="pointer-events-none fixed inset-0 z-[200]">
       {dimBackground ? (
@@ -188,6 +250,7 @@ export function TutorialCallout({
         onTouchEnd={stopAllPointerLikeEvents}
         onTouchMove={stopAllPointerLikeEvents}
       >
+        <div className={arrowClassName} style={arrowStyle} />
         <div className="flex flex-col gap-3">
           <h2 id={headingId} className="text-base font-semibold text-white">
             {message.headline}
