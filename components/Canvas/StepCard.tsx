@@ -136,6 +136,28 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
 
+    if (isLoadingEarVisible && opportunitiesCount === 0) {
+      if (!skippedAll && !isStepCompleted('opportunities_autogenerating')) {
+        if (opportunitiesAutogenTipOwnerStepId === null) {
+          opportunitiesAutogenTipOwnerStepId = stepId
+        }
+
+        if (opportunitiesAutogenTipOwnerStepId === stepId) {
+          logTutorialDebug?.('opportunities_autogenerating fallback from open', {
+            owner: opportunitiesAutogenTipOwnerStepId,
+            stepId
+          })
+          showStep('opportunities_autogenerating')
+        } else {
+          logTutorialDebug?.('opportunities_autogenerating fallback blocked', {
+            reason: 'different owner',
+            owner: opportunitiesAutogenTipOwnerStepId,
+            stepId
+          })
+        }
+      }
+    }
+
     if (!skippedAll && !isStepCompleted('opportunities_intro')) {
       logTutorialDebug('opportunities_intro showStep from open button', { stepId })
       showStep('opportunities_intro')
