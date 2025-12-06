@@ -136,7 +136,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
   const handleOpenOpportunities = (event: MouseEvent<HTMLButtonElement>) => {
     event.stopPropagation()
 
-    if (isLoadingEarVisible && opportunitiesCount === 0) {
+    if (isLoadingEarVisible) {
       if (!skippedAll && !isStepCompleted('opportunities_autogenerating')) {
         if (opportunitiesAutogenTipOwnerStepId === null) {
           opportunitiesAutogenTipOwnerStepId = stepId
