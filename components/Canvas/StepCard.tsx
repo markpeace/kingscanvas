@@ -105,6 +105,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     : `${opportunitiesCount} opportunit${opportunitiesCount === 1 ? 'y' : 'ies'}`
   const badgeAriaLabel = `${badgeLabel} for ${stepTitle}`
 
+  // Hotfix: trigger the autogenerating tutorial tip as soon as this step shows the loading ear.
   useEffect(() => {
     if (!isLoadingEarVisible) {
       return
@@ -161,6 +162,7 @@ function StepOpportunitiesSection({ stepId, stepTitle }: StepOpportunitiesSectio
     }
   }
 
+  // The callout handles a temporarily null targetRef internally; no explicit ref check needed here.
   const shouldShowOpportunitiesAutogeneratingCallout =
     !skippedAll &&
     opportunitiesAutogenTipOwnerStepId === stepId &&
