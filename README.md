@@ -63,10 +63,6 @@ If you're a developer contributing to the codebase, please begin with the docume
 
 ## 🤝 Collaborators
 
-This product is being developed in collaboration with King’s College London. Brand alignment follows [King’s brand guidelines](https://www.kcl.ac.uk/governance/brand-guidelines).
-
-To discuss collaborations or integrations, contact: [brand@kcl.ac.uk](mailto:brand@kcl.ac.uk)
-
 ---
 
 ## 📁 Repository Structure
