@@ -1,0 +1,33 @@
+status: "completed"
+epoch: "epoch-0012-core-knowledge-lab"
+plan: "PLAN.md"
+start_date: "2025-12-01"
+completed_at: "2025-12-13"
+updated_at: "2025-12-13"
+branch: "epoch-0012-personal-trainer-core-knowledge-lab"
+summary: |
+  Core Knowledge lab v1 completed. Pirate Captain now runs on behavioural
+  domains (crewProfile, strategy, voyageLog) with reflection updating structured
+  state. Personal Trainer intake seeds profile, goals, context, plan, and
+  progress with behavioural metadata. Evaluation scripts captured in
+  `docs/EVAL/core-knowledge-lab.md` for reuse.
+tasks:
+  - id: "pirate-captain-behavioural-ck"
+    title: "Pirate Captain behavioural Core Knowledge"
+    status: "done"
+    notes: |
+      Behaviour-driven crewProfile/strategy/voyageLog with reflection updates
+      and aiExtendable guards documented in docs/EVAL/core-knowledge-lab.md.
+      Linked to behavioural design notes in docs/DESIGN/core-knowledge-behaviour.md.
+  - id: "personal-trainer-core-knowledge"
+    title: "Personal Trainer Core Knowledge intake and updates"
+    status: "done"
+    notes: |
+      Intake script seeds profile/goals/context/plan/progress with behavioural
+      metadata and aiExtendable constraints; evaluation steps documented in
+      docs/EVAL/core-knowledge-lab.md.
+follow_up:
+  - id: "ck-next-luminaries"
+    notes: "Expand behavioural Core Knowledge to additional Luminaries."
+  - id: "ck-visualisations"
+    notes: "Add plan/progress visualisations in future dashboard epochs."

@@ -11,6 +11,16 @@ Detailed implementation plans for active epochs live under `/docs/ROADMAP/EPOCHS
 - **Product Vision:** Provide Luminary workspaces that surface Core Knowledge, conversational guidance, and context-aware tools in a transparent, inspectable way.
 - **Approach:** Ship incrementally through tightly scoped epochs, keeping documentation, state, and UX in sync at every milestone.
 
+## 🧠 Core Knowledge work
+
+- **Status:** Core Knowledge lab v1 (epoch-0012-core-knowledge-lab) is complete. Pirate Captain now runs on behavioural Core Knowledge (crewProfile, strategy, voyageLog) with reflection updating structured state, and Personal Trainer intake seeds profile/goals/context/plan/progress with behavioural metadata and aiExtendable guards. Evaluation scripts live in `docs/EVAL/core-knowledge-lab.md`.
+- **Now possible:** Behaviour-driven conversations that stay in narrative/world-state or coaching tone; reflection writes into structured Core Knowledge with proactive elicitation for missing constraints.
+
+### Next
+- Expand behavioural Core Knowledge to additional Luminaries.
+- Add plan/progress visualisations for Core Knowledge-driven plans.
+- Support richer goal types and constraint handling.
+
 ---
 
 ## 📅 Epoch Timeline
