@@ -15,11 +15,23 @@ type SuggestStepsRequestBody = {
   historyRejected?: string[]
   lastSuggestion?: string
   personaId?: StudentPersonaId
+  fast?: boolean
 }
 
 type SuggestStepsResponse =
   | { ok: true; suggestions: Array<{ bucket: string; text: string }>; model: string }
   | { ok?: false; error: string }
+
+function normaliseBooleanFlag(value: unknown): boolean | undefined {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') {
+    const lower = value.trim().toLowerCase()
+    if (['1', 'true', 'yes', 'on', 'fast'].includes(lower)) return true
+    if (['0', 'false', 'no', 'off', 'slow'].includes(lower)) return false
+  }
+
+  return undefined
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<SuggestStepsResponse>) {
   const session = await getServerSession(req, res, authOptions)
@@ -34,8 +46,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     return res.status(405).json({ ok: false, error: 'Method not allowed' })
   }
 
-  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected, lastSuggestion, personaId } =
+  const { intentionId, intentionText, intentionBucket, historyAccepted, historyRejected, lastSuggestion, personaId, fast } =
     req.body as SuggestStepsRequestBody
+  const fastFlag = normaliseBooleanFlag(fast ?? (req.query?.fast as string | undefined))
+  const envFast = process.env.LLM_FAST === 'true'
+  const useFast = envFast ? true : fastFlag ?? true
 
   const persona = getStudentPersona(personaId)
 
@@ -45,7 +60,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     intentionBucket,
     persona: persona.shortLabel,
     acceptedCount: historyAccepted?.length || 0,
-    rejectedCount: historyRejected?.length || 0
+    rejectedCount: historyRejected?.length || 0,
+    fast: useFast
   })
 
   try {
@@ -55,7 +71,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       historyAccepted,
       historyRejected,
       lastSuggestion,
-      persona
+      persona,
+      fast: useFast
     })
 
     const suggestions = Array.isArray(aiResponse?.suggestions) ? aiResponse.suggestions : []

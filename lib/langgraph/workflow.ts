@@ -1,7 +1,11 @@
 import { StateGraph } from "@langchain/langgraph"
 import { getChatModel } from "@/lib/ai/client"
-import { buildStepOpportunitiesPromptV1, type StepOpportunityPromptContext } from "@/lib/ai/opportunityPrompt"
-import { buildSuggestionPromptV5 } from "@/lib/ai/stepPrompt"
+import {
+  buildStepOpportunitiesPromptLite,
+  buildStepOpportunitiesPromptV1,
+  type StepOpportunityPromptContext
+} from "@/lib/ai/opportunityPrompt"
+import { buildSuggestionPromptLite, buildSuggestionPromptV5 } from "@/lib/ai/stepPrompt"
 import { debug } from "@/lib/debug"
 import { DEFAULT_STUDENT_PERSONA_ID, getStudentPersona, type StudentPersona } from "@/lib/context/studentPersonas"
 import type { BucketId } from "@/types/canvas"
@@ -13,6 +17,7 @@ type SuggestStepsInput = {
   historyRejected?: string[]
   lastSuggestion?: string
   persona?: StudentPersona
+  fast?: boolean
 }
 
 type Suggestion = { bucket: BucketId; text: string }
@@ -121,6 +126,37 @@ const suggestStepGraph = (() => {
   return graph.compile()
 })()
 
+function isFastModelName(modelName?: string): boolean {
+  if (!modelName) return false
+  const lower = modelName.toLowerCase()
+  return ["mini", "small", "fast", "lite", "turbo"].some((token) => lower.includes(token))
+}
+
+function inferModelHintFromEnv(): string | undefined {
+  const envHint = (process.env.LLM ?? process.env.OPENAI_MODEL ?? process.env.OPENAI_MODEL_NAME ?? "").trim()
+  return envHint.length > 0 ? envHint : undefined
+}
+
+function resolveModelHint(llm: { model?: unknown; modelName?: unknown } | null | undefined): string | undefined {
+  const raw =
+    (llm && typeof llm === "object" && "model" in llm && typeof (llm as any).model === "string"
+      ? (llm as any).model
+      : undefined) ??
+    (llm && typeof llm === "object" && "modelName" in llm && typeof (llm as any).modelName === "string"
+      ? (llm as any).modelName
+      : undefined)
+
+  return raw && raw.trim().length > 0 ? raw.trim() : undefined
+}
+
+function shouldUseLitePrompt({ fastFlag, modelHint }: { fastFlag?: boolean; modelHint?: string }): boolean {
+  if (process.env.LLM_FAST === "true") return true
+  if (fastFlag === true) return true
+  if (isFastModelName(modelHint)) return true
+  if (fastFlag === false) return false
+  return true
+}
+
 const VALID_BUCKETS: BucketId[] = ["do-now", "do-later", "before-graduation", "after-graduation"]
 
 function normaliseBucket(bucket?: string): BucketId {
@@ -170,10 +206,13 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
   const lastSuggestionRaw = typeof payload.lastSuggestion === "string" ? payload.lastSuggestion.trim() : ""
   const lastSuggestion = lastSuggestionRaw.length > 0 ? lastSuggestionRaw : undefined
   const persona = payload.persona ?? getStudentPersona(DEFAULT_STUDENT_PERSONA_ID)
+  const envModelHint = inferModelHintFromEnv()
+  const promptModelHint = resolveModelHint(getChatModel()) ?? envModelHint
+  const useLitePrompt = shouldUseLitePrompt({ fastFlag: payload.fast, modelHint: promptModelHint })
 
   try {
     if (workflowName === "suggest-step") {
-      const prompt = buildSuggestionPromptV5({
+      const prompt = (useLitePrompt ? buildSuggestionPromptLite : buildSuggestionPromptV5)({
         intentionText,
         targetBucket: promptBucket,
         historyAccepted,
@@ -182,9 +221,10 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
         persona
       })
 
-      debug.trace("AI Prompt Builder v5: constructed prompt", {
+      debug.trace("AI Prompt Builder: constructed prompt", {
         bucket: payload.intentionBucket ?? bucket,
         intention: intentionText,
+        promptVariant: useLitePrompt ? "lite" : "v5",
         ...(persona ? { persona: persona.shortLabel } : {})
       })
 
@@ -199,9 +239,10 @@ export async function runWorkflow(workflowName: WorkflowName, payload: SuggestSt
       resolvedModel = finalState.model ?? "unknown"
       const text = (finalState.suggestionText ?? "").trim()
 
-      debug.info("AI: model response (prompt v5)", {
+      debug.info("AI: model response (suggest-step)", {
         bucket: payload.intentionBucket ?? bucket,
         preview: text.slice(0, 120),
+        promptVariant: useLitePrompt ? "lite" : "v5",
         ...(persona ? { persona: persona.shortLabel } : {})
       })
 
@@ -264,16 +305,17 @@ export async function runOpportunityWorkflow(
     : []
 
   const persona = payload.persona ?? getStudentPersona(DEFAULT_STUDENT_PERSONA_ID)
+  const llm = getChatModel()
+  const modelHint = resolveModelHint(llm) ?? inferModelHintFromEnv()
+  const useLitePrompt = shouldUseLitePrompt({ fastFlag: payload.fast, modelHint })
 
-  const prompt = buildStepOpportunitiesPromptV1({
+  const prompt = (useLitePrompt ? buildStepOpportunitiesPromptLite : buildStepOpportunitiesPromptV1)({
     stepTitle,
     stepBucket,
     intentionTitle,
     existingOpportunityTitles,
     persona
   })
-
-  const llm = getChatModel()
 
   const resolvedModel =
     (typeof (llm as any).model === "string" && (llm as any).model.trim().length > 0
@@ -287,6 +329,7 @@ export async function runOpportunityWorkflow(
 
   debug.trace("AI: suggest-opportunities using model", {
     model: resolvedModel,
+    promptVariant: useLitePrompt ? "lite" : "v1",
     ...(persona ? { persona: persona.shortLabel } : {}),
     ...(process.env.OPENAI_BASE_URL ? { baseURL: process.env.OPENAI_BASE_URL } : {})
   })
@@ -316,6 +359,7 @@ export async function runOpportunityWorkflow(
 
   debug.info("AI: raw suggest-opportunities response", {
     preview: trimmed.slice(0, 200),
+    promptVariant: useLitePrompt ? "lite" : "v1",
     ...(persona ? { persona: persona.shortLabel } : {})
   })
 
@@ -354,6 +398,7 @@ export async function runOpportunityWorkflow(
   debug.info("AI: suggest-opportunities parsed response", {
     count: opportunities.length,
     example: opportunities[0]?.title || "(none)",
+    promptVariant: useLitePrompt ? "lite" : "v1",
     ...(persona ? { persona: persona.shortLabel } : {})
   })
 

@@ -121,4 +121,35 @@ describe('/api/ai/suggest-steps POST', () => {
     expect(json.ok).toBe(false)
     expect(json.error).toBe('LLM environment variable is not set')
   })
+
+  it('forwards the fast flag, defaulting to lite mode', async () => {
+    mockRunWorkflow.mockResolvedValue({
+      suggestions: [{ bucket: 'do-now', text: 'Start a portfolio' }],
+      model: 'gpt-4o-mini'
+    })
+
+    const originalEnv = process.env.LLM_FAST
+    process.env.LLM_FAST = 'true'
+
+    const { req, res } = createMockRequestResponse({
+      intentionText: 'Build projects',
+      intentionBucket: 'before-graduation',
+      fast: false
+    })
+
+    try {
+      await handler(req, res)
+
+      expect(mockRunWorkflow).toHaveBeenCalledWith(
+        'suggest-step',
+        expect.objectContaining({
+          intentionText: 'Build projects',
+          intentionBucket: 'before-graduation',
+          fast: true
+        })
+      )
+    } finally {
+      process.env.LLM_FAST = originalEnv
+    }
+  })
 })
