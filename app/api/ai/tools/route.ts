@@ -1,6 +1,6 @@
 export const runtime = "nodejs"
 
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, type ModelMode } from "@/lib/ai/client"
 import { findProfilesByNameFragment } from "@/lib/ai/tools/profiles"
 import { AIMessage, ToolMessage } from "@langchain/core/messages"
 
@@ -14,6 +14,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}))
     const q = (typeof body?.q === "string" && body.q.trim()) || "Find profiles with name fragment 'Ada'."
+    const requestedMode = typeof body?.mode === "string" ? body.mode : undefined
+    const mode: ModelMode = requestedMode === "quality" ? "quality" : "fast"
     const startedAt = Date.now()
 
     // Define OpenAI tool schema (server executes tools explicitly).
@@ -35,7 +37,7 @@ export async function POST(req: Request) {
       }
     ]
 
-    const model = getChatModel().bindTools(tools)
+    const model = getChatModel({ mode }).bindTools(tools)
 
     // Step 1: user → model (tool call proposal)
     const first = await model.invoke(q)
