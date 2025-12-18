@@ -14,6 +14,7 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}))
     const q = (typeof body?.q === "string" && body.q.trim()) || "Find profiles with name fragment 'Ada'."
+    const startedAt = Date.now()
 
     // Define OpenAI tool schema (server executes tools explicitly).
     const tools = [
@@ -39,11 +40,13 @@ export async function POST(req: Request) {
     // Step 1: user → model (tool call proposal)
     const first = await model.invoke(q)
 
-    // If no tool calls, just return model output.
     const toolCalls: ToolCall[] =
       (first as any)?.additional_kwargs?.tool_calls ??
       (first as any)?.tool_calls ??
       []
+    const toolCallCount = Array.isArray(toolCalls) ? toolCalls.length : 0
+
+    // If no tool calls, just return model output.
     if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
       const content =
         typeof (first as any) === "string"
@@ -51,6 +54,11 @@ export async function POST(req: Request) {
           : Array.isArray((first as any).content)
             ? (first as any).content.map((c: any) => (typeof c?.text === "string" ? c.text : "")).join("\n")
             : (first as any).content ?? ""
+
+      console.info("[ai-tools] follow-up skipped; no tool calls proposed", {
+        toolCallCount,
+        elapsedMs: Date.now() - startedAt
+      })
       return new Response(JSON.stringify({ ok: true, data: { output: String(content || "") } }), {
         status: 200,
         headers: { "content-type": "application/json" }
@@ -71,6 +79,11 @@ export async function POST(req: Request) {
       if (name === "profiles_search") {
         const fragment: string = String(args?.fragment || "")
         const limit: number | undefined = typeof args?.limit === "number" ? args.limit : undefined
+        console.info("[ai-tools] executing profiles_search tool", {
+          toolCallId: call.id,
+          limit: limit ?? 5,
+          hasFragment: fragment.length > 0
+        })
         const result = await findProfilesByNameFragment(fragment, limit ?? 5)
         rawResults.push({ tool: name, args: { fragment, limit: limit ?? 5 }, result })
         toolMessages.push(
@@ -87,6 +100,12 @@ export async function POST(req: Request) {
       new AIMessage(first),  // preserve the original AI tool-call message
       ...toolMessages
     ])
+
+    console.info("[ai-tools] follow-up completion executed", {
+      toolCallCount,
+      toolMessages: toolMessages.length,
+      elapsedMs: Date.now() - startedAt
+    })
 
     const finalText =
       typeof (followup as any) === "string"
