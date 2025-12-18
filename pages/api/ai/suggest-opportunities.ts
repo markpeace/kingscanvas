@@ -12,11 +12,23 @@ type SuggestOpportunitiesRequestBody = {
   intentionTitle?: string
   existingOpportunityTitles?: string[]
   personaId?: StudentPersonaId
+  fast?: boolean
 }
 
 type SuggestOpportunitiesResponse =
   | { ok: true; opportunities: Array<{ title: string; summary: string; tier?: string }> }
   | { ok?: false; error: string }
+
+function normaliseBooleanFlag(value: unknown): boolean | undefined {
+  if (typeof value === "boolean") return value
+  if (typeof value === "string") {
+    const lower = value.trim().toLowerCase()
+    if (["1", "true", "yes", "on", "fast"].includes(lower)) return true
+    if (["0", "false", "no", "off", "slow"].includes(lower)) return false
+  }
+
+  return undefined
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -34,8 +46,11 @@ export default async function handler(
     return res.status(405).json({ ok: false, error: "Method not allowed" })
   }
 
-  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles, personaId } =
+  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles, personaId, fast } =
     req.body as SuggestOpportunitiesRequestBody
+  const fastFlag = normaliseBooleanFlag(fast ?? (req.query?.fast as string | undefined))
+  const envFast = process.env.LLM_FAST === "true"
+  const useFast = envFast ? true : fastFlag ?? true
 
   const persona = getStudentPersona(personaId)
 
@@ -45,7 +60,8 @@ export default async function handler(
     hasStepTitle: !!stepTitle,
     intentionTitle,
     existingCount: existingOpportunityTitles?.length || 0,
-    persona: persona.shortLabel
+    persona: persona.shortLabel,
+    fast: useFast
   })
 
   try {
@@ -54,7 +70,8 @@ export default async function handler(
       stepBucket: stepBucket as any,
       intentionTitle,
       existingOpportunityTitles,
-      persona
+      persona,
+      fast: useFast
     })
 
     const opportunities = Array.isArray(result?.opportunities) ? result.opportunities : []

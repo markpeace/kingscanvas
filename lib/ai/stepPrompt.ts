@@ -192,3 +192,63 @@ No list markers.
 No quotation marks.
   `;
 }
+
+export function buildSuggestionPromptLite({
+  intentionText,
+  targetBucket,
+  historyAccepted = [],
+  historyRejected = [],
+  lastSuggestion,
+  persona
+}: {
+  intentionText: string;
+  targetBucket: string;
+  historyAccepted?: string[];
+  historyRejected?: string[];
+  lastSuggestion?: string;
+  persona?: StudentPersona;
+}) {
+  const personaSummary = persona
+    ? `Student persona:
+- Discipline: ${persona.discipline}
+- Programme type: ${persona.programmeType}
+- Stage: year ${persona.currentYear} of ${persona.totalYears} (about ${persona.yearsRemaining} years remaining)
+- Study mode: ${persona.studyMode}
+- Context: ${persona.notes.join("; ")}`
+    : `Assume a typical on-campus undergraduate on a three year social science degree in their first year.`;
+
+  return `
+You are a concise university development advisor.
+
+${personaSummary}
+
+Goal
+Write one short developmental focus (skill, experience, or knowledge) that helps the student progress their intention.
+
+Bucket rules (${targetBucket})
+- do_now: tiny moves that can start this week; favour SKILL or EXPERIENCE.
+- do_later: slightly larger tasters for this term; mix SKILL and EXPERIENCE, add KNOWLEDGE sparingly.
+- before_grad: balanced mix with at least one substantial CAPACITY or early EVIDENCE move.
+- after_grad: EVIDENCE/OFFRAMP ready ideas; mix with at least one accessible option.
+
+Variety rules
+- Do not repeat or lightly rephrase lastSuggestion or anything in historyAccepted/historyRejected.
+- Rotate focus types; prefer SKILL if none exist yet, then EXPERIENCE; use KNOWLEDGE only when it unlocks next moves.
+- Avoid starting two focuses in a row with the same first three words.
+- Keep neutral, supportive tone.
+
+Inputs
+- Intention: "${intentionText}"
+- Bucket: "${targetBucket}"
+- Accepted focuses:
+${historyAccepted.length ? historyAccepted.map((item) => `- ${item}`).join("\n") : "- (none)"}
+- Rejected focuses:
+${historyRejected.length ? historyRejected.map((item) => `- ${item}`).join("\n") : "- (none)"}
+- Last suggestion:
+${lastSuggestion ? `- ${lastSuggestion}` : "- (none)"}
+
+Output
+- One plain 5–14 word focus.
+- No labels, quotes, lists, or explanations.
+`;
+}

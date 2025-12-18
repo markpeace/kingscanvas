@@ -7,6 +7,7 @@ export type StepOpportunityPromptContext = {
   intentionTitle?: string
   existingOpportunityTitles?: string[]
   persona?: StudentPersona
+  fast?: boolean
 }
 
 export function buildStepOpportunitiesPromptV1(ctx: StepOpportunityPromptContext): string {
@@ -250,5 +251,58 @@ Constraints:
 - 2 to 5 opportunities.
 - Titles and summaries must be plain text.
 - Do not include any commentary outside the JSON.
+`
+}
+
+export function buildStepOpportunitiesPromptLite(ctx: StepOpportunityPromptContext): string {
+  const { stepTitle, stepBucket, intentionTitle, existingOpportunityTitles = [], persona } = ctx
+
+  const personaSummary = persona
+    ? `Student persona:
+- Discipline: ${persona.discipline}
+- Programme type: ${persona.programmeType}
+- Stage: year ${persona.currentYear} of ${persona.totalYears} (about ${persona.yearsRemaining} years remaining)
+- Study mode: ${persona.studyMode}
+- Context: ${persona.notes.join("; ")}`
+    : `Assume a typical on-campus undergraduate on a three year social science programme in their first year.`
+
+  return `
+You are an opportunity designer for university students.
+
+${personaSummary}
+
+Goal
+Turn one developmental step into 2–4 opportunity TYPES (titles plus one sentence) that help the student progress.
+
+Bucket rules (${stepBucket || "not specified"})
+- do-now: light actions that can start this week; avoid multi-week programmes.
+- do-later: short tasters or low-hours patterns over 1–4 weeks.
+- before-graduate: include at least one sustained or substantial pattern alongside lighter options.
+- after-graduate: allow intensive patterns but keep one flexible option.
+- if missing: default to a mix of one short-form and one medium option.
+
+Variety and fit
+- Keep every idea clearly linked to the step "${stepTitle}".
+- Do not duplicate existing opportunity titles:
+${existingOpportunityTitles.length ? existingOpportunityTitles.map((title) => `  - ${title}`).join("\n") : "  - (none)"}
+- Include at least one structured option and one independent option where sensible.
+- Vary form and focus; avoid three similar patterns in a row.
+
+Output
+Return JSON only:
+{
+  "opportunities": [
+    {
+      "title": "Short opportunity type",
+      "summary": "One sentence on how it helps with the step.",
+      "source": "kings-edge-simulated" | "independent",
+      "form": "workshop" | "mentoring" | "short-course" | "coaching" | "independent-action",
+      "focus": "experience" | "skills" | "community" | "reflection"
+    }
+  ]
+}
+- 2 to 5 opportunities.
+- Use plain text. No commentary outside the JSON.
+- Intention context (optional): "${intentionTitle || "not specified"}"
 `
 }
