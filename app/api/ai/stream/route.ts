@@ -1,13 +1,17 @@
 export const runtime = "nodejs"
 
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, type ModelMode } from "@/lib/ai/client"
+
+const parseMode = (value: unknown): ModelMode =>
+  typeof value === "string" && value.toLowerCase() === "quality" ? "quality" : "fast"
 
 export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}))
     const q = (typeof body?.q === "string" && body.q.trim()) || "Stream a short hello."
+    const mode = parseMode((body as any)?.mode)
 
-    const model = getChatModel()
+    const model = getChatModel(mode)
     const stream = await model.stream(q)
 
     const readable = new ReadableStream({

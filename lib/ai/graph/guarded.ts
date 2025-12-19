@@ -1,8 +1,8 @@
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, type ModelMode } from "@/lib/ai/client"
 
 export type RunResult = { output: string; mode: "langgraph" | "direct-fallback" }
 
-export async function runGuarded(input: string): Promise<RunResult> {
+export async function runGuarded(input: string, mode: ModelMode = "fast"): Promise<RunResult> {
   // Try dynamic import of LangGraph so we don't crash on incompatible runtimes.
   try {
     const { StateGraph, START, END } = (await import("@langchain/langgraph")) as typeof import("@langchain/langgraph")
@@ -10,7 +10,7 @@ export async function runGuarded(input: string): Promise<RunResult> {
     type SimpleState = { input: string; output?: string }
 
     async function node(state: SimpleState): Promise<SimpleState> {
-      const model = getChatModel()
+      const model = getChatModel(mode)
       const res = await model.invoke(state.input || "Say hello briefly.")
       const content =
         typeof (res as any) === "string"
@@ -38,7 +38,7 @@ export async function runGuarded(input: string): Promise<RunResult> {
     return { output: String(result.output ?? ""), mode: "langgraph" }
   } catch {
     // Fallback: direct model call (guaranteed to work in current template)
-    const model = getChatModel()
+    const model = getChatModel(mode)
     const res = await model.invoke(input || "Say hello briefly.")
     const content =
       typeof (res as any) === "string"
