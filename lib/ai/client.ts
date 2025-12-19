@@ -13,6 +13,13 @@ type GetChatModelOptions = {
   mode?: ModelMode
 }
 
+const chatModelCache = new Map<string, ChatOpenAI>()
+
+function cacheKey(model: string, baseURL?: string) {
+  const trimmedBaseUrl = (baseURL ?? "").trim()
+  return `${model}::${trimmedBaseUrl || "default"}`
+}
+
 /**
  * Returns a configured ChatOpenAI model.
  * Env:
@@ -33,11 +40,22 @@ export function getChatModel(options: GetChatModelOptions = {}) {
   const selectedModel = mode === "quality" ? heavyModel : fastModel
 
   const baseURL = process.env.OPENAI_BASE_URL // optional
+  const key = cacheKey(selectedModel, baseURL)
 
-  return new ChatOpenAI({
+  if (chatModelCache.has(key)) {
+    return chatModelCache.get(key) as ChatOpenAI
+  }
+
+  const model = new ChatOpenAI({
     model: selectedModel,
     apiKey,
+    timeout: 60_000,
+    maxRetries: 2,
     // IMPORTANT: the client expects `baseURL` directly (not inside `configuration`)
     ...(baseURL ? { baseURL } : {})
   })
+
+  chatModelCache.set(key, model)
+
+  return model
 }
