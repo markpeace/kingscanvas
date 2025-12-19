@@ -1,7 +1,8 @@
 export const runtime = "nodejs"
 
 import { runPing } from "@/lib/ai/graph/ping"
-import { resolveModelMode } from "@/lib/ai/client"
+import { getChatModel, resolveModelMode } from "@/lib/ai/client"
+import { IterableReadableStream } from "@langchain/core/utils/stream"
 
 function isDisabled() {
   return process.env.AI_ENABLE === "false"
@@ -46,6 +47,43 @@ function errPayload(err: unknown) {
   return { payload, status }
 }
 
+function extractChunkText(chunk: unknown) {
+  return typeof (chunk as any) === "string"
+    ? (chunk as any)
+    : Array.isArray((chunk as any)?.content)
+      ? (chunk as any).content.map((c: any) => (typeof c?.text === "string" ? c.text : "")).join("")
+      : (chunk as any)?.content ?? ""
+}
+
+function prefersStreaming(req: Request, flag?: unknown) {
+  if (typeof flag === "boolean") return flag
+  if (typeof flag === "string") return flag === "1" || flag.toLowerCase() === "true"
+
+  const accept = (req.headers.get("accept") || "").toLowerCase()
+  return accept.includes("text/event-stream") || accept.includes("text/plain") || accept.includes("application/x-ndjson")
+}
+
+async function streamPingResponse(q: string, mode: ReturnType<typeof resolveModelMode>) {
+  const encoder = new TextEncoder()
+  const model = getChatModel({ mode })
+  const stream = await model.stream(q)
+
+  const readable = IterableReadableStream.fromAsyncGenerator((async function* () {
+    for await (const chunk of stream) {
+      const text = extractChunkText(chunk)
+      if (text) yield encoder.encode(text)
+    }
+  })())
+
+  return new Response(readable, {
+    status: 200,
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "no-store"
+    }
+  })
+}
+
 export async function GET(req: Request) {
   try {
     if (isDisabled()) {
@@ -54,6 +92,15 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url)
     const q = searchParams.get("q") || "Say hello briefly."
     const mode = resolveModelMode(searchParams.get("mode"))
+
+    if (prefersStreaming(req, searchParams.get("stream"))) {
+      try {
+        return await streamPingResponse(q, mode)
+      } catch (streamErr) {
+        console.warn("[ai-ping] streaming unavailable; falling back to buffered response", streamErr)
+      }
+    }
+
     const output = await runPing(q, mode)
     return new Response(JSON.stringify({ ok: true, data: { output } }), { status: 200, headers: { "content-type": "application/json" } })
   } catch (err) {
@@ -70,6 +117,15 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}))
     const q = typeof body?.q === "string" && body.q.trim().length > 0 ? body.q : "Say hello briefly."
     const mode = resolveModelMode(body?.mode)
+
+    if (prefersStreaming(req, body?.stream)) {
+      try {
+        return await streamPingResponse(q, mode)
+      } catch (streamErr) {
+        console.warn("[ai-ping] streaming unavailable; falling back to buffered response", streamErr)
+      }
+    }
+
     const output = await runPing(q, mode)
     return new Response(JSON.stringify({ ok: true, data: { output } }), { status: 200, headers: { "content-type": "application/json" } })
   } catch (err) {
