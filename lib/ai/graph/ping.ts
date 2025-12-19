@@ -1,9 +1,10 @@
-import { getChatModel } from "@/lib/ai/client"
+import { getChatModel, resolveModelMode, type ModelMode } from "@/lib/ai/client"
 // NOTE: LangGraph implementation temporarily disabled due to runtime error ("t$ is not a function") in current env/version.
 // We'll reintroduce a LangGraph-based pipeline in a later PR when we add multi-node graphs.
 
-export async function runPing(input: string) {
-  const model = getChatModel()
+export async function runPing(input: string, mode?: ModelMode) {
+  const resolvedMode = resolveModelMode(mode)
+  const model = getChatModel({ mode: resolvedMode })
   const res = await model.invoke(input || "Say hello briefly.")
   const content =
     typeof (res as any) === "string"

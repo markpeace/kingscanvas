@@ -5,7 +5,7 @@
 
 **Models**
 - `LLM` — optional fast model identifier (defaults to `gpt-4o-mini` when unset)
-- `LLM_HEAVY` — optional higher-quality model used when `mode: "quality"` is requested (falls back to `LLM`)
+- `LLM_HEAVY` — optional higher-quality model used when `mode: "quality"` is requested (falls back to `LLM` when unset)
 
 **Optional**
 - `OPENAI_BASE_URL` — for Azure / compatible gateways
@@ -23,6 +23,9 @@
 - `/api/ai/graph` — guarded by `AI_GRAPH_ENABLE="true"`
 
 **Mode selection**
-- Send `{ mode: "fast" | "quality" }` in POST bodies for `/api/ai/stream` and `/api/ai/tools` to toggle between `LLM` (fast/default) and `LLM_HEAVY` (quality). Missing or unknown values default to fast.
+- Provide `mode: "fast" | "quality"` to toggle between `LLM` (fast/default) and `LLM_HEAVY` (quality). Missing or unknown values default to the fast model (`gpt-4o-mini` when `LLM` is unset).
+- Accepted locations:
+  - Query string for `GET /api/ai/ping` and `GET /api/ai/graph`
+  - JSON bodies for `POST /api/ai/ping`, `POST /api/ai/stream`, and `POST /api/ai/tools`
 
 The `/ui-demo` page contains cards to exercise these endpoints.

@@ -2,6 +2,13 @@ import { ChatOpenAI } from "@langchain/openai"
 
 export type ModelMode = "fast" | "quality"
 
+export function resolveModelMode(value?: unknown): ModelMode {
+  if (typeof value === "string" && value.trim().toLowerCase() === "quality") {
+    return "quality"
+  }
+  return "fast"
+}
+
 type GetChatModelOptions = {
   mode?: ModelMode
 }
@@ -20,7 +27,7 @@ export function getChatModel(options: GetChatModelOptions = {}) {
     throw new Error("OPENAI_API_KEY is not set")
   }
 
-  const mode = options.mode ?? "fast"
+  const mode = resolveModelMode(options.mode)
   const fastModel = (process.env.LLM ?? "").trim() || "gpt-4o-mini"
   const heavyModel = (process.env.LLM_HEAVY ?? "").trim() || fastModel
   const selectedModel = mode === "quality" ? heavyModel : fastModel

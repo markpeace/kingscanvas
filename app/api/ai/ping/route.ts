@@ -1,6 +1,7 @@
 export const runtime = "nodejs"
 
 import { runPing } from "@/lib/ai/graph/ping"
+import { resolveModelMode } from "@/lib/ai/client"
 
 function isDisabled() {
   return process.env.AI_ENABLE === "false"
@@ -52,7 +53,8 @@ export async function GET(req: Request) {
     }
     const { searchParams } = new URL(req.url)
     const q = searchParams.get("q") || "Say hello briefly."
-    const output = await runPing(q)
+    const mode = resolveModelMode(searchParams.get("mode"))
+    const output = await runPing(q, mode)
     return new Response(JSON.stringify({ ok: true, data: { output } }), { status: 200, headers: { "content-type": "application/json" } })
   } catch (err) {
     const { payload, status } = errPayload(err)
@@ -67,7 +69,8 @@ export async function POST(req: Request) {
     }
     const body = await req.json().catch(() => ({}))
     const q = typeof body?.q === "string" && body.q.trim().length > 0 ? body.q : "Say hello briefly."
-    const output = await runPing(q)
+    const mode = resolveModelMode(body?.mode)
+    const output = await runPing(q, mode)
     return new Response(JSON.stringify({ ok: true, data: { output } }), { status: 200, headers: { "content-type": "application/json" } })
   } catch (err) {
     const { payload, status } = errPayload(err)
