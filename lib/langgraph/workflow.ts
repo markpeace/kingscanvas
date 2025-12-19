@@ -68,8 +68,7 @@ const suggestStepGraph = (() => {
       (typeof llm.modelName === "string" && llm.modelName.trim().length > 0
         ? llm.modelName
         : undefined) ??
-      ((process.env.LLM ?? "").trim() || undefined) ??
-      "unknown"
+      ((process.env.LLM ?? "").trim() || "gpt-4o-mini")
 
     debug.trace("AI: suggest-step using model", {
       model: resolvedModel,
@@ -133,8 +132,13 @@ function isFastModelName(modelName?: string): boolean {
 }
 
 function inferModelHintFromEnv(): string | undefined {
-  const envHint = (process.env.LLM ?? process.env.OPENAI_MODEL ?? process.env.OPENAI_MODEL_NAME ?? "").trim()
-  return envHint.length > 0 ? envHint : undefined
+  const envHint = (
+    process.env.LLM ??
+    process.env.OPENAI_MODEL ??
+    process.env.OPENAI_MODEL_NAME ??
+    "gpt-4o-mini"
+  ).trim()
+  return envHint.length > 0 ? envHint : "gpt-4o-mini"
 }
 
 function resolveModelHint(llm: { model?: unknown; modelName?: unknown } | null | undefined): string | undefined {
