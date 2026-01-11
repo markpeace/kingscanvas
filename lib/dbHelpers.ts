@@ -32,6 +32,32 @@ export async function ensureStepIndexes() {
   await col.createIndex({ user: 1, status: 1 });
 }
 
+type StepIndexGuard = typeof globalThis & {
+  __stepIndexesReady?: boolean;
+  __stepIndexesPromise?: Promise<void>;
+};
+
+export async function ensureStepIndexesOnce() {
+  const guard = globalThis as StepIndexGuard;
+
+  if (guard.__stepIndexesReady) {
+    return;
+  }
+
+  if (!guard.__stepIndexesPromise) {
+    guard.__stepIndexesPromise = ensureStepIndexes()
+      .then(() => {
+        guard.__stepIndexesReady = true;
+      })
+      .catch((error) => {
+        guard.__stepIndexesPromise = undefined;
+        throw error;
+      });
+  }
+
+  await guard.__stepIndexesPromise;
+}
+
 export async function ensureOpportunityIndexes() {
   const col = await getCollection("opportunities");
   await col.createIndex({ user: 1, stepId: 1 });
