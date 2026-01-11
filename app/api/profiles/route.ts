@@ -10,10 +10,15 @@ function isoNow() {
 
 export async function GET() {
   try {
+    const session = await getSession()
+    if (!session?.user?.email) {
+      return new Response(JSON.stringify({ ok: false, error: "unauthorized" }), { status: 401, headers: { "content-type": "application/json" } })
+    }
+
     const database = await db()
     const docs = await database
       .collection("profiles")
-      .find({}, { projection: { _id: 1, displayName: 1, bio: 1, userId: 1, createdAt: 1, updatedAt: 1 } })
+      .find({ userId: session.user.email }, { projection: { _id: 1, displayName: 1, bio: 1, userId: 1, createdAt: 1, updatedAt: 1 } })
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray()
