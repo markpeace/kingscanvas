@@ -4,7 +4,9 @@ import "@/app/globals.css"
 
 import { debug } from "../lib/debug"
 
-console.log("[MSW] Mocking disabled globally — all endpoints use live APIs")
+if (process.env.NODE_ENV !== "production") {
+  console.log("[MSW] Mocking disabled globally — all endpoints use live APIs")
+}
 debug.info("[Startup] Mocking disabled globally — all endpoints use live APIs")
 
 export default function App({ Component, pageProps }: AppProps) {
