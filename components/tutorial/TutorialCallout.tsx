@@ -184,9 +184,6 @@ export function TutorialCallout({
         onMouseDown={stopAllPointerLikeEvents}
         onMouseUp={stopAllPointerLikeEvents}
         onClick={stopAllPointerLikeEvents}
-        onTouchStart={stopAllPointerLikeEvents}
-        onTouchEnd={stopAllPointerLikeEvents}
-        onTouchMove={stopAllPointerLikeEvents}
       >
         <div className="flex flex-col gap-3">
           <h2 id={headingId} className="text-base font-semibold text-kings-black">
@@ -207,11 +204,6 @@ export function TutorialCallout({
                 stopAllPointerLikeEvents(event)
                 handleNext()
               }}
-              onTouchStart={stopAllPointerLikeEvents}
-              onTouchEnd={(event) => {
-                stopAllPointerLikeEvents(event)
-                handleNext()
-              }}
             >
               Next
             </button>
@@ -225,11 +217,6 @@ export function TutorialCallout({
                 stopAllPointerLikeEvents(event)
                 handleSkipAll()
               }}
-              onTouchStart={stopAllPointerLikeEvents}
-              onTouchEnd={(event) => {
-                stopAllPointerLikeEvents(event)
-                handleSkipAll()
-              }}
             >
               Skip all tips
             </button>
@@ -240,11 +227,6 @@ export function TutorialCallout({
               onPointerUp={stopAllPointerLikeEvents}
               onMouseDown={stopAllPointerLikeEvents}
               onClick={(event) => {
-                stopAllPointerLikeEvents(event)
-                handleRemindLater()
-              }}
-              onTouchStart={stopAllPointerLikeEvents}
-              onTouchEnd={(event) => {
                 stopAllPointerLikeEvents(event)
                 handleRemindLater()
               }}
