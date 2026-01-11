@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
+import { ensureStepIndexesOnce } from "@/lib/dbHelpers";
 import { safelyGenerateOpportunitiesForStep } from "@/lib/opportunities/generation";
 import {
   createSuggestedSteps,
@@ -26,6 +27,8 @@ export default async function handler(
   }
 
   try {
+    await ensureStepIndexesOnce();
+
     if (req.method === "GET") {
       debug.trace("Steps API: GET", { user: email });
       const data = await getUserSteps(email);
