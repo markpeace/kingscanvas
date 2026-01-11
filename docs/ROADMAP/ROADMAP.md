@@ -140,10 +140,10 @@ Add simple interactive buttons and actions to dashboards, enabling controlled us
 
 ---
 
-### 🧭 Epoch 0011 — Contextual tutorial and guidance system
-**Status:** In planning. ([PLAN](./EPOCHS/epoch-0011-tutorial-guidance/PLAN.md))
+### ✅ Epoch 0011 — Contextual tutorial and guidance system
+**Status:** Completed. ([PLAN](./EPOCHS/epoch-0011-tutorial-guidance/PLAN.md))
 
-Add a contextual, event-driven tutorial with JSON-driven copy, tooltip-style callouts, and per-user state in the database so students can pick up guidance across devices without blocking their flow.
+Delivered a contextual, event-driven tutorial with JSON-driven copy, tooltip-style callouts, and per-user state in the database so students can pick up guidance across devices without blocking their flow.
 
 ---
 

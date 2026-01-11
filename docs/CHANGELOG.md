@@ -1,5 +1,10 @@
 # Changelog
 
+### 2025-12-03 – Epoch 0011 "Contextual tutorial and guidance system" completed
+- Delivered JSON-driven tutorial callouts with type-safe message loading.
+- Added a tutorial manager plus reusable callout UI with focus control and responsive positioning.
+- Persisted per-user tutorial state and wired guidance to personas, intentions, steps, and opportunities.
+
 ### 2025-11-29 – Epoch 0010 "Prompt Refinement and AI Architecture" completed
 - Centralised AI layer for step and opportunity generation with explicit model
   configuration and debug-level provenance surfaced in the Debug Panel.
