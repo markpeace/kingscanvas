@@ -38,13 +38,7 @@ const tutorialMessageIds = [
   "delete_steps_and_intentions"
 ] as const satisfies TutorialMessageId[]
 
-const isProduction = process.env.NODE_ENV === "production"
-
 function validateMessages(raw: RawMessageMap): asserts raw is Record<TutorialMessageId, RawMessage> {
-  if (isProduction) {
-    return
-  }
-
   const missingIds = tutorialMessageIds.filter((id) => !raw[id])
 
   if (missingIds.length > 0) {
@@ -68,11 +62,7 @@ function mapMessages(raw: RawMessageMap): Record<TutorialMessageId, TutorialMess
     const entry = raw[id]
 
     if (!entry) {
-      if (!isProduction) {
-        throw new Error(`Missing tutorial message for id "${id}".`)
-      }
-
-      return acc
+      throw new Error(`Missing tutorial message for id "${id}".`)
     }
 
     acc[id] = { id, headline: entry.headline, body: entry.body }
