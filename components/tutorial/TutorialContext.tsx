@@ -12,6 +12,7 @@ const introSequence: TutorialMessageId[] = [
   "persona_intro"
 ]
 const canvasIntroIds: TutorialMessageId[] = ["canvas_intro_1", "canvas_intro_2", "canvas_intro_3"]
+const DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000
 
 export function logTutorialDebug(message: string, payload?: unknown) {
   if (process.env.NODE_ENV !== "development") return
@@ -38,6 +39,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   const [skippedAll, setSkippedAll] = useState(false)
   const [isHydrated, setIsHydrated] = useState(false)
   const [completedSteps, setCompletedSteps] = useState<Set<TutorialMessageId>>(new Set())
+  const [dismissedSteps, setDismissedSteps] = useState<Map<TutorialMessageId, number>>(new Map())
 
   const hydrateFromServer = useCallback((state: TutorialState) => {
     const nextCompletedSteps = tutorialMessageIdList.reduce<Set<TutorialMessageId>>((acc, id) => {
@@ -47,7 +49,25 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
       return acc
     }, new Set<TutorialMessageId>())
 
+    const now = Date.now()
+    const nextDismissedSteps = tutorialMessageIdList.reduce<Map<TutorialMessageId, number>>((acc, id) => {
+      const dismissedAt = state[id]?.dismissedAt
+
+      if (!dismissedAt) {
+        return acc
+      }
+
+      const dismissedAtMs = Date.parse(dismissedAt)
+
+      if (!Number.isNaN(dismissedAtMs) && now - dismissedAtMs < DISMISS_COOLDOWN_MS) {
+        acc.set(id, dismissedAtMs)
+      }
+
+      return acc
+    }, new Map<TutorialMessageId, number>())
+
     setCompletedSteps(nextCompletedSteps)
+    setDismissedSteps(nextDismissedSteps)
     setSkippedAll(Boolean(state.skippedAll))
 
     if (state.skippedAll) {
@@ -56,16 +76,20 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }
 
     const hasCompletedAnyStep = nextCompletedSteps.size > 0
-    const hasStartedCanvasIntro = canvasIntroIds.some((id) => nextCompletedSteps.has(id))
+    const hasStartedCanvasIntro = canvasIntroIds.some(
+      (id) => nextCompletedSteps.has(id) || nextDismissedSteps.has(id)
+    )
+    const nextIntroStep = introSequence.find(
+      (id) => !nextCompletedSteps.has(id) && !nextDismissedSteps.has(id)
+    ) ?? null
 
     if (!hasCompletedAnyStep) {
-      setActiveStepId("canvas_intro_1")
+      setActiveStepId(nextIntroStep)
       return
     }
 
     if (hasStartedCanvasIntro) {
-      const nextSequenceStep = introSequence.find((id) => !nextCompletedSteps.has(id)) ?? null
-      setActiveStepId(nextSequenceStep)
+      setActiveStepId(nextIntroStep)
       return
     }
 
@@ -114,19 +138,45 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }).catch((error) => console.error("Tutorial: failed to persist state", error))
   }, [])
 
+  const isDismissedRecently = useCallback(
+    (id: TutorialMessageId) => {
+      const dismissedAt = dismissedSteps.get(id)
+
+      if (!dismissedAt) {
+        return false
+      }
+
+      if (Date.now() - dismissedAt >= DISMISS_COOLDOWN_MS) {
+        setDismissedSteps((prev) => {
+          if (!prev.has(id)) {
+            return prev
+          }
+
+          const next = new Map(prev)
+          next.delete(id)
+          return next
+        })
+        return false
+      }
+
+      return true
+    },
+    [dismissedSteps]
+  )
+
   const showStep = useCallback(
     (id: TutorialMessageId) => {
       logTutorialDebug("showStep called", { id, skippedAll, activeStepId })
 
-      if (skippedAll || completedSteps.has(id)) {
-        logTutorialDebug("showStep blocked", { id, reason: "skippedAll or completed" })
+      if (skippedAll || completedSteps.has(id) || isDismissedRecently(id)) {
+        logTutorialDebug("showStep blocked", { id, reason: "skippedAll, completed, or dismissed" })
         return
       }
 
       logTutorialDebug("showStep activating", { id })
       setActiveStepId(id)
     },
-    [activeStepId, completedSteps, skippedAll]
+    [activeStepId, completedSteps, isDismissedRecently, skippedAll]
   )
 
   const completeStep = useCallback(
@@ -134,6 +184,15 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
       setCompletedSteps((prev) => {
         const updated = new Set(prev)
         updated.add(id)
+
+        setDismissedSteps((prevDismissed) => {
+          if (!prevDismissed.has(id)) {
+            return prevDismissed
+          }
+          const next = new Map(prevDismissed)
+          next.delete(id)
+          return next
+        })
 
         setActiveStepId((current) => {
           if (current !== id) {
@@ -163,6 +222,11 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
   const dismissStep = useCallback(
     (id: TutorialMessageId) => {
       setActiveStepId((current) => (current === id ? null : current))
+      setDismissedSteps((prev) => {
+        const next = new Map(prev)
+        next.set(id, Date.now())
+        return next
+      })
       persistState({ action: "dismissStep", stepId: id })
     },
     [persistState]
@@ -176,6 +240,7 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   const resetTutorial = useCallback(() => {
     setCompletedSteps(new Set())
+    setDismissedSteps(new Map())
     setSkippedAll(false)
     setActiveStepId("canvas_intro_1")
     persistState({ action: "resetAll" })
