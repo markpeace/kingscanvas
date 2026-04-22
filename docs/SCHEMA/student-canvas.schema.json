@@ -1,0 +1,301 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kcl.ac.uk/kings-edge/student-canvas.schema.json",
+  "title": "Student Canvas Storage Contract (v1)",
+  "description": "Canonical storage contract for the student Canvas plan.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "student_id",
+    "created_at",
+    "updated_at",
+    "canvas"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "student_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Student identifier (for example K-number)."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "tutorial_state": {
+      "type": "object",
+      "description": "Per-student tutorial state, if present.",
+      "additionalProperties": true
+    },
+    "canvas": {
+      "$ref": "#/$defs/CanvasState"
+    }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "bucket": {
+      "type": "string",
+      "enum": [
+        "do_now",
+        "do_later",
+        "before_graduation",
+        "after_graduation"
+      ]
+    },
+    "progress_status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed",
+        "abandoned"
+      ]
+    },
+    "opportunity_decision_status": {
+      "type": "string",
+      "enum": [
+        "suggested",
+        "accepted"
+      ]
+    },
+    "opportunity_source": {
+      "type": "string",
+      "enum": [
+        "catalogue",
+        "free_text"
+      ]
+    },
+    "catalogue_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "system",
+        "id"
+      ],
+      "properties": {
+        "system": {
+          "type": "string",
+          "minLength": 1
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "CanvasState": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "intentions"
+      ],
+      "properties": {
+        "intentions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Intention"
+          },
+          "default": []
+        }
+      }
+    },
+    "Intention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "bucket",
+        "progress_status",
+        "created_at",
+        "updated_at",
+        "steps"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "bucket": {
+          "$ref": "#/$defs/bucket"
+        },
+        "progress_status": {
+          "$ref": "#/$defs/progress_status"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Step"
+          },
+          "default": []
+        }
+      }
+    },
+    "Step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "bucket",
+        "order",
+        "progress_status",
+        "created_at",
+        "updated_at",
+        "opportunities"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "bucket": {
+          "$ref": "#/$defs/bucket"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "progress_status": {
+          "$ref": "#/$defs/progress_status"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "opportunities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Opportunity"
+          },
+          "default": []
+        }
+      }
+    },
+    "Opportunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "decision_status",
+        "source",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "decision_status": {
+          "$ref": "#/$defs/opportunity_decision_status"
+        },
+        "progress_status": {
+          "$ref": "#/$defs/progress_status"
+        },
+        "source": {
+          "$ref": "#/$defs/opportunity_source"
+        },
+        "catalogue_ref": {
+          "$ref": "#/$defs/catalogue_ref"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "const": "catalogue"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "catalogue_ref"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "const": "free_text"
+              }
+            }
+          },
+          "then": {
+            "not": {
+              "required": [
+                "catalogue_ref"
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "progress_status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "decision_status": {
+                "const": "accepted"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
