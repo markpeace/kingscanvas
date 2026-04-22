@@ -7,6 +7,7 @@ import { STUDENT_PERSONAS, getStudentPersona, type StudentPersonaId } from "@/li
 import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
 import { getStudentOpportunitiesByStep } from "@/lib/studentCanvas/repository"
+import { canonicalOpportunityToUi } from "@/lib/studentCanvas/mappers"
 import type { Opportunity } from "@/types/canvas"
 
 type OpportunitiesResponse =
@@ -92,7 +93,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const canonicalStepId = resolveCanonicalStepId(step as { _id?: unknown; id?: unknown }, requestedStepId)
 
-    const opportunities = await getStudentOpportunitiesByStep(email, canonicalStepId)
+    const canonicalOpportunities = await getStudentOpportunitiesByStep(email, canonicalStepId)
+    const opportunities = canonicalOpportunities.map((opportunity) => canonicalOpportunityToUi(opportunity, canonicalStepId))
 
     if (opportunities.length > 0) {
       debug.debug("Opportunities API: returning existing opportunities", {

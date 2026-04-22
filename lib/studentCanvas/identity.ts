@@ -21,7 +21,7 @@ export function createCanonicalId(): string {
   return randomUUID()
 }
 
-export function isCanonicalId(value: unknown): value is string {
+export function isCanonicalId(value: unknown): boolean {
   if (typeof value !== "string") {
     return false
   }

@@ -7,7 +7,9 @@ import {
   getStudentStepById,
   replaceStudentOpportunitiesByStep,
 } from "@/lib/studentCanvas/repository"
+import { canonicalOpportunityToUi } from "@/lib/studentCanvas/mappers"
 import type { Opportunity, OpportunityStatus } from "@/types/canvas"
+import type { Opportunity as StudentCanvasOpportunity } from "@/types/studentCanvasV1"
 
 export type OpportunityGenerationOrigin = "manual" | "ai-accepted" | "shuffle" | "lazy-fetch"
 
@@ -203,16 +205,15 @@ export async function generateOpportunitiesForStep(params: {
       return []
     }
 
-    const records = filteredDrafts.map((draft) => ({
+    const records: Array<Partial<StudentCanvasOpportunity>> = filteredDrafts.map((draft) => ({
       title: draft.title.trim(),
-      summary: draft.summary.trim(),
-      source: draft.source,
-      form: draft.form,
-      focus: isValidFocus(draft.focus) ? draft.focus : "skills",
-      status: sanitizeStatus(draft.status)
+      description: draft.summary.trim(),
+      source: draft.source === "kings-edge-simulated" ? "catalogue" : "free_text",
+      decision_status: sanitizeStatus(draft.status) === "saved" ? "accepted" : "suggested",
     }))
 
-    const created = await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, records) as Opportunity[]
+    const createdCanonical = await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, records)
+    const created = createdCanonical.map((opportunity) => canonicalOpportunityToUi(opportunity, canonicalStepId))
 
     debug.info("Opportunities: generate success", {
       stepId: canonicalStepId,
