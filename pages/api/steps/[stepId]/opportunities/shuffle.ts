@@ -49,7 +49,7 @@ export default async function handler(
   debug.info('Opportunities API: shuffle requested', { stepId: requestedStepId, persona: persona.shortLabel })
 
   try {
-    const step = await findStepById(requestedStepId)
+    const step = await findStepById(requestedStepId, email)
 
     if (!step) {
       debug.warn('Opportunities API: shuffle step not found', { user: email, stepId: requestedStepId })
@@ -70,7 +70,7 @@ export default async function handler(
       return res.status(400).json({ ok: false, error: 'Step is not eligible for opportunities' })
     }
 
-    const opportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle', persona })
+    const opportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle', studentId: email, persona })
 
     const responseStepId =
       opportunities[0]?.stepId ??

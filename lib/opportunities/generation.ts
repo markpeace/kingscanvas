@@ -1,14 +1,12 @@
-import { ObjectId } from "mongodb"
-
-import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
 import { runOpportunityWorkflow } from "@/lib/langgraph/workflow"
 import type { StudentPersona } from "@/lib/context/studentPersonas"
 import {
-  createOpportunitiesForStep,
-  deleteOpportunitiesForStep,
-  type OpportunityDraft as PersistenceOpportunityDraft
-} from "@/lib/userData"
+  getStudentIntentionTitle,
+  getStudentOpportunitiesByStep,
+  getStudentStepById,
+  replaceStudentOpportunitiesByStep,
+} from "@/lib/studentCanvas/repository"
 import type { Opportunity, OpportunityStatus } from "@/types/canvas"
 
 export type OpportunityGenerationOrigin = "manual" | "ai-accepted" | "shuffle" | "lazy-fetch"
@@ -21,7 +19,7 @@ export class StepNotFoundError extends Error {
 }
 
 type StepRecord = {
-  _id?: ObjectId | string
+  _id?: string | { toHexString?: () => string }
   id?: string
   user?: string
   intentionId?: string
@@ -30,14 +28,6 @@ type StepRecord = {
   bucket?: string
   bucketId?: string
   status?: string
-}
-
-type IntentionRecord = {
-  user: string
-  intentions?: Array<{
-    id?: string
-    title?: string
-  }>
 }
 
 function resolveCanonicalStepId(step: StepRecord, fallback: string): string {
@@ -82,64 +72,13 @@ function resolveBucketId(step: StepRecord): string | undefined {
   return undefined
 }
 
-type OpportunityRecord = { user?: string; stepId?: string }
-
-async function stepHasOpportunities(user: string, stepId: string): Promise<boolean> {
-  const col = await getCollection<OpportunityRecord>("opportunities")
-  const existing = await col.findOne({ user, stepId: String(stepId) })
-  return Boolean(existing)
-}
-
-async function findIntentionTitle(user: string, intentionId?: string): Promise<string | undefined> {
-  if (!intentionId) {
-    return undefined
-  }
-
-  const col = await getCollection<IntentionRecord>("intentions")
-  const doc = await col.findOne({ user })
-
-  if (!doc || !Array.isArray(doc.intentions)) {
-    return undefined
-  }
-
-  const match = doc.intentions.find((item) => item?.id === intentionId)
-  const title = match?.title
-
-  if (typeof title === "string" && title.trim().length > 0) {
-    return title
-  }
-
-  return undefined
-}
-
-export async function findStepById(stepId: string): Promise<StepRecord | null> {
-  if (typeof stepId !== "string" || stepId.trim().length === 0) {
+export async function findStepById(stepId: string, studentId?: string): Promise<StepRecord | null> {
+  if (typeof stepId !== "string" || stepId.trim().length === 0 || !studentId) {
     return null
   }
 
-  const col = await getCollection<StepRecord>("steps")
-  const queries: Array<Record<string, unknown>> = []
-
-  if (ObjectId.isValid(stepId)) {
-    try {
-      queries.push({ _id: new ObjectId(stepId) })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      debug.warn("Opportunities: failed to coerce step id", { stepId, message })
-    }
-  }
-
-  queries.push({ _id: stepId })
-  queries.push({ id: stepId })
-
-  for (const query of queries) {
-    const step = await col.findOne(query)
-    if (step) {
-      return step
-    }
-  }
-
-  return null
+  const step = await getStudentStepById(studentId, stepId)
+  return (step as StepRecord | null) ?? null
 }
 
 const VALID_SOURCES: Opportunity["source"][] = ["kings-edge-simulated", "independent"]
@@ -178,14 +117,15 @@ function sanitizeStatus(value: unknown): OpportunityStatus {
 export async function generateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
+  studentId?: string
   persona?: StudentPersona
 }): Promise<Opportunity[]> {
-  const { stepId, origin } = params
+  const { stepId, origin, studentId } = params
 
   let canonicalStepId = stepId
 
   try {
-    const step = await findStepById(stepId)
+    const step = await findStepById(stepId, studentId)
 
     if (!step || typeof step.user !== "string" || step.user.trim().length === 0) {
       debug.warn("Opportunities: step not found in generateOpportunitiesForStep", {
@@ -197,12 +137,12 @@ export async function generateOpportunitiesForStep(params: {
 
     canonicalStepId = resolveCanonicalStepId(step, stepId)
     const stepTitle = resolveStepTitle(step, canonicalStepId)
-    const intentionTitle = await findIntentionTitle(step.user, step.intentionId)
+    const intentionTitle = await getStudentIntentionTitle(step.user, step.intentionId)
     const bucketId = resolveBucketId(step)
 
     const shouldSkipAutoGeneration = origin !== "shuffle" && origin !== "lazy-fetch"
 
-    if (shouldSkipAutoGeneration && (await stepHasOpportunities(step.user, canonicalStepId))) {
+    if (shouldSkipAutoGeneration && (await getStudentOpportunitiesByStep(step.user, canonicalStepId)).length > 0) {
       debug.debug("Opportunities: already has opportunities; skipping auto generation", {
         stepId: canonicalStepId,
         origin
@@ -219,7 +159,7 @@ export async function generateOpportunitiesForStep(params: {
     })
 
     const drafts = Array.isArray(aiResult?.opportunities)
-      ? aiResult.opportunities.map((opp): PersistenceOpportunityDraft => {
+      ? aiResult.opportunities.map((opp) => {
           const title = isNonEmptyString(opp.title) ? opp.title : stepTitle
           const summary = isNonEmptyString(opp.summary) ? opp.summary : stepTitle
 
@@ -259,11 +199,11 @@ export async function generateOpportunitiesForStep(params: {
         origin,
         ...(params.persona ? { persona: params.persona.shortLabel } : {})
       })
-      await deleteOpportunitiesForStep(step.user, canonicalStepId)
+      await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, [])
       return []
     }
 
-    const records: PersistenceOpportunityDraft[] = filteredDrafts.map((draft) => ({
+    const records = filteredDrafts.map((draft) => ({
       title: draft.title.trim(),
       summary: draft.summary.trim(),
       source: draft.source,
@@ -272,8 +212,7 @@ export async function generateOpportunitiesForStep(params: {
       status: sanitizeStatus(draft.status)
     }))
 
-    await deleteOpportunitiesForStep(step.user, canonicalStepId)
-    const created = await createOpportunitiesForStep(step.user, canonicalStepId, records)
+    const created = await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, records) as Opportunity[]
 
     debug.info("Opportunities: generate success", {
       stepId: canonicalStepId,
@@ -296,6 +235,7 @@ export async function generateOpportunitiesForStep(params: {
 export async function safelyGenerateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
+  studentId?: string
   persona?: StudentPersona
 }): Promise<void> {
   const { stepId, origin } = params

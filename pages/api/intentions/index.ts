@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
-import { getUserIntentions, saveUserIntentions } from "@/lib/userData";
+import { getStudentIntentions, saveStudentIntentions } from "@/lib/studentCanvas/repository";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,9 +22,9 @@ export default async function handler(
   try {
     if (req.method === "GET") {
       debug.trace("Intentions API: GET", { user: email });
-      const data = await getUserIntentions(email);
-      debug.info("Intentions API: GET complete", { found: !!data });
-      return res.status(200).json(data || { intentions: [] });
+      const intentions = await getStudentIntentions(email);
+      debug.info("Intentions API: GET complete", { count: intentions.length });
+      return res.status(200).json({ intentions });
     }
 
     if (req.method === "PUT" || req.method === "POST") {
@@ -32,7 +32,7 @@ export default async function handler(
         user: email,
         keys: Object.keys(req.body || {}),
       });
-      await saveUserIntentions(email, req.body);
+      await saveStudentIntentions(email, req.body?.intentions || []);
       debug.info("Intentions API: write complete", { user: email });
       return res.status(200).json({ ok: true });
     }

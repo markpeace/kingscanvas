@@ -6,7 +6,7 @@ import { debug } from "@/lib/debug"
 import { STUDENT_PERSONAS, getStudentPersona, type StudentPersonaId } from "@/lib/context/studentPersonas"
 import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
-import { getOpportunitiesByStep } from "@/lib/userData"
+import { getStudentOpportunitiesByStep } from "@/lib/studentCanvas/repository"
 import type { Opportunity } from "@/types/canvas"
 
 type OpportunitiesResponse =
@@ -68,7 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   })
 
   try {
-    const step = await findStepById(requestedStepId)
+    const step = await findStepById(requestedStepId, email)
 
     if (!step) {
       debug.warn("Opportunities API: step not found", { user: email, stepId: requestedStepId })
@@ -92,7 +92,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 
     const canonicalStepId = resolveCanonicalStepId(step as { _id?: unknown; id?: unknown }, requestedStepId)
 
-    const opportunities = await getOpportunitiesByStep(email, canonicalStepId)
+    const opportunities = await getStudentOpportunitiesByStep(email, canonicalStepId)
 
     if (opportunities.length > 0) {
       debug.debug("Opportunities API: returning existing opportunities", {
@@ -109,6 +109,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       generated = await generateOpportunitiesForStep({
         stepId: canonicalStepId,
         origin: "lazy-fetch",
+        studentId: email,
         persona
       })
       debug.info("Opportunities API: generated on demand", {
