@@ -1,6 +1,13 @@
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
 import { canonicalIdFromLegacyRef, createCanonicalId, isCanonicalId, nowIso, toIsoString } from "@/lib/studentCanvas/identity"
+import {
+  assembleCanonicalDocument,
+  readLegacySnapshot,
+  STUDENT_CANVAS_PRIMARY_COLLECTION,
+  STUDENT_CANVAS_SCHEMA_VERSION,
+  migrateStudentFromLegacy,
+} from "@/lib/studentCanvas/migration"
 import { isOpportunitySchemaCompliant } from "@/lib/studentCanvas/opportunityRules"
 import { assertValidStudentCanvasDocument } from "@/lib/studentCanvas/validation"
 import type { TutorialState } from "@/lib/tutorial/state"
@@ -11,8 +18,8 @@ import type {
   StudentCanvasDocument,
 } from "@/types/studentCanvasV1"
 
-const SCHEMA_VERSION = "1.0.0" as const
-const PRIMARY_COLLECTION = "student_canvas"
+const SCHEMA_VERSION = STUDENT_CANVAS_SCHEMA_VERSION
+const PRIMARY_COLLECTION = STUDENT_CANVAS_PRIMARY_COLLECTION
 
 type LegacyIntentionsDocument = {
   user: string
@@ -26,76 +33,11 @@ type PrimaryStudentCanvasDocument = StudentCanvasDocument & {
   tutorialState?: TutorialState
 }
 
-type LegacyStepDocument = {
-  _id?: string | { toHexString?: () => string; toString?: () => string }
-  id?: string
-  user: string
-  intentionId?: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  [key: string]: unknown
-}
-
-type LegacyOpportunityDocument = {
-  _id: string | { toHexString?: () => string; toString?: () => string }
-  user: string
-  stepId: string
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  [key: string]: unknown
-}
-
 function buildCatalogueRef(opportunityId: string) {
   return {
     system: "legacy-opportunity",
     id: opportunityId,
   }
-}
-
-function toStepId(step: LegacyStepDocument): string {
-  const legacyId = typeof step.id === "string" ? step.id.trim() : ""
-  if (isCanonicalId(legacyId)) {
-    return legacyId
-  }
-  if (legacyId.length > 0) {
-    return canonicalIdFromLegacyRef(legacyId, "step")
-  }
-
-  const legacyRawId = step._id
-  if (typeof legacyRawId === "string" && isCanonicalId(legacyRawId.trim())) {
-    return legacyRawId.trim()
-  }
-  if (typeof legacyRawId === "string" && legacyRawId.trim().length > 0) {
-    return canonicalIdFromLegacyRef(legacyRawId.trim(), "step")
-  }
-  if (legacyRawId && typeof legacyRawId === "object") {
-    const stringified =
-      typeof legacyRawId.toHexString === "function"
-        ? legacyRawId.toHexString()
-        : typeof legacyRawId.toString === "function"
-          ? legacyRawId.toString()
-          : ""
-    if (stringified.trim().length > 0) {
-      return canonicalIdFromLegacyRef(stringified.trim(), "step")
-    }
-  }
-
-  return createCanonicalId()
-}
-
-function toOpportunityId(opportunity: LegacyOpportunityDocument): string {
-  const legacyId = typeof opportunity._id === "string" ? opportunity._id.trim() : ""
-  if (isCanonicalId(legacyId)) {
-    return legacyId
-  }
-
-  const ref =
-    typeof opportunity._id === "string"
-      ? opportunity._id
-      : typeof opportunity._id?.toHexString === "function"
-        ? opportunity._id.toHexString()
-        : String(opportunity._id)
-  return canonicalIdFromLegacyRef(ref, "opportunity")
 }
 
 function withUpdatedAt<T extends Record<string, unknown>>(record: T, timestamp: string): T & { updated_at: string } {
@@ -130,115 +72,8 @@ function applyOpportunityPatch(
 }
 
 async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument | null> {
-  const intentionsCollection = await getCollection<LegacyIntentionsDocument>("intentions")
-  const stepsCollection = await getCollection<LegacyStepDocument>("steps")
-  const opportunitiesCollection = await getCollection<LegacyOpportunityDocument>("opportunities")
-
-  const [legacyIntentions, legacySteps, legacyOpportunities] = await Promise.all([
-    intentionsCollection.findOne({ user: studentId }),
-    stepsCollection.find({ user: studentId }).toArray(),
-    opportunitiesCollection.find({ user: studentId }).toArray(),
-  ])
-
-  if (!legacyIntentions && legacySteps.length === 0 && legacyOpportunities.length === 0) {
-    return null
-  }
-
-  const fallbackTime = nowIso()
-  const opportunitiesByStep = new Map<string, StudentCanvasOpportunity[]>()
-
-  for (const opportunity of legacyOpportunities) {
-    const stepId = String(opportunity.stepId)
-    const canonicalId = toOpportunityId(opportunity)
-    const mapped: StudentCanvasOpportunity = {
-      id: canonicalId,
-      title: typeof opportunity.title === "string" ? opportunity.title : "Untitled opportunity",
-      description: typeof opportunity.summary === "string" ? opportunity.summary : undefined,
-      decision_status: opportunity.status === "saved" ? "accepted" : "suggested",
-      progress_status: undefined,
-      source: opportunity.source === "kings-edge-simulated" ? "catalogue" : "free_text",
-      catalogue_ref: opportunity.source === "kings-edge-simulated" ? buildCatalogueRef(canonicalId) : undefined,
-      created_at: toIsoString(opportunity.createdAt, fallbackTime),
-      updated_at: toIsoString(opportunity.updatedAt, fallbackTime),
-    }
-
-    const existing = opportunitiesByStep.get(stepId) ?? []
-    existing.push(mapped)
-    opportunitiesByStep.set(stepId, existing)
-  }
-
-  const stepsByIntention = new Map<string, StudentCanvasStep[]>()
-
-  for (const step of legacySteps) {
-    const intentionId = typeof step.intentionId === "string" ? step.intentionId : ""
-    if (!intentionId) {
-      continue
-    }
-
-    const stepId = toStepId(step)
-    const mapped: StudentCanvasStep = {
-      id: stepId,
-      title:
-        typeof step.title === "string" && step.title.trim().length > 0
-          ? step.title
-          : typeof step.text === "string" && step.text.trim().length > 0
-            ? step.text
-            : "Untitled step",
-      description: typeof step.text === "string" ? step.text : undefined,
-      bucket:
-        step.bucket === "do_later" ||
-        step.bucket === "before_graduation" ||
-        step.bucket === "after_graduation" ||
-        step.bucket === "do_now"
-          ? step.bucket
-          : step.bucket === "do-later"
-            ? "do_later"
-            : step.bucket === "before-graduation"
-              ? "before_graduation"
-              : step.bucket === "after-graduation"
-                ? "after_graduation"
-                : "do_now",
-      order: typeof step.order === "number" ? step.order : 0,
-      progress_status:
-        step.status === "accepted"
-          ? "in_progress"
-          : step.status === "completed"
-            ? "completed"
-            : step.status === "rejected"
-              ? "abandoned"
-              : "not_started",
-      created_at: toIsoString(step.createdAt, fallbackTime),
-      updated_at: toIsoString(step.updatedAt, fallbackTime),
-      opportunities: opportunitiesByStep.get(stepId) ?? [],
-    }
-
-    const existing = stepsByIntention.get(intentionId) ?? []
-    existing.push(mapped)
-    stepsByIntention.set(intentionId, existing)
-  }
-
-  const intentions = Array.isArray(legacyIntentions?.intentions) ? legacyIntentions.intentions : []
-
-  const mergedIntentions = intentions.map((intention) => {
-    const intentionId = typeof intention?.id === "string" ? intention.id : ""
-    return {
-      ...intention,
-      steps: intentionId ? stepsByIntention.get(intentionId) ?? [] : [],
-      updated_at: toIsoString(intention?.updated_at, fallbackTime),
-      created_at: toIsoString(intention?.created_at, fallbackTime),
-    }
-  })
-
-  return {
-    schema_version: SCHEMA_VERSION,
-    student_id: studentId,
-    created_at: toIsoString(legacyIntentions?.createdAt, fallbackTime),
-    updated_at: toIsoString(legacyIntentions?.updatedAt, fallbackTime),
-    tutorial_state: legacyIntentions?.tutorialState,
-    canvas: {
-      intentions: mergedIntentions,
-    },
-  }
+  const snapshot = await readLegacySnapshot(studentId)
+  return assembleCanonicalDocument(studentId, snapshot).document
 }
 
 async function getPrimaryCollection() {
@@ -271,7 +106,7 @@ export async function getStudentCanvas(studentId: string): Promise<StudentCanvas
   const collection = await getCollection<PrimaryStudentCanvasDocument>(PRIMARY_COLLECTION)
   const primary = await collection.findOne({ student_id: studentId })
 
-  if (primary) {
+  if (primary?.schema_version === SCHEMA_VERSION) {
     const tutorialState = primary.tutorial_state ?? primary.tutorialState
 
     return {
@@ -281,6 +116,22 @@ export async function getStudentCanvas(studentId: string): Promise<StudentCanvas
       canvas: {
         intentions: Array.isArray(primary.canvas?.intentions) ? primary.canvas.intentions : [],
       },
+    }
+  }
+
+  if (primary) {
+    debug.warn("StudentCanvas: stale primary schema, attempting lazy migration", {
+      studentId,
+      expectedSchemaVersion: SCHEMA_VERSION,
+      currentSchemaVersion: primary.schema_version,
+    })
+  }
+
+  const lazyMigrationEnabled = process.env.STUDENT_CANVAS_ENABLE_LAZY_MIGRATION === "true"
+  if (lazyMigrationEnabled) {
+    const migrated = await migrateStudentFromLegacy(studentId)
+    if (migrated) {
+      return migrated
     }
   }
 
