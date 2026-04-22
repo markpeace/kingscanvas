@@ -1,11 +1,12 @@
-import { ObjectId } from "mongodb"
-
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
-import type { TutorialState } from "@/lib/tutorial/state"
+import { canonicalIdFromLegacyRef, createCanonicalId, isCanonicalId, nowIso, toIsoString } from "@/lib/studentCanvas/identity"
 import { assertValidStudentCanvasDocument } from "@/lib/studentCanvas/validation"
+import type { TutorialState } from "@/lib/tutorial/state"
 import type {
   Intention as StudentCanvasIntention,
+  Opportunity as StudentCanvasOpportunity,
+  Step as StudentCanvasStep,
   StudentCanvasDocument,
 } from "@/types/studentCanvasV1"
 
@@ -21,7 +22,7 @@ type LegacyIntentionsDocument = {
 }
 
 type LegacyStepDocument = {
-  _id?: ObjectId | string
+  _id?: string | { toHexString?: () => string; toString?: () => string }
   id?: string
   user: string
   intentionId?: string
@@ -31,7 +32,7 @@ type LegacyStepDocument = {
 }
 
 type LegacyOpportunityDocument = {
-  _id: ObjectId | string
+  _id: string | { toHexString?: () => string; toString?: () => string }
   user: string
   stepId: string
   createdAt?: Date | string
@@ -39,49 +40,81 @@ type LegacyOpportunityDocument = {
   [key: string]: unknown
 }
 
-function nowIso(): string {
-  return new Date().toISOString()
-}
-
-function toIso(value: unknown, fallback: string): string {
-  if (typeof value === "string" && value.trim().length > 0) {
-    return value
-  }
-
-  if (value instanceof Date) {
-    return value.toISOString()
-  }
-
-  return fallback
-}
-
 function toStepId(step: LegacyStepDocument): string {
-  if (typeof step.id === "string" && step.id.trim().length > 0) {
-    return step.id
+  const legacyId = typeof step.id === "string" ? step.id.trim() : ""
+  if (isCanonicalId(legacyId)) {
+    return legacyId
+  }
+  if (legacyId.length > 0) {
+    return canonicalIdFromLegacyRef(legacyId, "step")
   }
 
-  const rawId = step._id
-  if (typeof rawId === "string" && rawId.trim().length > 0) {
-    return rawId
+  const legacyRawId = step._id
+  if (typeof legacyRawId === "string" && isCanonicalId(legacyRawId.trim())) {
+    return legacyRawId.trim()
+  }
+  if (typeof legacyRawId === "string" && legacyRawId.trim().length > 0) {
+    return canonicalIdFromLegacyRef(legacyRawId.trim(), "step")
+  }
+  if (legacyRawId && typeof legacyRawId === "object") {
+    const stringified =
+      typeof legacyRawId.toHexString === "function"
+        ? legacyRawId.toHexString()
+        : typeof legacyRawId.toString === "function"
+          ? legacyRawId.toString()
+          : ""
+    if (stringified.trim().length > 0) {
+      return canonicalIdFromLegacyRef(stringified.trim(), "step")
+    }
   }
 
-  if (rawId instanceof ObjectId) {
-    return rawId.toHexString()
-  }
-
-  return new ObjectId().toHexString()
+  return createCanonicalId()
 }
 
 function toOpportunityId(opportunity: LegacyOpportunityDocument): string {
-  if (typeof opportunity._id === "string") {
-    return opportunity._id
+  const legacyId = typeof opportunity._id === "string" ? opportunity._id.trim() : ""
+  if (isCanonicalId(legacyId)) {
+    return legacyId
   }
 
-  if (opportunity._id instanceof ObjectId) {
-    return opportunity._id.toHexString()
-  }
+  const ref =
+    typeof opportunity._id === "string"
+      ? opportunity._id
+      : typeof opportunity._id?.toHexString === "function"
+        ? opportunity._id.toHexString()
+        : String(opportunity._id)
+  return canonicalIdFromLegacyRef(ref, "opportunity")
+}
 
-  return String(opportunity._id)
+function withUpdatedAt<T extends Record<string, unknown>>(record: T, timestamp: string): T & { updated_at: string } {
+  return {
+    ...record,
+    updated_at: timestamp,
+  }
+}
+
+function applyStepPatch(step: StudentCanvasStep, patch: Record<string, unknown>, timestamp: string): StudentCanvasStep {
+  return withUpdatedAt(
+    {
+      ...step,
+      ...patch,
+    },
+    timestamp,
+  ) as StudentCanvasStep
+}
+
+function applyOpportunityPatch(
+  opportunity: StudentCanvasOpportunity,
+  patch: Record<string, unknown>,
+  timestamp: string,
+): StudentCanvasOpportunity {
+  return withUpdatedAt(
+    {
+      ...opportunity,
+      ...patch,
+    },
+    timestamp,
+  ) as StudentCanvasOpportunity
 }
 
 async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument | null> {
@@ -100,15 +133,20 @@ async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument
   }
 
   const fallbackTime = nowIso()
-  const opportunitiesByStep = new Map<string, any[]>()
+  const opportunitiesByStep = new Map<string, StudentCanvasOpportunity[]>()
+
   for (const opportunity of legacyOpportunities) {
     const stepId = String(opportunity.stepId)
-    const mapped = {
-      ...opportunity,
-      id: toOpportunityId(opportunity),
-      _id: toOpportunityId(opportunity),
-      createdAt: toIso(opportunity.createdAt, fallbackTime),
-      updatedAt: toIso(opportunity.updatedAt, fallbackTime),
+    const canonicalId = toOpportunityId(opportunity)
+    const mapped: StudentCanvasOpportunity = {
+      id: canonicalId,
+      title: typeof opportunity.title === "string" ? opportunity.title : "Untitled opportunity",
+      description: typeof opportunity.summary === "string" ? opportunity.summary : undefined,
+      decision_status: opportunity.status === "saved" ? "accepted" : "suggested",
+      progress_status: undefined,
+      source: opportunity.source === "kings-edge-simulated" ? "catalogue" : "free_text",
+      created_at: toIsoString(opportunity.createdAt, fallbackTime),
+      updated_at: toIsoString(opportunity.updatedAt, fallbackTime),
     }
 
     const existing = opportunitiesByStep.get(stepId) ?? []
@@ -116,7 +154,7 @@ async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument
     opportunitiesByStep.set(stepId, existing)
   }
 
-  const stepsByIntention = new Map<string, any[]>()
+  const stepsByIntention = new Map<string, StudentCanvasStep[]>()
 
   for (const step of legacySteps) {
     const intentionId = typeof step.intentionId === "string" ? step.intentionId : ""
@@ -125,12 +163,39 @@ async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument
     }
 
     const stepId = toStepId(step)
-    const mapped = {
-      ...step,
+    const mapped: StudentCanvasStep = {
       id: stepId,
-      _id: stepId,
-      createdAt: toIso(step.createdAt, fallbackTime),
-      updatedAt: toIso(step.updatedAt, fallbackTime),
+      title:
+        typeof step.title === "string" && step.title.trim().length > 0
+          ? step.title
+          : typeof step.text === "string" && step.text.trim().length > 0
+            ? step.text
+            : "Untitled step",
+      description: typeof step.text === "string" ? step.text : undefined,
+      bucket:
+        step.bucket === "do_later" ||
+        step.bucket === "before_graduation" ||
+        step.bucket === "after_graduation" ||
+        step.bucket === "do_now"
+          ? step.bucket
+          : step.bucket === "do-later"
+            ? "do_later"
+            : step.bucket === "before-graduation"
+              ? "before_graduation"
+              : step.bucket === "after-graduation"
+                ? "after_graduation"
+                : "do_now",
+      order: typeof step.order === "number" ? step.order : 0,
+      progress_status:
+        step.status === "accepted"
+          ? "in_progress"
+          : step.status === "completed"
+            ? "completed"
+            : step.status === "rejected"
+              ? "abandoned"
+              : "not_started",
+      created_at: toIsoString(step.createdAt, fallbackTime),
+      updated_at: toIsoString(step.updatedAt, fallbackTime),
       opportunities: opportunitiesByStep.get(stepId) ?? [],
     }
 
@@ -146,14 +211,16 @@ async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument
     return {
       ...intention,
       steps: intentionId ? stepsByIntention.get(intentionId) ?? [] : [],
+      updated_at: toIsoString(intention?.updated_at, fallbackTime),
+      created_at: toIsoString(intention?.created_at, fallbackTime),
     }
   })
 
   return {
     schema_version: SCHEMA_VERSION,
     student_id: studentId,
-    created_at: toIso(legacyIntentions?.createdAt, fallbackTime),
-    updated_at: toIso(legacyIntentions?.updatedAt, fallbackTime),
+    created_at: toIsoString(legacyIntentions?.createdAt, fallbackTime),
+    updated_at: toIsoString(legacyIntentions?.updatedAt, fallbackTime),
     tutorial_state: legacyIntentions?.tutorialState,
     canvas: {
       intentions: mergedIntentions,
@@ -183,7 +250,7 @@ async function ensurePrimaryDocument(studentId: string): Promise<void> {
         },
       },
     },
-    { upsert: true }
+    { upsert: true },
   )
 }
 
@@ -223,13 +290,13 @@ async function mirrorLegacyIntentions(studentId: string, intentions: StudentCanv
         createdAt: new Date(),
       },
     },
-    { upsert: true }
+    { upsert: true },
   )
 }
 
 export async function upsertStudentCanvas(
   studentId: string,
-  payload: Partial<Pick<StudentCanvasDocument, "tutorial_state" | "canvas">>
+  payload: Partial<Pick<StudentCanvasDocument, "tutorial_state" | "canvas">>,
 ): Promise<void> {
   const collection = await getPrimaryCollection()
   const timestamp = nowIso()
@@ -237,9 +304,7 @@ export async function upsertStudentCanvas(
   const existing = await collection.findOne({ student_id: studentId })
   const currentIntentions = Array.isArray(existing?.canvas?.intentions) ? existing.canvas.intentions : []
 
-  const nextIntentions = Array.isArray(payload.canvas?.intentions)
-    ? payload.canvas?.intentions
-    : currentIntentions
+  const nextIntentions = Array.isArray(payload.canvas?.intentions) ? payload.canvas?.intentions : currentIntentions
 
   const update: Record<string, unknown> = {
     student_id: studentId,
@@ -262,7 +327,7 @@ export async function upsertStudentCanvas(
         created_at: timestamp,
       },
     },
-    { upsert: true }
+    { upsert: true },
   )
 
   await mirrorLegacyIntentions(studentId, nextIntentions, payload.tutorial_state)
@@ -272,35 +337,63 @@ export async function patchIntentionById(studentId: string, intentionId: string,
   await ensurePrimaryDocument(studentId)
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
+  const timestamp = nowIso()
 
   const nextIntentions = intentions.map((intention) => {
     if (intention?.id !== intentionId) {
       return intention
     }
 
-    return { ...intention, ...patch }
+    return withUpdatedAt({ ...intention, ...patch }, timestamp) as StudentCanvasIntention
   })
 
   await upsertStudentCanvas(studentId, { canvas: { intentions: nextIntentions } })
+}
+
+function stepMatchesId(step: StudentCanvasStep, stepId: string): boolean {
+  if (step.id === stepId) {
+    return true
+  }
+
+  if (!isCanonicalId(stepId) && step.id === canonicalIdFromLegacyRef(stepId, "step")) {
+    return true
+  }
+
+  return false
+}
+
+function opportunityMatchesId(
+  opportunity: StudentCanvasOpportunity,
+  opportunityId: string,
+): boolean {
+  if (opportunity.id === opportunityId) {
+    return true
+  }
+
+  if (!isCanonicalId(opportunityId) && opportunity.id === canonicalIdFromLegacyRef(opportunityId, "opportunity")) {
+    return true
+  }
+
+  return false
 }
 
 export async function patchStepById(studentId: string, stepId: string, patch: Record<string, unknown>) {
   await ensurePrimaryDocument(studentId)
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
+  const timestamp = nowIso()
 
   const nextIntentions = intentions.map((intention) => {
     const steps = Array.isArray(intention?.steps) ? intention.steps : []
-    return {
-      ...intention,
-      steps: steps.map((step: any) => {
-        if (step?.id !== stepId && step?._id !== stepId) {
-          return step
-        }
+    const nextSteps = steps.map((step) => {
+      if (!stepMatchesId(step, stepId)) {
+        return step
+      }
 
-        return { ...step, ...patch }
-      }),
-    }
+      return applyStepPatch(step, patch, timestamp)
+    })
+
+    return withUpdatedAt({ ...intention, steps: nextSteps }, timestamp) as StudentCanvasIntention
   })
 
   await upsertStudentCanvas(studentId, { canvas: { intentions: nextIntentions } })
@@ -310,38 +403,41 @@ export async function patchOpportunityById(
   studentId: string,
   stepId: string,
   opportunityId: string,
-  patch: Record<string, unknown>
+  patch: Record<string, unknown>,
 ) {
   await ensurePrimaryDocument(studentId)
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
+  const timestamp = nowIso()
 
   const nextIntentions = intentions.map((intention) => {
     const steps = Array.isArray(intention?.steps) ? intention.steps : []
 
-    return {
-      ...intention,
-      steps: steps.map((step: any) => {
-        const currentStepId = step?.id ?? step?._id
-        if (currentStepId !== stepId) {
-          return step
+    const nextSteps = steps.map((step) => {
+      if (!stepMatchesId(step, stepId)) {
+        return step
+      }
+
+      const opportunities = Array.isArray(step?.opportunities) ? step.opportunities : []
+      const nextOpportunities = opportunities.map((opportunity) => {
+        if (!opportunityMatchesId(opportunity, opportunityId)) {
+          return opportunity
         }
 
-        const opportunities = Array.isArray(step?.opportunities) ? step.opportunities : []
+        return applyOpportunityPatch(opportunity, patch, timestamp)
+      })
 
-        return {
+      return applyStepPatch(
+        {
           ...step,
-          opportunities: opportunities.map((opportunity: any) => {
-            const currentOpportunityId = opportunity?.id ?? opportunity?._id
-            if (currentOpportunityId !== opportunityId) {
-              return opportunity
-            }
+          opportunities: nextOpportunities,
+        },
+        {},
+        timestamp,
+      )
+    })
 
-            return { ...opportunity, ...patch }
-          }),
-        }
-      }),
-    }
+    return withUpdatedAt({ ...intention, steps: nextSteps }, timestamp) as StudentCanvasIntention
   })
 
   await upsertStudentCanvas(studentId, { canvas: { intentions: nextIntentions } })
@@ -361,10 +457,7 @@ export async function getStudentIntentions(studentId: string): Promise<StudentCa
   return Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
 }
 
-export async function saveStudentIntentions(
-  studentId: string,
-  intentions: StudentCanvasIntention[]
-): Promise<void> {
+export async function saveStudentIntentions(studentId: string, intentions: StudentCanvasIntention[]): Promise<void> {
   const existing = await getStudentCanvas(studentId)
   const timestamp = nowIso()
   const candidateDocument: StudentCanvasDocument = {
@@ -381,55 +474,93 @@ export async function saveStudentIntentions(
   await upsertStudentCanvas(studentId, { canvas: { intentions } })
 }
 
-export async function getStudentSteps(studentId: string): Promise<any[]> {
+export async function getStudentSteps(studentId: string): Promise<StudentCanvasStep[]> {
   const intentions = await getStudentIntentions(studentId)
   return intentions.flatMap((intention) => (Array.isArray(intention?.steps) ? intention.steps : []))
 }
 
-export async function upsertStudentStep(studentId: string, step: any): Promise<{ stepId: string }> {
+type RawStepInput = Partial<StudentCanvasStep> & {
+  _id?: string
+  intentionId?: string
+  status?: string
+}
+
+function toProgressStatus(status: unknown): StudentCanvasStep["progress_status"] {
+  switch (status) {
+    case "accepted":
+    case "in_progress":
+      return "in_progress"
+    case "completed":
+      return "completed"
+    case "rejected":
+    case "abandoned":
+      return "abandoned"
+    default:
+      return "not_started"
+  }
+}
+
+export async function upsertStudentStep(studentId: string, step: RawStepInput): Promise<{ stepId: string }> {
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
   const timestamp = nowIso()
-  const stepId =
-    typeof step?.id === "string" && step.id.trim().length > 0
-      ? step.id
-      : typeof step?._id === "string" && step._id.trim().length > 0
-      ? step._id
-      : new ObjectId().toHexString()
 
+  const providedId =
+    typeof step?.id === "string" && step.id.trim().length > 0
+      ? step.id.trim()
+      : typeof step?._id === "string" && step._id.trim().length > 0
+        ? step._id.trim()
+        : ""
+
+  const stepId =
+    providedId.length === 0 ? createCanonicalId() : isCanonicalId(providedId) ? providedId : canonicalIdFromLegacyRef(providedId, "step")
   const intentionId = typeof step?.intentionId === "string" ? step.intentionId : ""
+
   const nextIntentions = intentions.map((intention) => {
     if (intention?.id !== intentionId) {
       return intention
     }
 
-    const steps = Array.isArray(intention?.steps) ? (intention.steps as any[]) : []
-    const existingIndex = steps.findIndex((item: any) => item?.id === stepId || item?._id === stepId)
+    const steps = Array.isArray(intention?.steps) ? intention.steps : []
+    const existingIndex = steps.findIndex((item) => stepMatchesId(item, providedId || stepId))
 
-    const nextStep = {
-      ...step,
+    const nextStep: StudentCanvasStep = {
       id: stepId,
-      _id: stepId,
-      user: studentId,
-      createdAt: toIso(
-        steps[existingIndex]?.createdAt ?? steps[existingIndex]?.created_at ?? step?.createdAt ?? step?.created_at,
-        timestamp
-      ),
-      updatedAt: timestamp,
-      opportunities: Array.isArray(step?.opportunities)
-        ? step.opportunities
-        : Array.isArray(steps[existingIndex]?.opportunities)
-        ? steps[existingIndex].opportunities
-        : [],
+      title:
+        typeof step.title === "string" && step.title.trim().length > 0
+          ? step.title
+          : typeof step.description === "string" && step.description.trim().length > 0
+            ? step.description
+            : "Untitled step",
+      description: typeof step.description === "string" ? step.description : undefined,
+      bucket:
+        step.bucket === "do_later" ||
+        step.bucket === "before_graduation" ||
+        step.bucket === "after_graduation" ||
+        step.bucket === "do_now"
+          ? step.bucket
+          : "do_now",
+      order: typeof step.order === "number" ? step.order : 0,
+      progress_status: toProgressStatus(step.status ?? step.progress_status),
+      created_at:
+        existingIndex >= 0
+          ? toIsoString(steps[existingIndex].created_at, timestamp)
+          : toIsoString(step.created_at, timestamp),
+      updated_at: timestamp,
+      opportunities:
+        Array.isArray(step.opportunities)
+          ? step.opportunities
+          : existingIndex >= 0 && Array.isArray(steps[existingIndex].opportunities)
+            ? steps[existingIndex].opportunities
+            : [],
     }
 
+    const nextSteps = existingIndex >= 0 ? [...steps] : [...steps, nextStep]
     if (existingIndex >= 0) {
-      const cloned = [...steps]
-      cloned[existingIndex] = nextStep
-      return { ...intention, steps: cloned }
+      nextSteps[existingIndex] = nextStep
     }
 
-    return { ...intention, steps: [...steps, nextStep] }
+    return withUpdatedAt({ ...intention, steps: nextSteps }, timestamp) as StudentCanvasIntention
   })
 
   await upsertStudentCanvas(studentId, { canvas: { intentions: nextIntentions } })
@@ -439,18 +570,18 @@ export async function upsertStudentStep(studentId: string, step: any): Promise<{
 export async function createSuggestedStudentSteps(
   studentId: string,
   intentionId: string,
-  suggestions: any[]
+  suggestions: Array<Partial<StudentCanvasStep>>,
 ): Promise<{ insertedIds: string[] }> {
   const insertedIds: string[] = []
 
   for (const suggestion of suggestions) {
-    const stepId = new ObjectId().toHexString()
+    const stepId = createCanonicalId()
     insertedIds.push(stepId)
     await upsertStudentStep(studentId, {
       ...suggestion,
       id: stepId,
       intentionId,
-      status: suggestion?.status ?? "suggested",
+      status: "suggested",
     })
   }
 
@@ -458,17 +589,16 @@ export async function createSuggestedStudentSteps(
 }
 
 export async function updateStudentStepStatus(studentId: string, stepId: string, status: string): Promise<boolean> {
-  const timestamp = nowIso()
-  await patchStepById(studentId, stepId, { status, updatedAt: timestamp })
+  await patchStepById(studentId, stepId, { progress_status: toProgressStatus(status) })
   return true
 }
 
-export async function getStudentStepById(studentId: string, stepId: string): Promise<any | null> {
+export async function getStudentStepById(studentId: string, stepId: string): Promise<StudentCanvasStep | null> {
   const steps = await getStudentSteps(studentId)
-  return steps.find((step) => step?.id === stepId || step?._id === stepId) ?? null
+  return steps.find((step) => stepMatchesId(step, stepId)) ?? null
 }
 
-export async function getStudentOpportunitiesByStep(studentId: string, stepId: string): Promise<any[]> {
+export async function getStudentOpportunitiesByStep(studentId: string, stepId: string): Promise<StudentCanvasOpportunity[]> {
   const step = await getStudentStepById(studentId, stepId)
   return Array.isArray(step?.opportunities) ? step.opportunities : []
 }
@@ -476,27 +606,39 @@ export async function getStudentOpportunitiesByStep(studentId: string, stepId: s
 export async function replaceStudentOpportunitiesByStep(
   studentId: string,
   stepId: string,
-  opportunities: any[]
-): Promise<any[]> {
+  opportunities: Array<Partial<StudentCanvasOpportunity> & { _id?: string }>,
+): Promise<StudentCanvasOpportunity[]> {
   const timestamp = nowIso()
   const next = opportunities.map((opportunity) => {
-    const id =
+    const providedId =
       typeof opportunity?.id === "string" && opportunity.id.trim().length > 0
-        ? opportunity.id
+        ? opportunity.id.trim()
         : typeof opportunity?._id === "string" && opportunity._id.trim().length > 0
-        ? opportunity._id
-        : new ObjectId().toHexString()
+          ? opportunity._id.trim()
+          : ""
 
-    return {
-      ...opportunity,
+    const id =
+      providedId.length === 0
+        ? createCanonicalId()
+        : isCanonicalId(providedId)
+          ? providedId
+          : canonicalIdFromLegacyRef(providedId, "opportunity")
+
+    const mapped: StudentCanvasOpportunity = {
       id,
-      _id: id,
-      createdAt: toIso(opportunity?.createdAt, timestamp),
-      updatedAt: timestamp,
+      title: typeof opportunity.title === "string" ? opportunity.title : "Untitled opportunity",
+      description: typeof opportunity.description === "string" ? opportunity.description : undefined,
+      decision_status: opportunity.decision_status === "accepted" ? "accepted" : "suggested",
+      progress_status: opportunity.progress_status,
+      source: opportunity.source === "catalogue" ? "catalogue" : "free_text",
+      created_at: toIsoString(opportunity?.created_at, timestamp),
+      updated_at: timestamp,
     }
+
+    return mapped
   })
 
-  await patchStepById(studentId, stepId, { opportunities: next, updatedAt: timestamp })
+  await patchStepById(studentId, stepId, { opportunities: next })
   return next
 }
 
@@ -517,22 +659,22 @@ export async function getStudentIntentionTitle(studentId: string, intentionId?: 
 }
 
 export async function listRecentStudentStepHistory(studentId: string, intentionId: string, limit = 25) {
-  const steps = await getStudentSteps(studentId)
+  const intentions = await getStudentIntentions(studentId)
+  const targetIntention = intentions.find((intention) => intention.id === intentionId)
+  const steps = Array.isArray(targetIntention?.steps) ? targetIntention.steps : []
   const filtered = steps
-    .filter(
-      (step) =>
-        step?.intentionId === intentionId &&
-        (step?.status === "accepted" || step?.status === "rejected")
-    )
-    .sort((a, b) => {
-      const aTime = new Date(a?.updatedAt ?? 0).getTime()
-      const bTime = new Date(b?.updatedAt ?? 0).getTime()
-      return bTime - aTime
-    })
+    .filter((step) => step?.progress_status === "in_progress" || step?.progress_status === "abandoned")
+    .sort((a, b) => new Date(b?.updated_at ?? 0).getTime() - new Date(a?.updated_at ?? 0).getTime())
     .slice(0, limit)
 
-  const accepted = filtered.filter((step) => step?.status === "accepted").map((step) => step?.text)
-  const rejected = filtered.filter((step) => step?.status === "rejected").map((step) => step?.text)
+  const accepted = filtered
+    .filter((step) => step?.progress_status === "in_progress")
+    .map((step) => step?.title)
+    .filter((value): value is string => typeof value === "string")
+  const rejected = filtered
+    .filter((step) => step?.progress_status === "abandoned")
+    .map((step) => step?.title)
+    .filter((value): value is string => typeof value === "string")
 
   debug.info("StudentCanvas: step history loaded", {
     studentId,
