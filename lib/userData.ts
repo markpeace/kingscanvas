@@ -5,6 +5,7 @@ import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
 import type { TutorialState } from "./tutorial/state";
 import type { Opportunity } from "@/types/canvas";
+import type { Intention as StudentCanvasIntention } from "@/types/studentCanvasV1";
 
 type OpportunityDocument = {
   _id: ObjectId;
@@ -25,7 +26,7 @@ export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "crea
 type UserIntentionsDocument = {
   _id?: ObjectId;
   user: string;
-  intentions?: any[];
+  intentions?: StudentCanvasIntention[];
   tutorialState?: TutorialState;
   createdAt?: Date;
   updatedAt?: Date;
@@ -82,7 +83,7 @@ export async function getUserIntentions(email: string) {
 /**
  * Save or update intentions for a given user.
  */
-export async function saveUserIntentions(email: string, data: any) {
+export async function saveUserIntentions(email: string, data: { intentions?: StudentCanvasIntention[] }) {
   const col = await getCollection<UserIntentionsDocument>("intentions");
   debug.trace("MongoDB: upserting intentions", {
     user: email,

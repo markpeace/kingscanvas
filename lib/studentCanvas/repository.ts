@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb"
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
 import type { TutorialState } from "@/lib/tutorial/state"
+import { assertValidStudentCanvasDocument } from "@/lib/studentCanvas/validation"
 import type {
   Intention as StudentCanvasIntention,
   StudentCanvasDocument,
@@ -13,7 +14,7 @@ const PRIMARY_COLLECTION = "student_canvas"
 
 type LegacyIntentionsDocument = {
   user: string
-  intentions?: any[]
+  intentions?: StudentCanvasIntention[]
   tutorialState?: TutorialState
   createdAt?: Date
   updatedAt?: Date
@@ -203,7 +204,7 @@ export async function getStudentCanvas(studentId: string): Promise<StudentCanvas
   return buildFromLegacy(studentId)
 }
 
-async function mirrorLegacyIntentions(studentId: string, intentions: any[], tutorialState?: TutorialState) {
+async function mirrorLegacyIntentions(studentId: string, intentions: StudentCanvasIntention[], tutorialState?: TutorialState) {
   if (process.env.STUDENT_CANVAS_MIRROR_LEGACY_WRITES !== "true") {
     return
   }
@@ -355,7 +356,7 @@ export async function saveStudentTutorialState(studentId: string, tutorialState:
   await upsertStudentCanvas(studentId, { tutorial_state: tutorialState })
 }
 
-export async function getStudentIntentions(studentId: string): Promise<any[]> {
+export async function getStudentIntentions(studentId: string): Promise<StudentCanvasIntention[]> {
   const canvas = await getStudentCanvas(studentId)
   return Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
 }
@@ -364,6 +365,19 @@ export async function saveStudentIntentions(
   studentId: string,
   intentions: StudentCanvasIntention[]
 ): Promise<void> {
+  const existing = await getStudentCanvas(studentId)
+  const timestamp = nowIso()
+  const candidateDocument: StudentCanvasDocument = {
+    schema_version: SCHEMA_VERSION,
+    student_id: studentId,
+    created_at: existing?.created_at ?? timestamp,
+    updated_at: timestamp,
+    canvas: { intentions },
+    ...(existing?.tutorial_state ? { tutorial_state: existing.tutorial_state } : {}),
+  }
+
+  assertValidStudentCanvasDocument(candidateDocument, "saveStudentIntentions")
+
   await upsertStudentCanvas(studentId, { canvas: { intentions } })
 }
 
