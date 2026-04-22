@@ -5,7 +5,7 @@ import { authOptions, createTestSession, isProd } from "@/lib/auth/config"
 import { debug } from "@/lib/debug"
 import { tutorialMessageIdList, type TutorialMessageId } from "@/lib/tutorial/messages"
 import { defaultTutorialState, type TutorialState, type TutorialStepState } from "@/lib/tutorial/state"
-import { getUserTutorialState, saveUserTutorialState } from "@/lib/userData"
+import { getStudentTutorialState, saveStudentTutorialState } from "@/lib/studentCanvas/repository"
 
 type TutorialActionPayload =
   | { action: "completeStep"; stepId: TutorialMessageId }
@@ -39,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (req.method === "GET") {
       debug.trace("Tutorial API: GET", { user: email })
-      const tutorialState = mergeWithDefault(await getUserTutorialState(email))
+      const tutorialState = mergeWithDefault(await getStudentTutorialState(email))
       debug.info("Tutorial API: GET complete", { hasState: !!tutorialState })
       return res.status(200).json(tutorialState)
     }
@@ -53,7 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: "Missing action" })
       }
 
-      let tutorialState = mergeWithDefault(await getUserTutorialState(email))
+      let tutorialState = mergeWithDefault(await getStudentTutorialState(email))
       const now = new Date().toISOString()
 
       if (action === "completeStep") {
@@ -84,7 +84,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: "Invalid action" })
       }
 
-      await saveUserTutorialState(email, tutorialState)
+      await saveStudentTutorialState(email, tutorialState)
       debug.info("Tutorial API: state updated", { user: email, action })
       return res.status(200).json(tutorialState)
     }

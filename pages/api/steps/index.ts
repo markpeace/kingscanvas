@@ -5,11 +5,11 @@ import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
 import { safelyGenerateOpportunitiesForStep } from "@/lib/opportunities/generation";
 import {
-  createSuggestedSteps,
-  getUserSteps,
-  saveUserStep,
-  updateStepStatus,
-} from "@/lib/userData";
+  createSuggestedStudentSteps,
+  getStudentSteps,
+  upsertStudentStep,
+  updateStudentStepStatus,
+} from "@/lib/studentCanvas/repository";
 
 export default async function handler(
   req: NextApiRequest,
@@ -28,7 +28,7 @@ export default async function handler(
   try {
     if (req.method === "GET") {
       debug.trace("Steps API: GET", { user: email });
-      const data = await getUserSteps(email);
+      const data = await getStudentSteps(email);
       debug.info("Steps API: GET complete", { count: data?.length || 0 });
       return res.status(200).json(data);
     }
@@ -46,8 +46,8 @@ export default async function handler(
       }
 
       debug.trace("Steps API: update status", { user: email, stepId, status });
-      const result = await updateStepStatus(email, stepId, status);
-      debug.info("Steps API: update status result", { matched: result.matchedCount });
+      const updated = await updateStudentStepStatus(email, stepId, status);
+      debug.info("Steps API: update status result", { updated });
 
       if (status === "accepted") {
         debug.info("Opportunities: auto generation requested", {
@@ -56,7 +56,7 @@ export default async function handler(
           userId: email,
         });
 
-        await safelyGenerateOpportunitiesForStep({ stepId, origin: "ai-accepted" });
+        await safelyGenerateOpportunitiesForStep({ stepId, origin: "ai-accepted", studentId: email });
       }
       return res.status(200).json({ ok: true });
     }
@@ -76,11 +76,9 @@ export default async function handler(
           count: steps.length,
         });
 
-        const result = await createSuggestedSteps(email, intentionId, steps);
+        const result = await createSuggestedStudentSteps(email, intentionId, steps);
 
-        const insertedIds = result?.insertedIds
-          ? Object.values(result.insertedIds).map((value) => value?.toString?.() ?? String(value))
-          : [];
+        const insertedIds = result.insertedIds;
 
         debug.info("Steps API: bulk suggestion write complete", {
           user: email,
@@ -95,7 +93,7 @@ export default async function handler(
         payloadKeys: Object.keys(req.body || {}),
       });
 
-      const result = await saveUserStep(email, req.body);
+      const result = await upsertStudentStep(email, req.body);
 
       debug.info("Steps API: write complete", { user: email, stepId: result.stepId });
 
@@ -111,7 +109,7 @@ export default async function handler(
         intentionId: manualIntentionId,
       });
 
-      await safelyGenerateOpportunitiesForStep({ stepId: result.stepId, origin: "manual" });
+      await safelyGenerateOpportunitiesForStep({ stepId: result.stepId, origin: "manual", studentId: email });
 
       return res.status(200).json({ ok: true, stepId: result.stepId });
     }

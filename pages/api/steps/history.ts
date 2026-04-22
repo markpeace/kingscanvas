@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
-import { listRecentHistory } from "@/lib/userData";
+import { listRecentStudentStepHistory } from "@/lib/studentCanvas/repository";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   debug.trace("Steps API: history fetch", { intentionId, user: email });
 
   try {
-    const data = await listRecentHistory(email, intentionId);
+    const data = await listRecentStudentStepHistory(email, intentionId);
     debug.info("Steps API: history result", {
       accepted: data.accepted.length,
       rejected: data.rejected.length,
