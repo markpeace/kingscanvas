@@ -108,13 +108,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     let generated: OpportunityApiItem[] = []
 
     try {
-      generated = await generateOpportunitiesForStep({
+      const generatedUi = await generateOpportunitiesForStep({
         stepId: canonicalStepId,
         origin: "lazy-fetch",
         studentId: email,
         persona
       })
-      generated = generated.map((opportunity) => uiOpportunityToCanonical(opportunity))
+      generated = generatedUi.map((opportunity) => uiOpportunityToCanonical(opportunity))
       debug.info("Opportunities API: generated on demand", {
         stepId: canonicalStepId,
         count: generated.length,
