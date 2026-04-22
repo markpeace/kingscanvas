@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 
 import { authOptions, createTestSession, isProd } from "@/lib/auth/config";
 import { debug } from "@/lib/debug";
+import { toCanonicalIntentionsFromUnknown, toUiIntentionsFromUnknown } from "@/lib/studentCanvas/mappers";
 import { getStudentIntentions, saveStudentIntentions } from "@/lib/studentCanvas/repository";
 
 export default async function handler(
@@ -22,7 +23,8 @@ export default async function handler(
   try {
     if (req.method === "GET") {
       debug.trace("Intentions API: GET", { user: email });
-      const intentions = await getStudentIntentions(email);
+      const canonicalIntentions = await getStudentIntentions(email);
+      const intentions = toUiIntentionsFromUnknown(canonicalIntentions);
       debug.info("Intentions API: GET complete", { count: intentions.length });
       return res.status(200).json({ intentions });
     }
@@ -32,7 +34,8 @@ export default async function handler(
         user: email,
         keys: Object.keys(req.body || {}),
       });
-      await saveStudentIntentions(email, req.body?.intentions || []);
+      const canonicalIntentions = toCanonicalIntentionsFromUnknown(req.body?.intentions);
+      await saveStudentIntentions(email, canonicalIntentions);
       debug.info("Intentions API: write complete", { user: email });
       return res.status(200).json({ ok: true });
     }
