@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto"
+import { createHash, randomUUID } from "node:crypto"
 
 import { z } from "zod"
 
@@ -198,7 +198,7 @@ function toDeterministicUuid(value: unknown, prefix: string): string {
     }
   }
 
-  return hashToUuid(`${prefix}:generated`)
+  return randomUUID()
 }
 
 function hashToUuid(seed: string): string {

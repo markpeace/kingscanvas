@@ -116,17 +116,33 @@ export async function saveUserIntentions(email: string, data: any) {
     (await col.findOne({ student_id: email })) ??
     (await col.findOne({ user: email }));
   const previous = parseStudentCanvasDocument(existing) ?? undefined;
-  const canonicalDoc = buildStudentCanvasDocument(email, data, previous ?? undefined);
+  let canonicalDoc: StudentCanvas | null = null;
+
+  try {
+    canonicalDoc = buildStudentCanvasDocument(email, data, previous ?? undefined);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error("MongoDB: canonical intentions mapping failed, falling back to legacy payload", {
+      user: email,
+      message,
+    });
+  }
 
   debug.trace("MongoDB: upserting intentions", {
     user: email,
     keys: Object.keys(data || {}),
   });
-  const result = await col.updateOne(
-    { student_id: email },
-    { $set: canonicalDoc, $unset: { user: "", intentions: "", tutorialState: "", createdAt: "", updatedAt: "" } },
-    { upsert: true }
-  );
+  const result = canonicalDoc
+    ? await col.updateOne(
+        { student_id: email },
+        { $set: canonicalDoc, $unset: { user: "", intentions: "", tutorialState: "", createdAt: "", updatedAt: "" } },
+        { upsert: true }
+      )
+    : await col.updateOne(
+        { user: email },
+        { $set: { intentions: data.intentions || [], updatedAt: new Date() } },
+        { upsert: true }
+      );
   debug.info("MongoDB: upsert result", {
     matched: result.matchedCount,
     modified: result.modifiedCount,
