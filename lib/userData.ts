@@ -3,6 +3,12 @@ import type { Document, InsertManyResult, WithId } from "mongodb";
 
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
+import {
+  buildStudentCanvasDocument,
+  parseStudentCanvasDocument,
+  toLegacyIntentionsPayload,
+  type StudentCanvas,
+} from "./studentCanvas";
 import type { TutorialState } from "./tutorial/state";
 import type { Opportunity } from "@/types/canvas";
 
@@ -24,9 +30,17 @@ export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "crea
 
 type UserIntentionsDocument = {
   _id?: ObjectId;
-  user: string;
-  intentions?: any[];
-  tutorialState?: TutorialState;
+  schema_version?: string;
+  student_id?: string;
+  user?: string;
+  created_at?: string;
+  updated_at?: string;
+  tutorial_state?: TutorialState;
+  tutorialState?: TutorialState; // legacy
+  canvas?: {
+    intentions?: any[];
+  };
+  intentions?: any[]; // legacy
   createdAt?: Date;
   updatedAt?: Date;
 };
@@ -74,9 +88,23 @@ function mapOpportunity(doc: OpportunityDocument): Opportunity {
 export async function getUserIntentions(email: string) {
   const col = await getCollection<UserIntentionsDocument>("intentions");
   debug.trace("MongoDB: fetching intentions", { user: email });
-  const doc = await col.findOne({ user: email });
-  debug.info("MongoDB: fetch complete", { found: !!doc });
-  return doc;
+  const doc =
+    (await col.findOne({ student_id: email })) ??
+    (await col.findOne({ user: email }));
+
+  const parsed = parseStudentCanvasDocument(doc);
+  if (parsed) {
+    debug.info("MongoDB: fetch complete (canonical)", { found: true });
+    return toLegacyIntentionsPayload(parsed);
+  }
+
+  if (doc?.intentions && Array.isArray(doc.intentions)) {
+    debug.info("MongoDB: fetch complete (legacy)", { found: true });
+    return { intentions: doc.intentions };
+  }
+
+  debug.info("MongoDB: fetch complete", { found: false });
+  return { intentions: [] };
 }
 
 /**
@@ -84,13 +112,19 @@ export async function getUserIntentions(email: string) {
  */
 export async function saveUserIntentions(email: string, data: any) {
   const col = await getCollection<UserIntentionsDocument>("intentions");
+  const existing =
+    (await col.findOne({ student_id: email })) ??
+    (await col.findOne({ user: email }));
+  const previous = parseStudentCanvasDocument(existing) ?? undefined;
+  const canonicalDoc = buildStudentCanvasDocument(email, data, previous ?? undefined);
+
   debug.trace("MongoDB: upserting intentions", {
     user: email,
     keys: Object.keys(data || {}),
   });
   const result = await col.updateOne(
-    { user: email },
-    { $set: { intentions: data.intentions || [], updatedAt: new Date() } },
+    { student_id: email },
+    { $set: canonicalDoc, $unset: { user: "", intentions: "", tutorialState: "", createdAt: "", updatedAt: "" } },
     { upsert: true }
   );
   debug.info("MongoDB: upsert result", {
@@ -103,17 +137,33 @@ export async function saveUserIntentions(email: string, data: any) {
 export async function getUserTutorialState(email: string): Promise<TutorialState | undefined> {
   const col = await getCollection<UserIntentionsDocument>("intentions");
   debug.trace("MongoDB: fetching tutorial state", { user: email });
-  const doc = await col.findOne({ user: email }, { projection: { tutorialState: 1 } });
-  debug.info("MongoDB: tutorial state fetch complete", { found: !!doc?.tutorialState });
-  return doc?.tutorialState;
+  const doc =
+    (await col.findOne({ student_id: email }, { projection: { tutorial_state: 1 } })) ??
+    (await col.findOne({ user: email }, { projection: { tutorialState: 1, tutorial_state: 1 } }));
+  const tutorialState = doc?.tutorial_state ?? doc?.tutorialState;
+  debug.info("MongoDB: tutorial state fetch complete", { found: !!tutorialState });
+  return tutorialState;
 }
 
 export async function saveUserTutorialState(email: string, tutorialState: TutorialState) {
   const col = await getCollection<UserIntentionsDocument>("intentions");
   debug.trace("MongoDB: updating tutorial state", { user: email });
+  const existing =
+    (await col.findOne({ student_id: email })) ??
+    (await col.findOne({ user: email }));
+  const previous = parseStudentCanvasDocument(existing) as StudentCanvas | null;
+  const canonicalDoc = previous ?? buildStudentCanvasDocument(email, {}, undefined);
+
   const result = await col.updateOne(
-    { user: email },
-    { $set: { tutorialState, updatedAt: new Date() } },
+    { student_id: email },
+    {
+      $set: {
+        ...canonicalDoc,
+        tutorial_state: tutorialState,
+        updated_at: new Date().toISOString(),
+      },
+      $unset: { user: "", tutorialState: "", createdAt: "", updatedAt: "" },
+    },
     { upsert: true }
   );
   debug.info("MongoDB: tutorial state update result", { matched: result.matchedCount });

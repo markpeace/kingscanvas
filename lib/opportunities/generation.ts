@@ -33,7 +33,14 @@ type StepRecord = {
 }
 
 type IntentionRecord = {
-  user: string
+  user?: string
+  student_id?: string
+  canvas?: {
+    intentions?: Array<{
+      id?: string
+      title?: string
+    }>
+  }
   intentions?: Array<{
     id?: string
     title?: string
@@ -96,13 +103,19 @@ async function findIntentionTitle(user: string, intentionId?: string): Promise<s
   }
 
   const col = await getCollection<IntentionRecord>("intentions")
-  const doc = await col.findOne({ user })
+  const doc = (await col.findOne({ student_id: user })) ?? (await col.findOne({ user }))
 
-  if (!doc || !Array.isArray(doc.intentions)) {
+  const intentions = Array.isArray(doc?.canvas?.intentions)
+    ? doc.canvas.intentions
+    : Array.isArray(doc?.intentions)
+      ? doc.intentions
+      : null
+
+  if (!intentions) {
     return undefined
   }
 
-  const match = doc.intentions.find((item) => item?.id === intentionId)
+  const match = intentions.find((item) => item?.id === intentionId)
   const title = match?.title
 
   if (typeof title === "string" && title.trim().length > 0) {
