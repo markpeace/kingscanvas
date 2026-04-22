@@ -39,9 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (req.method === "GET") {
       debug.trace("Tutorial API: GET", { user: email })
-      const tutorialState = mergeWithDefault(await getStudentTutorialState(email))
-      debug.info("Tutorial API: GET complete", { hasState: !!tutorialState })
-      return res.status(200).json(tutorialState)
+      const tutorial_state = mergeWithDefault(await getStudentTutorialState(email))
+      debug.info("Tutorial API: GET complete", { hasState: !!tutorial_state })
+      return res.status(200).json(tutorial_state)
     }
 
     if (req.method === "POST") {
