@@ -1,3 +1,4 @@
+import { createCanonicalId, nowIso, toIsoString, isCanonicalId } from "@/lib/studentCanvas/identity"
 import type {
   CanvasState,
   Intention as CanonicalIntention,
@@ -22,12 +23,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
 }
 
-function nowIso(): string {
-  return new Date().toISOString()
-}
 
 function toStringOrFallback(value: unknown, fallback = ""): string {
-  return typeof value === "string" ? value : fallback
+  return typeof value === "string" && value.trim().length > 0 ? value : fallback
 }
 
 export function canonicalBucketToUi(bucket: StudentCanvasBucket): BucketId {
@@ -101,9 +99,10 @@ function uiSourceToCanonical(source: UiOpportunity["source"]): CanonicalOpportun
 }
 
 export function canonicalOpportunityToUi(opportunity: CanonicalOpportunity, stepId: string): UiOpportunity {
+  const id = isCanonicalId(opportunity.id) ? opportunity.id : createCanonicalId()
   return {
-    id: opportunity.id,
-    _id: opportunity.id,
+    id,
+    _id: id,
     stepId,
     title: opportunity.title,
     summary: opportunity.description ?? "",
@@ -111,29 +110,30 @@ export function canonicalOpportunityToUi(opportunity: CanonicalOpportunity, step
     form: "independent-action",
     focus: "planning",
     status: canonicalDecisionToUiStatus(opportunity.decision_status),
-    createdAt: opportunity.created_at,
-    updatedAt: opportunity.updated_at,
+    createdAt: toIsoString(opportunity.created_at),
+    updatedAt: toIsoString(opportunity.updated_at),
   }
 }
 
 export function uiOpportunityToCanonical(opportunity: UiOpportunity): CanonicalOpportunity {
   const timestamp = nowIso()
   return {
-    id: opportunity.id,
+    id: isCanonicalId(opportunity.id) ? opportunity.id : createCanonicalId(),
     title: opportunity.title,
     description: opportunity.summary,
     decision_status: uiStatusToCanonicalDecision(opportunity.status),
     progress_status: undefined,
     source: uiSourceToCanonical(opportunity.source),
-    created_at: toStringOrFallback(opportunity.createdAt, timestamp),
-    updated_at: toStringOrFallback(opportunity.updatedAt, timestamp),
+    created_at: toIsoString(opportunity.createdAt, timestamp),
+    updated_at: toIsoString(opportunity.updatedAt, timestamp),
   }
 }
 
 export function canonicalStepToUi(step: CanonicalStep, intentionId: string): UiStep {
+  const id = isCanonicalId(step.id) ? step.id : createCanonicalId()
   return {
-    id: step.id,
-    clientId: step.id,
+    id,
+    clientId: id,
     intentionId,
     title: step.title,
     text: step.description ?? step.title,
@@ -141,7 +141,7 @@ export function canonicalStepToUi(step: CanonicalStep, intentionId: string): UiS
     order: step.order,
     status: canonicalProgressToUiStatus(step.progress_status),
     source: "student-canvas",
-    createdAt: step.created_at,
+    createdAt: toIsoString(step.created_at),
   }
 }
 
@@ -152,40 +152,40 @@ export function uiStepToCanonical(step: UiStep): CanonicalStep {
     : []
 
   return {
-    id: step.id,
+    id: isCanonicalId(step.id) ? step.id : createCanonicalId(),
     title: toStringOrFallback(step.title, toStringOrFallback(step.text, "Untitled step")),
     description: typeof step.text === "string" ? step.text : undefined,
     bucket: uiBucketToCanonical(step.bucket),
     order: typeof step.order === "number" ? step.order : 0,
     progress_status: uiStatusToCanonicalProgress(step.status),
-    created_at: toStringOrFallback(step.createdAt, timestamp),
-    updated_at: timestamp,
+    created_at: toIsoString(step.createdAt, timestamp),
+    updated_at: toIsoString((step as unknown as Record<string, unknown>).updatedAt, timestamp),
     opportunities: rawOpportunities.map(uiOpportunityToCanonical),
   }
 }
 
 export function canonicalIntentionToUi(intention: CanonicalIntention): UiIntention {
   return {
-    id: intention.id,
+    id: isCanonicalId(intention.id) ? intention.id : createCanonicalId(),
     title: intention.title,
     description: intention.description,
     bucket: canonicalBucketToUi(intention.bucket),
     steps: intention.steps.map((step) => canonicalStepToUi(step, intention.id)),
-    createdAt: intention.created_at,
-    updatedAt: intention.updated_at,
+    createdAt: toIsoString(intention.created_at),
+    updatedAt: toIsoString(intention.updated_at),
   }
 }
 
 export function uiIntentionToCanonical(intention: UiIntention): CanonicalIntention {
   const timestamp = nowIso()
   return {
-    id: intention.id,
+    id: isCanonicalId(intention.id) ? intention.id : createCanonicalId(),
     title: intention.title,
     description: intention.description,
     bucket: uiBucketToCanonical(intention.bucket),
     progress_status: DEFAULT_PROGRESS,
-    created_at: intention.createdAt,
-    updated_at: intention.updatedAt ?? timestamp,
+    created_at: toIsoString(intention.createdAt, timestamp),
+    updated_at: toIsoString(intention.updatedAt, timestamp),
     steps: Array.isArray(intention.steps) ? intention.steps.map(uiStepToCanonical) : [],
   }
 }
