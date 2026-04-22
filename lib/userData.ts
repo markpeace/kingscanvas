@@ -4,6 +4,7 @@ import type { Document, InsertManyResult, WithId } from "mongodb";
 import { getCollection } from "./dbHelpers";
 import { debug } from "./debug";
 import type { TutorialState } from "./tutorial/state";
+import { getStudentTutorialState, saveStudentTutorialState } from "./studentCanvas/repository";
 import type { Opportunity } from "@/types/canvas";
 import type { Intention as StudentCanvasIntention } from "@/types/studentCanvasV1";
 
@@ -102,23 +103,16 @@ export async function saveUserIntentions(email: string, data: { intentions?: Stu
 }
 
 export async function getUserTutorialState(email: string): Promise<TutorialState | undefined> {
-  const col = await getCollection<UserIntentionsDocument>("intentions");
-  debug.trace("MongoDB: fetching tutorial state", { user: email });
-  const doc = await col.findOne({ user: email }, { projection: { tutorialState: 1 } });
-  debug.info("MongoDB: tutorial state fetch complete", { found: !!doc?.tutorialState });
-  return doc?.tutorialState;
+  debug.trace("MongoDB: fetching tutorial state from student canvas", { user: email });
+  const tutorialState = await getStudentTutorialState(email);
+  debug.info("MongoDB: tutorial state fetch complete", { found: !!tutorialState });
+  return tutorialState;
 }
 
 export async function saveUserTutorialState(email: string, tutorialState: TutorialState) {
-  const col = await getCollection<UserIntentionsDocument>("intentions");
-  debug.trace("MongoDB: updating tutorial state", { user: email });
-  const result = await col.updateOne(
-    { user: email },
-    { $set: { tutorialState, updatedAt: new Date() } },
-    { upsert: true }
-  );
-  debug.info("MongoDB: tutorial state update result", { matched: result.matchedCount });
-  return result;
+  debug.trace("MongoDB: updating tutorial state in student canvas", { user: email });
+  await saveStudentTutorialState(email, tutorialState);
+  debug.info("MongoDB: tutorial state update complete");
 }
 
 /**

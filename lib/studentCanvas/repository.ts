@@ -21,6 +21,10 @@ type LegacyIntentionsDocument = {
   updatedAt?: Date
 }
 
+type PrimaryStudentCanvasDocument = StudentCanvasDocument & {
+  tutorialState?: TutorialState
+}
+
 type LegacyStepDocument = {
   _id?: string | { toHexString?: () => string; toString?: () => string }
   id?: string
@@ -255,13 +259,16 @@ async function ensurePrimaryDocument(studentId: string): Promise<void> {
 }
 
 export async function getStudentCanvas(studentId: string): Promise<StudentCanvasDocument | null> {
-  const collection = await getPrimaryCollection()
+  const collection = await getCollection<PrimaryStudentCanvasDocument>(PRIMARY_COLLECTION)
   const primary = await collection.findOne({ student_id: studentId })
 
   if (primary) {
+    const tutorialState = primary.tutorial_state ?? primary.tutorialState
+
     return {
       ...primary,
       schema_version: SCHEMA_VERSION,
+      ...(tutorialState ? { tutorial_state: tutorialState } : {}),
       canvas: {
         intentions: Array.isArray(primary.canvas?.intentions) ? primary.canvas.intentions : [],
       },
@@ -271,7 +278,7 @@ export async function getStudentCanvas(studentId: string): Promise<StudentCanvas
   return buildFromLegacy(studentId)
 }
 
-async function mirrorLegacyIntentions(studentId: string, intentions: StudentCanvasIntention[], tutorialState?: TutorialState) {
+async function mirrorLegacyIntentions(studentId: string, intentions: StudentCanvasIntention[]) {
   if (process.env.STUDENT_CANVAS_MIRROR_LEGACY_WRITES !== "true") {
     return
   }
@@ -283,7 +290,6 @@ async function mirrorLegacyIntentions(studentId: string, intentions: StudentCanv
       $set: {
         user: studentId,
         intentions,
-        ...(tutorialState ? { tutorialState } : {}),
         updatedAt: new Date(),
       },
       $setOnInsert: {
@@ -323,6 +329,9 @@ export async function upsertStudentCanvas(
     { student_id: studentId },
     {
       $set: update,
+      $unset: {
+        tutorialState: "",
+      },
       $setOnInsert: {
         created_at: timestamp,
       },
@@ -330,7 +339,7 @@ export async function upsertStudentCanvas(
     { upsert: true },
   )
 
-  await mirrorLegacyIntentions(studentId, nextIntentions, payload.tutorial_state)
+  await mirrorLegacyIntentions(studentId, nextIntentions)
 }
 
 export async function patchIntentionById(studentId: string, intentionId: string, patch: Record<string, unknown>) {
