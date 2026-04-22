@@ -389,7 +389,7 @@ export async function upsertStudentStep(studentId: string, step: any): Promise<{
       return intention
     }
 
-    const steps = Array.isArray(intention?.steps) ? intention.steps : []
+    const steps = Array.isArray(intention?.steps) ? (intention.steps as any[]) : []
     const existingIndex = steps.findIndex((item: any) => item?.id === stepId || item?._id === stepId)
 
     const nextStep = {
@@ -397,7 +397,10 @@ export async function upsertStudentStep(studentId: string, step: any): Promise<{
       id: stepId,
       _id: stepId,
       user: studentId,
-      createdAt: toIso(steps[existingIndex]?.createdAt ?? step?.createdAt, timestamp),
+      createdAt: toIso(
+        steps[existingIndex]?.createdAt ?? steps[existingIndex]?.created_at ?? step?.createdAt ?? step?.created_at,
+        timestamp
+      ),
       updatedAt: timestamp,
       opportunities: Array.isArray(step?.opportunities)
         ? step.opportunities
