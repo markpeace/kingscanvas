@@ -117,13 +117,17 @@ export function canonicalOpportunityToUi(opportunity: CanonicalOpportunity, step
 
 export function uiOpportunityToCanonical(opportunity: UiOpportunity): CanonicalOpportunity {
   const timestamp = nowIso()
+  const source = uiSourceToCanonical(opportunity.source)
+  const decisionStatus = uiStatusToCanonicalDecision(opportunity.status)
+  const id = isCanonicalId(opportunity.id) ? opportunity.id : createCanonicalId()
   return {
-    id: isCanonicalId(opportunity.id) ? opportunity.id : createCanonicalId(),
+    id,
     title: opportunity.title,
     description: opportunity.summary,
-    decision_status: uiStatusToCanonicalDecision(opportunity.status),
+    decision_status: decisionStatus,
     progress_status: undefined,
-    source: uiSourceToCanonical(opportunity.source),
+    source,
+    catalogue_ref: source === "catalogue" ? { system: "ui-opportunity", id } : undefined,
     created_at: toIsoString(opportunity.createdAt, timestamp),
     updated_at: toIsoString(opportunity.updatedAt, timestamp),
   }

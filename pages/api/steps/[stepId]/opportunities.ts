@@ -7,11 +7,11 @@ import { STUDENT_PERSONAS, getStudentPersona, type StudentPersonaId } from "@/li
 import { isStepEligibleForOpportunities } from "@/lib/opportunities/eligibility"
 import { findStepById, generateOpportunitiesForStep } from "@/lib/opportunities/generation"
 import { getStudentOpportunitiesByStep } from "@/lib/studentCanvas/repository"
-import { canonicalOpportunityToUi } from "@/lib/studentCanvas/mappers"
-import type { Opportunity } from "@/types/canvas"
+import { uiOpportunityToCanonical } from "@/lib/studentCanvas/mappers"
+import type { OpportunityApiItem } from "@/types/canvas"
 
 type OpportunitiesResponse =
-  | { ok: true; stepId: string; opportunities: Opportunity[] }
+  | { ok: true; stepId: string; opportunities: OpportunityApiItem[] }
   | { ok: false; error: string }
 
 function resolveCanonicalStepId(step: { _id?: unknown; id?: unknown }, fallback: string): string {
@@ -94,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
     const canonicalStepId = resolveCanonicalStepId(step as { _id?: unknown; id?: unknown }, requestedStepId)
 
     const canonicalOpportunities = await getStudentOpportunitiesByStep(email, canonicalStepId)
-    const opportunities = canonicalOpportunities.map((opportunity) => canonicalOpportunityToUi(opportunity, canonicalStepId))
+    const opportunities = canonicalOpportunities
 
     if (opportunities.length > 0) {
       debug.debug("Opportunities API: returning existing opportunities", {
@@ -105,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       return res.status(200).json({ ok: true, stepId: canonicalStepId, opportunities })
     }
 
-    let generated: Opportunity[] = []
+    let generated: OpportunityApiItem[] = []
 
     try {
       generated = await generateOpportunitiesForStep({
@@ -114,6 +114,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
         studentId: email,
         persona
       })
+      generated = generated.map((opportunity) => uiOpportunityToCanonical(opportunity))
       debug.info("Opportunities API: generated on demand", {
         stepId: canonicalStepId,
         count: generated.length,

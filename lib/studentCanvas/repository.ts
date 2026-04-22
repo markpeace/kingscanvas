@@ -1,6 +1,7 @@
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
 import { canonicalIdFromLegacyRef, createCanonicalId, isCanonicalId, nowIso, toIsoString } from "@/lib/studentCanvas/identity"
+import { isOpportunitySchemaCompliant } from "@/lib/studentCanvas/opportunityRules"
 import { assertValidStudentCanvasDocument } from "@/lib/studentCanvas/validation"
 import type { TutorialState } from "@/lib/tutorial/state"
 import type {
@@ -38,6 +39,13 @@ type LegacyOpportunityDocument = {
   createdAt?: Date | string
   updatedAt?: Date | string
   [key: string]: unknown
+}
+
+function buildCatalogueRef(opportunityId: string) {
+  return {
+    system: "legacy-opportunity",
+    id: opportunityId,
+  }
 }
 
 function toStepId(step: LegacyStepDocument): string {
@@ -145,6 +153,7 @@ async function buildFromLegacy(studentId: string): Promise<StudentCanvasDocument
       decision_status: opportunity.status === "saved" ? "accepted" : "suggested",
       progress_status: undefined,
       source: opportunity.source === "kings-edge-simulated" ? "catalogue" : "free_text",
+      catalogue_ref: opportunity.source === "kings-edge-simulated" ? buildCatalogueRef(canonicalId) : undefined,
       created_at: toIsoString(opportunity.createdAt, fallbackTime),
       updated_at: toIsoString(opportunity.updatedAt, fallbackTime),
     }
@@ -629,10 +638,16 @@ export async function replaceStudentOpportunitiesByStep(
       title: typeof opportunity.title === "string" ? opportunity.title : "Untitled opportunity",
       description: typeof opportunity.description === "string" ? opportunity.description : undefined,
       decision_status: opportunity.decision_status === "accepted" ? "accepted" : "suggested",
-      progress_status: opportunity.progress_status,
+      progress_status:
+        opportunity.progress_status && opportunity.decision_status !== "accepted" ? undefined : opportunity.progress_status,
       source: opportunity.source === "catalogue" ? "catalogue" : "free_text",
+      catalogue_ref: opportunity.source === "catalogue" ? opportunity.catalogue_ref ?? buildCatalogueRef(id) : undefined,
       created_at: toIsoString(opportunity?.created_at, timestamp),
       updated_at: timestamp,
+    }
+
+    if (!isOpportunitySchemaCompliant(mapped)) {
+      throw new Error("Invalid opportunity payload")
     }
 
     return mapped

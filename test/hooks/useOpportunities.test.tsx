@@ -23,11 +23,11 @@ describe('useOpportunities', () => {
         id: 'opp-1',
         stepId: 'step-123',
         title: 'Opportunity',
-        summary: 'Summary',
-        source: 'kings-edge-simulated',
-        form: 'workshop',
-        focus: 'skills',
-        status: 'suggested'
+        description: 'Summary',
+        decision_status: 'suggested',
+        source: 'catalogue',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z'
       }
     ]
 
@@ -44,7 +44,16 @@ describe('useOpportunities', () => {
     })
 
     expect(result.current.error).toBeNull()
-    expect(result.current.opportunities).toEqual(opportunities)
+    expect(result.current.opportunities).toEqual([
+      expect.objectContaining({
+        id: 'opp-1',
+        stepId: 'step-123',
+        title: 'Opportunity',
+        summary: 'Summary',
+        source: 'kings-edge-simulated',
+        status: 'suggested'
+      })
+    ])
   })
 
   it('treats 404 as an empty state', async () => {
@@ -86,11 +95,11 @@ describe('useOpportunities', () => {
       id: 'opp-initial',
       stepId: 'step-123',
       title: 'Initial Opportunity',
-      summary: 'Initial summary',
-      source: 'kings-edge-simulated',
-      form: 'workshop',
-      focus: 'skills',
-      status: 'suggested'
+      description: 'Initial summary',
+      decision_status: 'suggested',
+      source: 'catalogue',
+      created_at: '2026-01-01T00:00:00.000Z',
+      updated_at: '2026-01-01T00:00:00.000Z'
     }
     const refreshedOpportunity = {
       ...initialOpportunity,
@@ -116,7 +125,14 @@ describe('useOpportunities', () => {
       expect(result.current.isLoading).toBe(false)
     })
 
-    expect(result.current.opportunities).toEqual([initialOpportunity])
+    expect(result.current.opportunities[0]).toEqual(
+      expect.objectContaining({
+        id: 'opp-initial',
+        title: 'Initial Opportunity',
+        summary: 'Initial summary',
+        source: 'kings-edge-simulated'
+      })
+    )
 
     await act(async () => {
       await result.current.refetch()
@@ -124,7 +140,13 @@ describe('useOpportunities', () => {
 
     expect(global.fetch).toHaveBeenLastCalledWith('/api/steps/step-123/opportunities')
     expect(result.current.error).toBeNull()
-    expect(result.current.opportunities).toEqual([refreshedOpportunity])
+    expect(result.current.opportunities[0]).toEqual(
+      expect.objectContaining({
+        id: 'opp-refreshed',
+        title: 'Refreshed Opportunity',
+        source: 'kings-edge-simulated'
+      })
+    )
   })
 
   it('invokes onFirstAutoGenerateStart once when fetching begins', async () => {
@@ -133,11 +155,11 @@ describe('useOpportunities', () => {
         id: 'opp-1',
         stepId: 'step-123',
         title: 'Opportunity',
-        summary: 'Summary',
-        source: 'kings-edge-simulated',
-        form: 'workshop',
-        focus: 'skills',
-        status: 'suggested'
+        description: 'Summary',
+        decision_status: 'suggested',
+        source: 'catalogue',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z'
       }
     ]
 
@@ -165,11 +187,11 @@ describe('useOpportunities', () => {
         id: 'opp-1',
         stepId: 'step-123',
         title: 'Opportunity',
-        summary: 'Summary',
-        source: 'kings-edge-simulated',
-        form: 'workshop',
-        focus: 'skills',
-        status: 'suggested'
+        description: 'Summary',
+        decision_status: 'suggested',
+        source: 'catalogue',
+        created_at: '2026-01-01T00:00:00.000Z',
+        updated_at: '2026-01-01T00:00:00.000Z'
       }
     ]
 

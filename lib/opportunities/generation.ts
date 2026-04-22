@@ -210,6 +210,13 @@ export async function generateOpportunitiesForStep(params: {
       description: draft.summary.trim(),
       source: draft.source === "kings-edge-simulated" ? "catalogue" : "free_text",
       decision_status: sanitizeStatus(draft.status) === "saved" ? "accepted" : "suggested",
+      catalogue_ref:
+        draft.source === "kings-edge-simulated"
+          ? {
+              system: "kings-edge-simulated",
+              id: draft.title.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 64),
+            }
+          : undefined,
     }))
 
     const createdCanonical = await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, records)
