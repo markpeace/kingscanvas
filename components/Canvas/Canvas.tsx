@@ -221,7 +221,8 @@ function CanvasContent() {
     autosavePayload,
     '/api/intentions',
     1500,
-    3
+    3,
+    status === 'authenticated' && !loadingIntentions
   )
   const debugUiEnabled =
     process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
