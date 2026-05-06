@@ -1,4 +1,4 @@
-import Ajv from "ajv"
+import Ajv2020 from "ajv/dist/2020"
 import addFormats from "ajv-formats"
 
 import studentCanvasSchema from "@/docs/SCHEMA/student-canvas.schema.json"
@@ -20,8 +20,8 @@ export class StudentCanvasValidationError extends Error {
   }
 }
 
-const ajv = new Ajv({ allErrors: true })
-addFormats(ajv as never)
+const ajv = new Ajv2020({ allErrors: true })
+addFormats(ajv)
 
 const validateDocument = ajv.compile(studentCanvasSchema)
 
@@ -47,15 +47,23 @@ export function validateStudentCanvasDocument(document: unknown): {
 
   return {
     valid: false,
-    issues: (validateDocument.errors ?? []).map((error) => toIssue(error as unknown as Record<string, unknown>)),
+    issues: (validateDocument.errors ?? []).map((error) =>
+      toIssue(error as unknown as Record<string, unknown>)
+    ),
   }
 }
 
-export function assertValidStudentCanvasDocument(document: unknown, context: string): asserts document is StudentCanvasDocument {
+export function assertValidStudentCanvasDocument(
+  document: unknown,
+  context: string
+): asserts document is StudentCanvasDocument {
   const result = validateStudentCanvasDocument(document)
   if (result.valid) {
     return
   }
 
-  throw new StudentCanvasValidationError(`Student canvas schema validation failed (${context})`, result.issues)
+  throw new StudentCanvasValidationError(
+    `Student canvas schema validation failed (${context})`,
+    result.issues
+  )
 }

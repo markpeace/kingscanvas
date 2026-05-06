@@ -1,6 +1,12 @@
 import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
-import { canonicalIdFromLegacyRef, createCanonicalId, isCanonicalId, nowIso, toIsoString } from "@/lib/studentCanvas/identity"
+import {
+  canonicalIdFromLegacyRef,
+  createCanonicalId,
+  isCanonicalId,
+  nowIso,
+  toIsoString,
+} from "@/lib/studentCanvas/identity"
 import {
   assembleCanonicalDocument,
   readLegacySnapshot,
@@ -40,34 +46,92 @@ function buildCatalogueRef(opportunityId: string) {
   }
 }
 
-function withUpdatedAt<T extends Record<string, unknown>>(record: T, timestamp: string): T & { updated_at: string } {
+function buildEmptyDocument(studentId: string, timestamp: string): StudentCanvasDocument {
+  return {
+    schema_version: SCHEMA_VERSION,
+    student_id: studentId,
+    created_at: timestamp,
+    updated_at: timestamp,
+    canvas: {
+      intentions: [],
+    },
+  }
+}
+
+function sanitizeStoredDocument(
+  studentId: string,
+  document: PrimaryStudentCanvasDocument | StudentCanvasDocument | null | undefined,
+  timestamp: string = nowIso()
+): StudentCanvasDocument {
+  const tutorialState =
+    document?.tutorial_state ??
+    (document as PrimaryStudentCanvasDocument | null | undefined)?.tutorialState
+
+  return {
+    schema_version: SCHEMA_VERSION,
+    student_id:
+      typeof document?.student_id === "string" && document.student_id.trim().length > 0
+        ? document.student_id
+        : studentId,
+    created_at: toIsoString(document?.created_at, timestamp),
+    updated_at: toIsoString(document?.updated_at, timestamp),
+    ...(tutorialState ? { tutorial_state: tutorialState } : {}),
+    canvas: {
+      intentions: Array.isArray(document?.canvas?.intentions) ? document.canvas.intentions : [],
+    },
+  }
+}
+
+async function replaceCanonicalDocument(document: StudentCanvasDocument): Promise<void> {
+  assertValidStudentCanvasDocument(document, "studentCanvas.replaceCanonicalDocument")
+  const collection = await getPrimaryCollection()
+  if (typeof collection.replaceOne === "function") {
+    await collection.replaceOne({ student_id: document.student_id }, document, { upsert: true })
+  } else {
+    await collection.updateOne(
+      { student_id: document.student_id },
+      { $set: document, $unset: { tutorialState: "" } },
+      { upsert: true }
+    )
+  }
+  await mirrorLegacyIntentions(document.student_id, document.canvas.intentions)
+}
+
+function withUpdatedAt<T extends Record<string, unknown>>(
+  record: T,
+  timestamp: string
+): T & { updated_at: string } {
   return {
     ...record,
     updated_at: timestamp,
   }
 }
 
-function applyStepPatch(step: StudentCanvasStep, patch: Record<string, unknown>, timestamp: string): StudentCanvasStep {
+function applyStepPatch(
+  step: StudentCanvasStep,
+  patch: Record<string, unknown>,
+  timestamp: string
+): StudentCanvasStep {
   return withUpdatedAt(
     {
       ...step,
       ...patch,
     },
-    timestamp,
+    timestamp
   ) as StudentCanvasStep
 }
 
 function applyOpportunityPatch(
   opportunity: StudentCanvasOpportunity,
   patch: Record<string, unknown>,
-  timestamp: string,
+  timestamp: string
 ): StudentCanvasOpportunity {
   return withUpdatedAt(
     {
       ...opportunity,
       ...patch,
     },
-    timestamp,
+    timestamp
   ) as StudentCanvasOpportunity
 }
 
@@ -81,25 +145,19 @@ async function getPrimaryCollection() {
 }
 
 async function ensurePrimaryDocument(studentId: string): Promise<void> {
+  const collection = await getCollection<PrimaryStudentCanvasDocument>(PRIMARY_COLLECTION)
+  const existing = await collection.findOne({ student_id: studentId })
+
+  if (existing?.schema_version === SCHEMA_VERSION) {
+    assertValidStudentCanvasDocument(
+      sanitizeStoredDocument(studentId, existing),
+      "studentCanvas.ensurePrimaryDocument"
+    )
+    return
+  }
+
   const timestamp = nowIso()
-  const collection = await getPrimaryCollection()
-  await collection.updateOne(
-    { student_id: studentId },
-    {
-      $set: {
-        student_id: studentId,
-        schema_version: SCHEMA_VERSION,
-        updated_at: timestamp,
-      },
-      $setOnInsert: {
-        created_at: timestamp,
-        canvas: {
-          intentions: [],
-        },
-      },
-    },
-    { upsert: true },
-  )
+  await replaceCanonicalDocument(buildEmptyDocument(studentId, timestamp))
 }
 
 export async function getStudentCanvas(studentId: string): Promise<StudentCanvasDocument | null> {
@@ -107,16 +165,9 @@ export async function getStudentCanvas(studentId: string): Promise<StudentCanvas
   const primary = await collection.findOne({ student_id: studentId })
 
   if (primary?.schema_version === SCHEMA_VERSION) {
-    const tutorialState = primary.tutorial_state ?? primary.tutorialState
-
-    return {
-      ...primary,
-      schema_version: SCHEMA_VERSION,
-      ...(tutorialState ? { tutorial_state: tutorialState } : {}),
-      canvas: {
-        intentions: Array.isArray(primary.canvas?.intentions) ? primary.canvas.intentions : [],
-      },
-    }
+    const document = sanitizeStoredDocument(studentId, primary)
+    assertValidStudentCanvasDocument(document, "studentCanvas.getStudentCanvas")
+    return document
   }
 
   if (primary) {
@@ -156,53 +207,48 @@ async function mirrorLegacyIntentions(studentId: string, intentions: StudentCanv
         createdAt: new Date(),
       },
     },
-    { upsert: true },
+    { upsert: true }
   )
 }
 
 export async function upsertStudentCanvas(
   studentId: string,
-  payload: Partial<Pick<StudentCanvasDocument, "tutorial_state" | "canvas">>,
+  payload: Partial<Pick<StudentCanvasDocument, "tutorial_state" | "canvas">>
 ): Promise<void> {
-  const collection = await getPrimaryCollection()
+  const collection = await getCollection<PrimaryStudentCanvasDocument>(PRIMARY_COLLECTION)
   const timestamp = nowIso()
-
   const existing = await collection.findOne({ student_id: studentId })
-  const currentIntentions = Array.isArray(existing?.canvas?.intentions) ? existing.canvas.intentions : []
+  const current =
+    existing?.schema_version === SCHEMA_VERSION
+      ? sanitizeStoredDocument(studentId, existing, timestamp)
+      : buildEmptyDocument(studentId, timestamp)
 
-  const nextIntentions = Array.isArray(payload.canvas?.intentions) ? payload.canvas?.intentions : currentIntentions
-
-  const update: Record<string, unknown> = {
-    student_id: studentId,
-    schema_version: SCHEMA_VERSION,
+  const nextDocument: StudentCanvasDocument = {
+    ...current,
     updated_at: timestamp,
     canvas: {
-      intentions: nextIntentions,
+      intentions: Array.isArray(payload.canvas?.intentions)
+        ? payload.canvas.intentions
+        : current.canvas.intentions,
     },
   }
 
   if (Object.prototype.hasOwnProperty.call(payload, "tutorial_state")) {
-    update.tutorial_state = payload.tutorial_state
+    if (payload.tutorial_state) {
+      nextDocument.tutorial_state = payload.tutorial_state
+    } else {
+      delete nextDocument.tutorial_state
+    }
   }
 
-  await collection.updateOne(
-    { student_id: studentId },
-    {
-      $set: update,
-      $unset: {
-        tutorialState: "",
-      },
-      $setOnInsert: {
-        created_at: timestamp,
-      },
-    },
-    { upsert: true },
-  )
-
-  await mirrorLegacyIntentions(studentId, nextIntentions)
+  await replaceCanonicalDocument(nextDocument)
 }
 
-export async function patchIntentionById(studentId: string, intentionId: string, patch: Record<string, unknown>) {
+export async function patchIntentionById(
+  studentId: string,
+  intentionId: string,
+  patch: Record<string, unknown>
+) {
   await ensurePrimaryDocument(studentId)
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
@@ -233,20 +279,27 @@ function stepMatchesId(step: StudentCanvasStep, stepId: string): boolean {
 
 function opportunityMatchesId(
   opportunity: StudentCanvasOpportunity,
-  opportunityId: string,
+  opportunityId: string
 ): boolean {
   if (opportunity.id === opportunityId) {
     return true
   }
 
-  if (!isCanonicalId(opportunityId) && opportunity.id === canonicalIdFromLegacyRef(opportunityId, "opportunity")) {
+  if (
+    !isCanonicalId(opportunityId) &&
+    opportunity.id === canonicalIdFromLegacyRef(opportunityId, "opportunity")
+  ) {
     return true
   }
 
   return false
 }
 
-export async function patchStepById(studentId: string, stepId: string, patch: Record<string, unknown>) {
+export async function patchStepById(
+  studentId: string,
+  stepId: string,
+  patch: Record<string, unknown>
+) {
   await ensurePrimaryDocument(studentId)
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
@@ -272,7 +325,7 @@ export async function patchOpportunityById(
   studentId: string,
   stepId: string,
   opportunityId: string,
-  patch: Record<string, unknown>,
+  patch: Record<string, unknown>
 ) {
   await ensurePrimaryDocument(studentId)
   const canvas = await getStudentCanvas(studentId)
@@ -302,7 +355,7 @@ export async function patchOpportunityById(
           opportunities: nextOpportunities,
         },
         {},
-        timestamp,
+        timestamp
       )
     })
 
@@ -312,12 +365,17 @@ export async function patchOpportunityById(
   await upsertStudentCanvas(studentId, { canvas: { intentions: nextIntentions } })
 }
 
-export async function getStudentTutorialState(studentId: string): Promise<TutorialState | undefined> {
+export async function getStudentTutorialState(
+  studentId: string
+): Promise<TutorialState | undefined> {
   const canvas = await getStudentCanvas(studentId)
   return canvas?.tutorial_state
 }
 
-export async function saveStudentTutorialState(studentId: string, tutorialState: TutorialState): Promise<void> {
+export async function saveStudentTutorialState(
+  studentId: string,
+  tutorialState: TutorialState
+): Promise<void> {
   await upsertStudentCanvas(studentId, { tutorial_state: tutorialState })
 }
 
@@ -326,7 +384,10 @@ export async function getStudentIntentions(studentId: string): Promise<StudentCa
   return Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
 }
 
-export async function saveStudentIntentions(studentId: string, intentions: StudentCanvasIntention[]): Promise<void> {
+export async function saveStudentIntentions(
+  studentId: string,
+  intentions: StudentCanvasIntention[]
+): Promise<void> {
   const existing = await getStudentCanvas(studentId)
   const timestamp = nowIso()
   const candidateDocument: StudentCanvasDocument = {
@@ -369,7 +430,10 @@ function toProgressStatus(status: unknown): StudentCanvasStep["progress_status"]
   }
 }
 
-export async function upsertStudentStep(studentId: string, step: RawStepInput): Promise<{ stepId: string }> {
+export async function upsertStudentStep(
+  studentId: string,
+  step: RawStepInput
+): Promise<{ stepId: string }> {
   const canvas = await getStudentCanvas(studentId)
   const intentions = Array.isArray(canvas?.canvas.intentions) ? canvas.canvas.intentions : []
   const timestamp = nowIso()
@@ -382,7 +446,11 @@ export async function upsertStudentStep(studentId: string, step: RawStepInput): 
         : ""
 
   const stepId =
-    providedId.length === 0 ? createCanonicalId() : isCanonicalId(providedId) ? providedId : canonicalIdFromLegacyRef(providedId, "step")
+    providedId.length === 0
+      ? createCanonicalId()
+      : isCanonicalId(providedId)
+        ? providedId
+        : canonicalIdFromLegacyRef(providedId, "step")
   const intentionId = typeof step?.intentionId === "string" ? step.intentionId : ""
 
   const nextIntentions = intentions.map((intention) => {
@@ -416,12 +484,11 @@ export async function upsertStudentStep(studentId: string, step: RawStepInput): 
           ? toIsoString(steps[existingIndex].created_at, timestamp)
           : toIsoString(step.created_at, timestamp),
       updated_at: timestamp,
-      opportunities:
-        Array.isArray(step.opportunities)
-          ? step.opportunities
-          : existingIndex >= 0 && Array.isArray(steps[existingIndex].opportunities)
-            ? steps[existingIndex].opportunities
-            : [],
+      opportunities: Array.isArray(step.opportunities)
+        ? step.opportunities
+        : existingIndex >= 0 && Array.isArray(steps[existingIndex].opportunities)
+          ? steps[existingIndex].opportunities
+          : [],
     }
 
     const nextSteps = existingIndex >= 0 ? [...steps] : [...steps, nextStep]
@@ -439,7 +506,7 @@ export async function upsertStudentStep(studentId: string, step: RawStepInput): 
 export async function createSuggestedStudentSteps(
   studentId: string,
   intentionId: string,
-  suggestions: Array<Partial<StudentCanvasStep>>,
+  suggestions: Array<Partial<StudentCanvasStep>>
 ): Promise<{ insertedIds: string[] }> {
   const insertedIds: string[] = []
 
@@ -457,17 +524,27 @@ export async function createSuggestedStudentSteps(
   return { insertedIds }
 }
 
-export async function updateStudentStepStatus(studentId: string, stepId: string, status: string): Promise<boolean> {
+export async function updateStudentStepStatus(
+  studentId: string,
+  stepId: string,
+  status: string
+): Promise<boolean> {
   await patchStepById(studentId, stepId, { progress_status: toProgressStatus(status) })
   return true
 }
 
-export async function getStudentStepById(studentId: string, stepId: string): Promise<StudentCanvasStep | null> {
+export async function getStudentStepById(
+  studentId: string,
+  stepId: string
+): Promise<StudentCanvasStep | null> {
   const steps = await getStudentSteps(studentId)
   return steps.find((step) => stepMatchesId(step, stepId)) ?? null
 }
 
-export async function getStudentOpportunitiesByStep(studentId: string, stepId: string): Promise<StudentCanvasOpportunity[]> {
+export async function getStudentOpportunitiesByStep(
+  studentId: string,
+  stepId: string
+): Promise<StudentCanvasOpportunity[]> {
   const step = await getStudentStepById(studentId, stepId)
   return Array.isArray(step?.opportunities) ? step.opportunities : []
 }
@@ -475,7 +552,7 @@ export async function getStudentOpportunitiesByStep(studentId: string, stepId: s
 export async function replaceStudentOpportunitiesByStep(
   studentId: string,
   stepId: string,
-  opportunities: Array<Partial<StudentCanvasOpportunity> & { _id?: string }>,
+  opportunities: Array<Partial<StudentCanvasOpportunity> & { _id?: string }>
 ): Promise<StudentCanvasOpportunity[]> {
   const timestamp = nowIso()
   const next = opportunities.map((opportunity) => {
@@ -496,12 +573,18 @@ export async function replaceStudentOpportunitiesByStep(
     const mapped: StudentCanvasOpportunity = {
       id,
       title: typeof opportunity.title === "string" ? opportunity.title : "Untitled opportunity",
-      description: typeof opportunity.description === "string" ? opportunity.description : undefined,
+      description:
+        typeof opportunity.description === "string" ? opportunity.description : undefined,
       decision_status: opportunity.decision_status === "accepted" ? "accepted" : "suggested",
       progress_status:
-        opportunity.progress_status && opportunity.decision_status !== "accepted" ? undefined : opportunity.progress_status,
+        opportunity.progress_status && opportunity.decision_status !== "accepted"
+          ? undefined
+          : opportunity.progress_status,
       source: opportunity.source === "catalogue" ? "catalogue" : "free_text",
-      catalogue_ref: opportunity.source === "catalogue" ? opportunity.catalogue_ref ?? buildCatalogueRef(id) : undefined,
+      catalogue_ref:
+        opportunity.source === "catalogue"
+          ? (opportunity.catalogue_ref ?? buildCatalogueRef(id))
+          : undefined,
       created_at: toIsoString(opportunity?.created_at, timestamp),
       updated_at: timestamp,
     }
@@ -517,7 +600,10 @@ export async function replaceStudentOpportunitiesByStep(
   return next
 }
 
-export async function getStudentIntentionTitle(studentId: string, intentionId?: string): Promise<string | undefined> {
+export async function getStudentIntentionTitle(
+  studentId: string,
+  intentionId?: string
+): Promise<string | undefined> {
   if (!intentionId) {
     return undefined
   }
@@ -533,12 +619,18 @@ export async function getStudentIntentionTitle(studentId: string, intentionId?: 
   return undefined
 }
 
-export async function listRecentStudentStepHistory(studentId: string, intentionId: string, limit = 25) {
+export async function listRecentStudentStepHistory(
+  studentId: string,
+  intentionId: string,
+  limit = 25
+) {
   const intentions = await getStudentIntentions(studentId)
   const targetIntention = intentions.find((intention) => intention.id === intentionId)
   const steps = Array.isArray(targetIntention?.steps) ? targetIntention.steps : []
   const filtered = steps
-    .filter((step) => step?.progress_status === "in_progress" || step?.progress_status === "abandoned")
+    .filter(
+      (step) => step?.progress_status === "in_progress" || step?.progress_status === "abandoned"
+    )
     .sort((a, b) => new Date(b?.updated_at ?? 0).getTime() - new Date(a?.updated_at ?? 0).getTime())
     .slice(0, limit)
 
