@@ -333,14 +333,21 @@ export async function writeMigrationMarker(marker: MigrationMarker): Promise<voi
 
 export async function migrateStudentFromLegacy(studentId: string): Promise<StudentCanvasDocument | null> {
   const { getCollection } = await import("@/lib/dbHelpers")
-  const { assertValidStudentCanvasDocument } = await import("@/lib/studentCanvas/validation")
+  const { validateStudentCanvasDocument } = await import("@/lib/studentCanvas/validation")
   const snapshot = await readLegacySnapshot(studentId)
   const { document, stats } = assembleCanonicalDocument(studentId, snapshot)
 
   if (!document) {
     return null
   }
-  assertValidStudentCanvasDocument(document, "migrateStudentFromLegacy")
+  const validation = validateStudentCanvasDocument(document)
+  if (!validation.valid) {
+    throw new Error(
+      `Student canvas schema validation failed (migrateStudentFromLegacy): ${validation.issues
+        .map((issue) => `${issue.path}:${issue.message}`)
+        .join("; ")}`,
+    )
+  }
 
   const collection = await getCollection<StudentCanvasDocument>(STUDENT_CANVAS_PRIMARY_COLLECTION)
   await collection.updateOne(
