@@ -1,4 +1,5 @@
 import { assembleCanonicalDocument } from "@/lib/studentCanvas/migration"
+import { validateStudentCanvasDocument } from "@/lib/studentCanvas/validation"
 
 describe("student canvas migration", () => {
   test("normalizes legacy ids, buckets, statuses, and timestamps", () => {
@@ -15,7 +16,7 @@ describe("student canvas migration", () => {
             progress_status: "accepted",
             created_at: "2024-01-05T00:00:00Z",
             updated_at: "2024-01-06T00:00:00Z",
-          },
+          } as any,
         ],
       },
       steps: [
@@ -47,6 +48,7 @@ describe("student canvas migration", () => {
 
     expect(document).not.toBeNull()
     expect(document?.schema_version).toBe("1.0.0")
+    expect(validateStudentCanvasDocument(document).valid).toBe(true)
     expect(document?.canvas.intentions).toHaveLength(1)
 
     const intention = document!.canvas.intentions[0]
@@ -107,4 +109,35 @@ describe("student canvas migration", () => {
       },
     ])
   })
+})
+
+test("rejects documents that do not follow the student canvas storage schema", () => {
+  const result = validateStudentCanvasDocument({
+    schema_version: "1.0.0",
+    student_id: "student-3",
+    created_at: "2024-01-01T00:00:00.000Z",
+    updated_at: "2024-01-01T00:00:00.000Z",
+    canvas: {
+      intentions: [
+        {
+          id: "not-a-uuid",
+          title: "Invalid intention",
+          bucket: "do-now",
+          progress_status: "accepted",
+          created_at: "2024-01-01T00:00:00.000Z",
+          updated_at: "2024-01-01T00:00:00.000Z",
+          steps: [],
+        },
+      ],
+    },
+  })
+
+  expect(result.valid).toBe(false)
+  expect(result.issues.map((issue) => issue.path)).toEqual(
+    expect.arrayContaining([
+      "/canvas/intentions/0/id",
+      "/canvas/intentions/0/bucket",
+      "/canvas/intentions/0/progress_status",
+    ])
+  )
 })

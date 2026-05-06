@@ -2,12 +2,11 @@ import { debug } from "@/lib/debug"
 import { runOpportunityWorkflow } from "@/lib/langgraph/workflow"
 import type { StudentPersona } from "@/lib/context/studentPersonas"
 import {
-  getStudentIntentionTitle,
+  getStudentIntentions,
   getStudentOpportunitiesByStep,
-  getStudentStepById,
   replaceStudentOpportunitiesByStep,
 } from "@/lib/studentCanvas/repository"
-import { canonicalOpportunityToUi } from "@/lib/studentCanvas/mappers"
+import { canonicalBucketToUi, canonicalOpportunityToUi } from "@/lib/studentCanvas/mappers"
 import type { Opportunity, OpportunityStatus } from "@/types/canvas"
 import type { Opportunity as StudentCanvasOpportunity } from "@/types/studentCanvasV1"
 
@@ -35,7 +34,12 @@ type StepRecord = {
 function resolveCanonicalStepId(step: StepRecord, fallback: string): string {
   const rawId = step._id
 
-  if (rawId && typeof rawId === "object" && "toHexString" in rawId && typeof rawId.toHexString === "function") {
+  if (
+    rawId &&
+    typeof rawId === "object" &&
+    "toHexString" in rawId &&
+    typeof rawId.toHexString === "function"
+  ) {
     return rawId.toHexString()
   }
 
@@ -74,13 +78,46 @@ function resolveBucketId(step: StepRecord): string | undefined {
   return undefined
 }
 
+function canonicalProgressToUiStatus(progress: unknown): string {
+  switch (progress) {
+    case "in_progress":
+      return "accepted"
+    case "completed":
+      return "completed"
+    case "abandoned":
+      return "rejected"
+    default:
+      return "suggested"
+  }
+}
+
 export async function findStepById(stepId: string, studentId?: string): Promise<StepRecord | null> {
   if (typeof stepId !== "string" || stepId.trim().length === 0 || !studentId) {
     return null
   }
 
-  const step = await getStudentStepById(studentId, stepId)
-  return (step as StepRecord | null) ?? null
+  const intentions = await getStudentIntentions(studentId)
+  for (const intention of intentions) {
+    const steps = Array.isArray(intention?.steps) ? intention.steps : []
+    const step = steps.find((candidate) => candidate.id === stepId)
+    if (!step) {
+      continue
+    }
+
+    return {
+      _id: step.id,
+      id: step.id,
+      user: studentId,
+      intentionId: intention.id,
+      title: step.title,
+      text: step.description ?? step.title,
+      bucket: canonicalBucketToUi(step.bucket),
+      bucketId: canonicalBucketToUi(step.bucket),
+      status: canonicalProgressToUiStatus(step.progress_status),
+    }
+  }
+
+  return null
 }
 
 const VALID_SOURCES: Opportunity["source"][] = ["kings-edge-simulated", "independent"]
@@ -89,7 +126,7 @@ const VALID_FORMS: Opportunity["form"][] = [
   "mentoring",
   "short-course",
   "coaching",
-  "independent-action"
+  "independent-action",
 ]
 const VALID_FOCUS_VALUES = ["experience", "skills", "community", "reflection"] as const
 const VALID_STATUSES: OpportunityStatus[] = ["suggested", "saved", "dismissed"]
@@ -107,7 +144,10 @@ function isValidForm(value: unknown): value is Opportunity["form"] {
 }
 
 function isValidFocus(value: unknown): value is Opportunity["focus"] {
-  return typeof value === "string" && VALID_FOCUS_VALUES.includes(value as (typeof VALID_FOCUS_VALUES)[number])
+  return (
+    typeof value === "string" &&
+    VALID_FOCUS_VALUES.includes(value as (typeof VALID_FOCUS_VALUES)[number])
+  )
 }
 
 function sanitizeStatus(value: unknown): OpportunityStatus {
@@ -132,22 +172,30 @@ export async function generateOpportunitiesForStep(params: {
     if (!step || typeof step.user !== "string" || step.user.trim().length === 0) {
       debug.warn("Opportunities: step not found in generateOpportunitiesForStep", {
         stepId,
-        origin
+        origin,
       })
       throw new StepNotFoundError(stepId)
     }
 
     canonicalStepId = resolveCanonicalStepId(step, stepId)
     const stepTitle = resolveStepTitle(step, canonicalStepId)
-    const intentionTitle = await getStudentIntentionTitle(step.user, step.intentionId)
+    const intentionTitle =
+      typeof step.intentionId === "string"
+        ? (await getStudentIntentions(step.user)).find(
+            (intention) => intention.id === step.intentionId
+          )?.title
+        : undefined
     const bucketId = resolveBucketId(step)
 
     const shouldSkipAutoGeneration = origin !== "shuffle" && origin !== "lazy-fetch"
 
-    if (shouldSkipAutoGeneration && (await getStudentOpportunitiesByStep(step.user, canonicalStepId)).length > 0) {
+    if (
+      shouldSkipAutoGeneration &&
+      (await getStudentOpportunitiesByStep(step.user, canonicalStepId)).length > 0
+    ) {
       debug.debug("Opportunities: already has opportunities; skipping auto generation", {
         stepId: canonicalStepId,
-        origin
+        origin,
       })
       return []
     }
@@ -157,7 +205,7 @@ export async function generateOpportunitiesForStep(params: {
       stepBucket: bucketId,
       intentionTitle,
       existingOpportunityTitles: [],
-      persona: params.persona
+      persona: params.persona,
     })
 
     const drafts = Array.isArray(aiResult?.opportunities)
@@ -165,8 +213,12 @@ export async function generateOpportunitiesForStep(params: {
           const title = isNonEmptyString(opp.title) ? opp.title : stepTitle
           const summary = isNonEmptyString(opp.summary) ? opp.summary : stepTitle
 
-          const source = isValidSource(opp.source) ? (opp.source as Opportunity["source"]) : "kings-edge-simulated"
-          const form = isValidForm(opp.form) ? (opp.form as Opportunity["form"]) : "independent-action"
+          const source = isValidSource(opp.source)
+            ? (opp.source as Opportunity["source"])
+            : "kings-edge-simulated"
+          const form = isValidForm(opp.form)
+            ? (opp.form as Opportunity["form"])
+            : "independent-action"
 
           const focus: Opportunity["focus"] =
             opp.focus === "experience" ||
@@ -182,7 +234,7 @@ export async function generateOpportunitiesForStep(params: {
             source,
             form,
             focus,
-            status: "suggested"
+            status: "suggested",
           }
         })
       : []
@@ -199,7 +251,7 @@ export async function generateOpportunitiesForStep(params: {
       debug.warn("Opportunities: no valid drafts to persist", {
         stepId: canonicalStepId,
         origin,
-        ...(params.persona ? { persona: params.persona.shortLabel } : {})
+        ...(params.persona ? { persona: params.persona.shortLabel } : {}),
       })
       await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, [])
       return []
@@ -219,14 +271,20 @@ export async function generateOpportunitiesForStep(params: {
           : undefined,
     }))
 
-    const createdCanonical = await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, records)
-    const created = createdCanonical.map((opportunity) => canonicalOpportunityToUi(opportunity, canonicalStepId))
+    const createdCanonical = await replaceStudentOpportunitiesByStep(
+      step.user,
+      canonicalStepId,
+      records
+    )
+    const created = createdCanonical.map((opportunity) =>
+      canonicalOpportunityToUi(opportunity, canonicalStepId)
+    )
 
     debug.info("Opportunities: generate success", {
       stepId: canonicalStepId,
       origin,
       count: created.length,
-      ...(params.persona ? { persona: params.persona.shortLabel } : {})
+      ...(params.persona ? { persona: params.persona.shortLabel } : {}),
     })
 
     return created
@@ -234,7 +292,7 @@ export async function generateOpportunitiesForStep(params: {
     debug.error("Opportunities: generate failed", {
       stepId: canonicalStepId,
       origin,
-      error
+      error,
     })
     throw error
   }
@@ -251,7 +309,7 @@ export async function safelyGenerateOpportunitiesForStep(params: {
   debug.debug("Opportunities: safelyGenerateOpportunitiesForStep start", {
     stepId,
     origin,
-    ...(params.persona ? { persona: params.persona.shortLabel } : {})
+    ...(params.persona ? { persona: params.persona.shortLabel } : {}),
   })
 
   try {
@@ -259,7 +317,7 @@ export async function safelyGenerateOpportunitiesForStep(params: {
     debug.debug("Opportunities: safelyGenerateOpportunitiesForStep success", {
       stepId,
       origin,
-      count: opportunities.length
+      count: opportunities.length,
     })
   } catch (error) {
     debug.warn("Opportunities: safelyGenerateOpportunitiesForStep failed", {
@@ -267,7 +325,7 @@ export async function safelyGenerateOpportunitiesForStep(params: {
       origin,
       error,
       errorName: error instanceof Error ? error.name : String(error),
-      errorMessage: error instanceof Error ? error.message : String(error)
+      errorMessage: error instanceof Error ? error.message : String(error),
     })
   }
 }

@@ -1,4 +1,9 @@
-import type { OpportunityFocus, OpportunityForm, OpportunitySource, OpportunityStatus } from "@/types/canvas"
+import type {
+  OpportunityFocus,
+  OpportunityForm,
+  OpportunitySource,
+  OpportunityStatus,
+} from "@/types/canvas"
 
 jest.mock("mongodb", () => {
   let counter = 0
@@ -34,7 +39,9 @@ jest.mock("mongodb", () => {
 })
 
 jest.mock("@/lib/dbHelpers", () => {
-  const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string; toString: () => string } }
+  const { ObjectId } = jest.requireMock("mongodb") as {
+    ObjectId: new () => { toHexString: () => string; toString: () => string }
+  }
   type MockId = InstanceType<typeof ObjectId>
   const stores: Record<string, Array<Record<string, any>>> = {}
 
@@ -52,8 +59,10 @@ jest.mock("@/lib/dbHelpers", () => {
           "toHexString" in value &&
           typeof (value as { toHexString?: () => string }).toHexString === "function"
         ) {
-          return (doc[key] as { toHexString: () => string }).toHexString() ===
+          return (
+            (doc[key] as { toHexString: () => string }).toHexString() ===
             (value as { toHexString: () => string }).toHexString()
+          )
         }
       }
 
@@ -91,7 +100,7 @@ jest.mock("@/lib/dbHelpers", () => {
         return {
           async toArray() {
             return results.slice()
-          }
+          },
         }
       },
       async findOne(filter: Record<string, any>) {
@@ -111,9 +120,78 @@ jest.mock("@/lib/dbHelpers", () => {
         stores[name] = stores[name].filter((doc) => !matches(doc, filter))
         return { acknowledged: true, deletedCount: before - stores[name].length }
       },
-      async updateOne() {
-        return { acknowledged: true, matchedCount: 0, modifiedCount: 0, upsertedCount: 0, upsertedId: null }
-      }
+      async replaceOne(
+        filter: Record<string, any>,
+        replacement: Record<string, any>,
+        options?: { upsert?: boolean }
+      ) {
+        const index = stores[name].findIndex((doc) => matches(doc, filter))
+        if (index >= 0) {
+          const existingId = stores[name][index]._id
+          stores[name][index] = { ...replacement, ...(existingId ? { _id: existingId } : {}) }
+          return {
+            acknowledged: true,
+            matchedCount: 1,
+            modifiedCount: 1,
+            upsertedCount: 0,
+            upsertedId: null,
+          }
+        }
+        if (options?.upsert) {
+          const id = new ObjectId()
+          stores[name].push({ ...replacement, _id: id })
+          return {
+            acknowledged: true,
+            matchedCount: 0,
+            modifiedCount: 0,
+            upsertedCount: 1,
+            upsertedId: id,
+          }
+        }
+        return {
+          acknowledged: true,
+          matchedCount: 0,
+          modifiedCount: 0,
+          upsertedCount: 0,
+          upsertedId: null,
+        }
+      },
+      async updateOne(
+        filter: Record<string, any>,
+        update: Record<string, any>,
+        options?: { upsert?: boolean }
+      ) {
+        const index = stores[name].findIndex((doc) => matches(doc, filter))
+        const set = update.$set ?? {}
+        if (index >= 0) {
+          stores[name][index] = { ...stores[name][index], ...set }
+          return {
+            acknowledged: true,
+            matchedCount: 1,
+            modifiedCount: 1,
+            upsertedCount: 0,
+            upsertedId: null,
+          }
+        }
+        if (options?.upsert) {
+          const id = new ObjectId()
+          stores[name].push({ ...filter, ...set, _id: id })
+          return {
+            acknowledged: true,
+            matchedCount: 0,
+            modifiedCount: 0,
+            upsertedCount: 1,
+            upsertedId: id,
+          }
+        }
+        return {
+          acknowledged: true,
+          matchedCount: 0,
+          modifiedCount: 0,
+          upsertedCount: 0,
+          upsertedId: null,
+        }
+      },
     }
   })
 
@@ -127,7 +205,7 @@ jest.mock("@/lib/dbHelpers", () => {
     getCollection,
     ensureStepIndexes: jest.fn(),
     ensureOpportunityIndexes: jest.fn(),
-    resetCollections
+    resetCollections,
   }
 })
 
@@ -137,37 +215,77 @@ jest.mock("@/lib/debug", () => ({
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-    error: jest.fn()
-  }
+    error: jest.fn(),
+  },
 }))
 
 jest.mock("@/lib/langgraph/workflow", () => ({
-  runOpportunityWorkflow: jest.fn()
+  runOpportunityWorkflow: jest.fn(),
 }))
 
 const { resetCollections } = jest.requireMock("@/lib/dbHelpers") as { resetCollections: () => void }
 const { runOpportunityWorkflow } = jest.requireMock("@/lib/langgraph/workflow") as {
-  runOpportunityWorkflow: jest.MockedFunction<(
-    input: { stepTitle: string; stepBucket?: string; intentionTitle?: string; existingOpportunityTitles?: string[] }
-  ) => Promise<{
-    opportunities: Array<{
-      title: string
-      summary: string
-      source?: OpportunitySource
-      form?: OpportunityForm
-      focus?: OpportunityFocus
-      status?: OpportunityStatus
+  runOpportunityWorkflow: jest.MockedFunction<
+    (input: {
+      stepTitle: string
+      stepBucket?: string
+      intentionTitle?: string
+      existingOpportunityTitles?: string[]
+    }) => Promise<{
+      opportunities: Array<{
+        title: string
+        summary: string
+        source?: OpportunitySource
+        form?: OpportunityForm
+        focus?: OpportunityFocus
+        status?: OpportunityStatus
+      }>
     }>
-  }>>
+  >
 }
 const { debug } = jest.requireMock("@/lib/debug") as {
-  debug: { info: jest.Mock; error: jest.Mock; warn: jest.Mock; trace: jest.Mock }
+  debug: { debug: jest.Mock; info: jest.Mock; error: jest.Mock; warn: jest.Mock; trace: jest.Mock }
+}
+
+async function seedCanvasStep(
+  user: string,
+  stepId: string,
+  options?: {
+    intentionTitle?: string
+    stepTitle?: string
+    bucket?: "do_now" | "do_later" | "before_graduation" | "after_graduation"
+  }
+) {
+  const { saveStudentIntentions } = await import("@/lib/studentCanvas/repository")
+  await saveStudentIntentions(user, [
+    {
+      id: "22222222-2222-4222-8222-222222222222",
+      title: options?.intentionTitle ?? "Launch creative career",
+      bucket: "do_now",
+      progress_status: "in_progress",
+      created_at: "2024-01-01T00:00:00.000Z",
+      updated_at: "2024-01-01T00:00:00.000Z",
+      steps: [
+        {
+          id: stepId,
+          title: options?.stepTitle ?? "Prepare portfolio",
+          bucket: options?.bucket ?? "do_now",
+          order: 0,
+          progress_status: "in_progress",
+          created_at: "2024-01-01T00:00:00.000Z",
+          updated_at: "2024-01-01T00:00:00.000Z",
+          opportunities: [],
+        },
+      ],
+    },
+  ])
 }
 
 describe("generateOpportunitiesForStep", () => {
   beforeEach(() => {
     resetCollections()
     runOpportunityWorkflow.mockReset()
+    debug.debug.mockReset()
     debug.info.mockReset()
     debug.error.mockReset()
     debug.warn.mockReset()
@@ -175,32 +293,12 @@ describe("generateOpportunitiesForStep", () => {
   })
 
   it("generates and replaces opportunities for a step", async () => {
-    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
-    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
-
-    const stepObjectId = new ObjectId()
-    const canonicalStepId = stepObjectId.toHexString()
-
-    const stepsCol = await getCollection("steps")
-    await stepsCol.insertMany([
-      {
-        _id: stepObjectId,
-        user: "owner@example.com",
-        intentionId: "int-123",
-        title: "Prepare portfolio",
-        bucket: "do-now"
-      }
-    ])
-
-    const intentionsCol = await getCollection("intentions")
-    await intentionsCol.insertMany([
-      {
-        user: "owner@example.com",
-        intentions: [
-          { id: "int-123", title: "Launch creative career" }
-        ]
-      }
-    ])
+    const canonicalStepId = "11111111-1111-4111-8111-111111111111"
+    await seedCanvasStep("owner@example.com", canonicalStepId, {
+      intentionTitle: "Launch creative career",
+      stepTitle: "Prepare portfolio",
+      bucket: "do_now",
+    })
 
     const { createOpportunitiesForStep, getOpportunitiesByStep } = await import("@/lib/userData")
 
@@ -211,8 +309,8 @@ describe("generateOpportunitiesForStep", () => {
         source: "kings-edge-simulated",
         form: "workshop",
         focus: "experience",
-        status: "suggested"
-      }
+        status: "suggested",
+      },
     ])
 
     runOpportunityWorkflow.mockResolvedValue({
@@ -222,28 +320,32 @@ describe("generateOpportunitiesForStep", () => {
           summary: "Meet alumni working in creative agencies.",
           source: "kings-edge-simulated",
           form: "workshop",
-          focus: "community"
+          focus: "community",
         },
         {
           title: "Shadow a portfolio review",
           summary: "Observe how mentors critique a professional portfolio.",
           source: "kings-edge-simulated",
           form: "mentoring",
-          focus: "skills"
+          focus: "skills",
         },
         {
           title: "Join creative showcase",
           summary: "Apply to present work at the student showcase in March.",
           source: "independent",
           form: "independent-action",
-          focus: "experience"
-        }
-      ]
+          focus: "experience",
+        },
+      ],
     })
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
-    const created = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "shuffle" })
+    const created = await generateOpportunitiesForStep({
+      stepId: canonicalStepId,
+      origin: "shuffle",
+      studentId: "owner@example.com",
+    })
 
     expect(created).toHaveLength(3)
     expect(created.every((item) => item.stepId === canonicalStepId)).toBe(true)
@@ -252,7 +354,7 @@ describe("generateOpportunitiesForStep", () => {
       stepBucket: "do-now",
       intentionTitle: "Launch creative career",
       existingOpportunityTitles: [],
-      persona: undefined
+      persona: undefined,
     })
 
     const remaining = await getOpportunitiesByStep("owner@example.com", canonicalStepId)
@@ -260,15 +362,20 @@ describe("generateOpportunitiesForStep", () => {
     expect(remaining.map((item) => item.title)).toEqual([
       "Attend industry breakfast",
       "Shadow a portfolio review",
-      "Join creative showcase"
+      "Join creative showcase",
     ])
   })
 
   it("throws StepNotFoundError when the step does not exist", async () => {
-    const { generateOpportunitiesForStep, StepNotFoundError } = await import("@/lib/opportunities/generation")
+    const { generateOpportunitiesForStep, StepNotFoundError } =
+      await import("@/lib/opportunities/generation")
 
     await expect(
-      generateOpportunitiesForStep({ stepId: "nonexistent", origin: "manual" })
+      generateOpportunitiesForStep({
+        stepId: "nonexistent",
+        origin: "manual",
+        studentId: "owner@example.com",
+      })
     ).rejects.toBeInstanceOf(StepNotFoundError)
 
     expect(debug.warn).toHaveBeenCalledWith(
@@ -278,49 +385,31 @@ describe("generateOpportunitiesForStep", () => {
   })
 
   it("propagates AI failures and logs an error", async () => {
-    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
-    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
-
-    const stepObjectId = new ObjectId()
-    const canonicalStepId = stepObjectId.toHexString()
-
-    const stepsCol = await getCollection("steps")
-    await stepsCol.insertMany([
-      {
-        _id: stepObjectId,
-        user: "owner@example.com",
-        intentionId: "int-789",
-        title: "Draft presentation",
-        bucket: "do-later"
-      }
-    ])
+    const canonicalStepId = "33333333-3333-4333-8333-333333333333"
+    await seedCanvasStep("owner@example.com", canonicalStepId, {
+      stepTitle: "Draft presentation",
+      bucket: "do_later",
+    })
 
     runOpportunityWorkflow.mockRejectedValue(new Error("AI offline"))
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
     await expect(
-      generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "ai-accepted" })
+      generateOpportunitiesForStep({
+        stepId: canonicalStepId,
+        origin: "ai-accepted",
+        studentId: "owner@example.com",
+      })
     ).rejects.toThrow("AI offline")
   })
 
   it("skips regeneration when manual steps already have opportunities", async () => {
-    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
-    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
-
-    const stepObjectId = new ObjectId()
-    const canonicalStepId = stepObjectId.toHexString()
-
-    const stepsCol = await getCollection("steps")
-    await stepsCol.insertMany([
-      {
-        _id: stepObjectId,
-        user: "owner@example.com",
-        intentionId: "int-789",
-        title: "Draft presentation",
-        bucket: "do-later"
-      }
-    ])
+    const canonicalStepId = "44444444-4444-4444-8444-444444444444"
+    await seedCanvasStep("owner@example.com", canonicalStepId, {
+      stepTitle: "Draft presentation",
+      bucket: "do_later",
+    })
 
     const { createOpportunitiesForStep, getOpportunitiesByStep } = await import("@/lib/userData")
 
@@ -331,8 +420,8 @@ describe("generateOpportunitiesForStep", () => {
         source: "kings-edge-simulated",
         form: "workshop",
         focus: "skills",
-        status: "suggested"
-      }
+        status: "suggested",
+      },
     ])
 
     runOpportunityWorkflow.mockResolvedValue({
@@ -343,14 +432,18 @@ describe("generateOpportunitiesForStep", () => {
           source: "kings-edge-simulated",
           form: "short-course",
           focus: "reflection",
-          status: "suggested"
-        }
-      ]
+          status: "suggested",
+        },
+      ],
     })
 
     const { generateOpportunitiesForStep } = await import("@/lib/opportunities/generation")
 
-    const created = await generateOpportunitiesForStep({ stepId: canonicalStepId, origin: "manual" })
+    const created = await generateOpportunitiesForStep({
+      stepId: canonicalStepId,
+      origin: "manual",
+      studentId: "owner@example.com",
+    })
 
     expect(created).toEqual([])
     expect(runOpportunityWorkflow).not.toHaveBeenCalled()
@@ -365,22 +458,11 @@ describe("generateOpportunitiesForStep", () => {
   })
 
   it("logs failures inside safelyGenerateOpportunitiesForStep", async () => {
-    const { ObjectId } = jest.requireMock("mongodb") as { ObjectId: new () => { toHexString: () => string } }
-    const { getCollection } = jest.requireMock("@/lib/dbHelpers") as { getCollection: jest.Mock }
-
-    const stepObjectId = new ObjectId()
-    const canonicalStepId = stepObjectId.toHexString()
-
-    const stepsCol = await getCollection("steps")
-    await stepsCol.insertMany([
-      {
-        _id: stepObjectId,
-        user: "owner@example.com",
-        intentionId: "int-789",
-        title: "Draft presentation",
-        bucket: "do-later"
-      }
-    ])
+    const canonicalStepId = "55555555-5555-4555-8555-555555555555"
+    await seedCanvasStep("owner@example.com", canonicalStepId, {
+      stepTitle: "Draft presentation",
+      bucket: "do_later",
+    })
 
     runOpportunityWorkflow.mockRejectedValue(new Error("AI offline"))
 
@@ -388,7 +470,8 @@ describe("generateOpportunitiesForStep", () => {
 
     const result = await safelyGenerateOpportunitiesForStep({
       stepId: canonicalStepId,
-      origin: "ai-accepted"
+      origin: "ai-accepted",
+      studentId: "owner@example.com",
     })
 
     expect(result).toBeUndefined()
@@ -398,7 +481,7 @@ describe("generateOpportunitiesForStep", () => {
         stepId: canonicalStepId,
         origin: "ai-accepted",
         errorName: "Error",
-        errorMessage: "AI offline"
+        errorMessage: "AI offline",
       })
     )
   })

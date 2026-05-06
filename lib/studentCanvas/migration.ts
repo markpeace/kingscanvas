@@ -1,5 +1,11 @@
 import { debug } from "@/lib/debug"
-import { canonicalIdFromLegacyRef, createCanonicalId, isCanonicalId, nowIso, toIsoString } from "@/lib/studentCanvas/identity"
+import {
+  canonicalIdFromLegacyRef,
+  createCanonicalId,
+  isCanonicalId,
+  nowIso,
+  toIsoString,
+} from "@/lib/studentCanvas/identity"
 import type { TutorialState } from "@/lib/tutorial/state"
 import type {
   Intention as StudentCanvasIntention,
@@ -154,13 +160,18 @@ function toCanonicalId(value: string, scope: "step" | "opportunity" | "intention
   return canonicalIdFromLegacyRef(value, scope)
 }
 
-export function assembleCanonicalDocument(studentId: string, snapshot: LegacySnapshot): {
+export function assembleCanonicalDocument(
+  studentId: string,
+  snapshot: LegacySnapshot
+): {
   document: StudentCanvasDocument | null
   stats: MigrationStats
 } {
   const fallbackTime = nowIso()
   const stats: MigrationStats = {
-    intentions_total: Array.isArray(snapshot.intentionsDoc?.intentions) ? snapshot.intentionsDoc?.intentions.length : 0,
+    intentions_total: Array.isArray(snapshot.intentionsDoc?.intentions)
+      ? snapshot.intentionsDoc?.intentions.length
+      : 0,
     intentions_migrated: 0,
     steps_total: snapshot.steps.length,
     steps_migrated: 0,
@@ -169,11 +180,17 @@ export function assembleCanonicalDocument(studentId: string, snapshot: LegacySna
     rejects: [],
   }
 
-  if (!snapshot.intentionsDoc && snapshot.steps.length === 0 && snapshot.opportunities.length === 0) {
+  if (
+    !snapshot.intentionsDoc &&
+    snapshot.steps.length === 0 &&
+    snapshot.opportunities.length === 0
+  ) {
     return { document: null, stats }
   }
 
-  const legacyIntentions = Array.isArray(snapshot.intentionsDoc?.intentions) ? snapshot.intentionsDoc.intentions : []
+  const legacyIntentions = Array.isArray(snapshot.intentionsDoc?.intentions)
+    ? snapshot.intentionsDoc.intentions
+    : []
   const intentionIdMap = new Map<string, string>()
 
   const canonicalIntentions: StudentCanvasIntention[] = legacyIntentions.map((intention) => {
@@ -187,7 +204,10 @@ export function assembleCanonicalDocument(studentId: string, snapshot: LegacySna
 
     return {
       id: canonicalId,
-      title: typeof intention?.title === "string" && intention.title.trim().length > 0 ? intention.title : "Untitled intention",
+      title:
+        typeof intention?.title === "string" && intention.title.trim().length > 0
+          ? intention.title
+          : "Untitled intention",
       description: typeof intention?.description === "string" ? intention.description : undefined,
       bucket: normalizeBucket(intention?.bucket),
       progress_status: normalizeProgress(intention?.progress_status),
@@ -211,7 +231,8 @@ export function assembleCanonicalDocument(studentId: string, snapshot: LegacySna
       continue
     }
 
-    const canonicalIntentionId = intentionIdMap.get(intentionRef) ?? toCanonicalId(intentionRef, "intention")
+    const canonicalIntentionId =
+      intentionIdMap.get(intentionRef) ?? toCanonicalId(intentionRef, "intention")
 
     const rawId = toStringId(step.id) || toStringId(step._id)
     const stepId = toCanonicalId(rawId, "step")
@@ -254,7 +275,9 @@ export function assembleCanonicalDocument(studentId: string, snapshot: LegacySna
     }
 
     const stepRef = stepIdMap.get(stepRefRaw) ?? toCanonicalId(stepRefRaw, "step")
-    const parentStep = Array.from(stepsByIntention.values()).flat().find((candidate) => candidate.id === stepRef)
+    const parentStep = Array.from(stepsByIntention.values())
+      .flat()
+      .find((candidate) => candidate.id === stepRef)
     if (!parentStep) {
       stats.rejects.push({
         entity: "opportunity",
@@ -272,7 +295,8 @@ export function assembleCanonicalDocument(studentId: string, snapshot: LegacySna
       decision_status: opportunity.status === "saved" ? "accepted" : "suggested",
       progress_status: undefined,
       source: opportunity.source === "kings-edge-simulated" ? "catalogue" : "free_text",
-      catalogue_ref: opportunity.source === "kings-edge-simulated" ? buildCatalogueRef(canonicalId) : undefined,
+      catalogue_ref:
+        opportunity.source === "kings-edge-simulated" ? buildCatalogueRef(canonicalId) : undefined,
       created_at: toIsoString(opportunity.createdAt, fallbackTime),
       updated_at: toIsoString(opportunity.updatedAt, fallbackTime),
     }
@@ -327,11 +351,13 @@ export async function writeMigrationMarker(marker: MigrationMarker): Promise<voi
     {
       $set: marker,
     },
-    { upsert: true },
+    { upsert: true }
   )
 }
 
-export async function migrateStudentFromLegacy(studentId: string): Promise<StudentCanvasDocument | null> {
+export async function migrateStudentFromLegacy(
+  studentId: string
+): Promise<StudentCanvasDocument | null> {
   const { getCollection } = await import("@/lib/dbHelpers")
   const { validateStudentCanvasDocument } = await import("@/lib/studentCanvas/validation")
   const snapshot = await readLegacySnapshot(studentId)
@@ -345,24 +371,28 @@ export async function migrateStudentFromLegacy(studentId: string): Promise<Stude
     throw new Error(
       `Student canvas schema validation failed (migrateStudentFromLegacy): ${validation.issues
         .map((issue) => `${issue.path}:${issue.message}`)
-        .join("; ")}`,
+        .join("; ")}`
     )
   }
 
   const collection = await getCollection<StudentCanvasDocument>(STUDENT_CANVAS_PRIMARY_COLLECTION)
-  await collection.updateOne(
-    { student_id: studentId },
-    {
-      $set: {
-        ...document,
-        schema_version: STUDENT_CANVAS_SCHEMA_VERSION,
+  if (typeof collection.replaceOne === "function") {
+    await collection.replaceOne({ student_id: studentId }, document, { upsert: true })
+  } else {
+    await collection.updateOne(
+      { student_id: studentId },
+      {
+        $set: {
+          ...document,
+          schema_version: STUDENT_CANVAS_SCHEMA_VERSION,
+        },
+        $setOnInsert: {
+          created_at: document.created_at,
+        },
       },
-      $setOnInsert: {
-        created_at: document.created_at,
-      },
-    },
-    { upsert: true },
-  )
+      { upsert: true }
+    )
+  }
 
   await writeMigrationMarker({
     student_id: studentId,
