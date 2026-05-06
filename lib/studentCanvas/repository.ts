@@ -15,6 +15,7 @@ import {
   migrateStudentFromLegacy,
 } from "@/lib/studentCanvas/migration"
 import { isOpportunitySchemaCompliant } from "@/lib/studentCanvas/opportunityRules"
+import { toCanonicalIntentionsFromUnknown } from "@/lib/studentCanvas/mappers"
 import { assertValidStudentCanvasDocument } from "@/lib/studentCanvas/validation"
 import type { TutorialState } from "@/lib/tutorial/state"
 import type {
@@ -77,7 +78,7 @@ function sanitizeStoredDocument(
     updated_at: toIsoString(document?.updated_at, timestamp),
     ...(tutorialState ? { tutorial_state: tutorialState } : {}),
     canvas: {
-      intentions: Array.isArray(document?.canvas?.intentions) ? document.canvas.intentions : [],
+      intentions: toCanonicalIntentionsFromUnknown(document?.canvas?.intentions),
     },
   }
 }

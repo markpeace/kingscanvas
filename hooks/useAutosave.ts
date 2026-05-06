@@ -6,7 +6,8 @@ export default function useAutosave<T>(
   data: T,
   endpoint: string,
   delay = 1500,
-  maxRetries = 3
+  maxRetries = 3,
+  enabled = true
 ) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -66,6 +67,11 @@ export default function useAutosave<T>(
     latestData.current = data
     if (timeout.current) clearTimeout(timeout.current)
 
+    if (!enabled) {
+      debug.trace('Autosave: disabled; skipping save', { endpoint })
+      return
+    }
+
     debug.trace('Autosave: change detected; debouncing', { delay })
 
     timeout.current = setTimeout(() => {
@@ -76,7 +82,7 @@ export default function useAutosave<T>(
       if (timeout.current) clearTimeout(timeout.current)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, endpoint, delay])
+  }, [data, endpoint, delay, enabled])
 
   return { saving, error, lastSavedAt, retryCount }
 }
