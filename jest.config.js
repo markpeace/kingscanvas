@@ -14,7 +14,8 @@ const customJestConfig = {
   testPathIgnorePatterns: [
     "<rootDir>/.next/",
     "<rootDir>/node_modules/",
-    "<rootDir>/.vercel/"
+    "<rootDir>/.vercel/",
+    "<rootDir>/e2e/"
   ],
   collectCoverageFrom: [
     "components/**/*.{ts,tsx}",

@@ -30,16 +30,14 @@ afterAll(() => { process.env = OLD_ENV })
 
 test("env guards: throws if MONGODB_URI / MONGODB_DB missing", async () => {
   process.env.MONGODB_URI = ""
-  await expect(async () => {
-    // dynamic import to re-evaluate guards
-    await import("@/lib/db/mongo")
-  }).rejects.toThrow(/MONGODB_URI is not set/)
+  const missingUri = await import("@/lib/db/mongo")
+  await expect(missingUri.getClient()).rejects.toThrow(/MONGODB_URI is not set/)
 
+  jest.resetModules()
   process.env.MONGODB_URI = "mongodb://localhost:27017"
   process.env.MONGODB_DB = ""
-  await expect(async () => {
-    await import("@/lib/db/mongo")
-  }).rejects.toThrow(/MONGODB_DB is not set/)
+  const missingDb = await import("@/lib/db/mongo")
+  await expect(missingDb.db()).rejects.toThrow(/MONGODB_DB is not set/)
 })
 
 test("getClient caches connection; db() returns named DB and is cached", async () => {

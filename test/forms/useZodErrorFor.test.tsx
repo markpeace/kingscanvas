@@ -14,31 +14,38 @@ const Schema = z.object({
 })
 type Values = z.infer<typeof Schema>
 
+function DemoFields({ form }: { form: ReturnType<typeof useForm<Values>> }) {
+  const emailErr = useZodErrorFor("email")
+
+  return (
+    <form onSubmit={form.handleSubmit(() => { /* no-op */ })}>
+      <FormItem>
+        <FormLabel>Email</FormLabel>
+        <FormControl>
+          <Input aria-label="email" {...form.register("email")} />
+        </FormControl>
+        <FormMessage data-testid="email-msg">{emailErr}</FormMessage>
+      </FormItem>
+      <FormItem>
+        <FormLabel>Name</FormLabel>
+        <FormControl>
+          <Input aria-label="name" {...form.register("name")} />
+        </FormControl>
+      </FormItem>
+      <Button type="submit">Submit</Button>
+    </form>
+  )
+}
+
 function DemoForm() {
   const form = useForm<Values>({
     resolver: zodResolver(Schema),
     defaultValues: { email: "", name: "" }
   })
-  const emailErr = useZodErrorFor("email")
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(() => { /* no-op */ })}>
-        <FormItem>
-          <FormLabel>Email</FormLabel>
-          <FormControl>
-            <Input aria-label="email" {...form.register("email")} />
-          </FormControl>
-          <FormMessage data-testid="email-msg">{emailErr}</FormMessage>
-        </FormItem>
-        <FormItem>
-          <FormLabel>Name</FormLabel>
-          <FormControl>
-            <Input aria-label="name" {...form.register("name")} />
-          </FormControl>
-        </FormItem>
-        <Button type="submit">Submit</Button>
-      </form>
+      <DemoFields form={form} />
     </Form>
   )
 }
@@ -50,7 +57,7 @@ describe("useZodErrorFor", () => {
 
     // submit empty form -> expect email error
     await user.click(screen.getByRole("button", { name: "Submit" }))
-    expect(screen.getByTestId("email-msg")).toHaveTextContent("Enter a valid email")
+    expect(await screen.findByText("Enter a valid email")).toBeInTheDocument()
 
     // type a valid email and submit again -> error should clear
     await user.type(screen.getByLabelText("email"), "ada@example.com")

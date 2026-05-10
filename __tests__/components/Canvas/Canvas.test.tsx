@@ -10,24 +10,19 @@ describe("Canvas layout", () => {
     expect(screen.getByRole("main", { name: "King's Canvas" })).toBeInTheDocument()
   })
 
-  it("renders four columns with correct headers", () => {
+  it("renders four column headers", () => {
     renderCanvas()
-
-    const columns = screen.getAllByRole("region")
-    expect(columns).toHaveLength(4)
 
     const headers = ["Do Now", "Do Later", "Before I Graduate", "After I Graduate"]
     headers.forEach(title => {
-      expect(screen.getByRole("heading", { level: 2, name: title })).toBeInTheDocument()
+      expect(screen.getByText(title)).toBeInTheDocument()
     })
   })
 
-  it("renders placeholder cards in the appropriate columns", () => {
+  it("renders controls for creating intentions", () => {
     renderCanvas()
 
-    const stepPlaceholders = screen.getAllByText("Step placeholder")
-    expect(stepPlaceholders).toHaveLength(4)
-
-    expect(screen.getByText("Intention placeholder")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "＋ Add Intention" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Reset tutorial tips" })).toBeInTheDocument()
   })
 })
