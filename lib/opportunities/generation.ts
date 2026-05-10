@@ -1,15 +1,14 @@
-import { ObjectId } from "mongodb"
-
-import { getCollection } from "@/lib/dbHelpers"
 import { debug } from "@/lib/debug"
 import { runOpportunityWorkflow } from "@/lib/langgraph/workflow"
 import type { StudentPersona } from "@/lib/context/studentPersonas"
 import {
-  createOpportunitiesForStep,
-  deleteOpportunitiesForStep,
-  type OpportunityDraft as PersistenceOpportunityDraft
-} from "@/lib/userData"
+  getStudentIntentions,
+  getStudentOpportunitiesByStep,
+  replaceStudentOpportunitiesByStep,
+} from "@/lib/studentCanvas/repository"
+import { canonicalBucketToUi, canonicalOpportunityToUi } from "@/lib/studentCanvas/mappers"
 import type { Opportunity, OpportunityStatus } from "@/types/canvas"
+import type { Opportunity as StudentCanvasOpportunity } from "@/types/studentCanvasV1"
 
 export type OpportunityGenerationOrigin = "manual" | "ai-accepted" | "shuffle" | "lazy-fetch"
 
@@ -21,7 +20,7 @@ export class StepNotFoundError extends Error {
 }
 
 type StepRecord = {
-  _id?: ObjectId | string
+  _id?: string | { toHexString?: () => string }
   id?: string
   user?: string
   intentionId?: string
@@ -32,18 +31,15 @@ type StepRecord = {
   status?: string
 }
 
-type IntentionRecord = {
-  user: string
-  intentions?: Array<{
-    id?: string
-    title?: string
-  }>
-}
-
 function resolveCanonicalStepId(step: StepRecord, fallback: string): string {
   const rawId = step._id
 
-  if (rawId && typeof rawId === "object" && "toHexString" in rawId && typeof rawId.toHexString === "function") {
+  if (
+    rawId &&
+    typeof rawId === "object" &&
+    "toHexString" in rawId &&
+    typeof rawId.toHexString === "function"
+  ) {
     return rawId.toHexString()
   }
 
@@ -82,60 +78,42 @@ function resolveBucketId(step: StepRecord): string | undefined {
   return undefined
 }
 
-type OpportunityRecord = { user?: string; stepId?: string }
-
-async function stepHasOpportunities(user: string, stepId: string): Promise<boolean> {
-  const col = await getCollection<OpportunityRecord>("opportunities")
-  const existing = await col.findOne({ user, stepId: String(stepId) })
-  return Boolean(existing)
+function canonicalProgressToUiStatus(progress: unknown): string {
+  switch (progress) {
+    case "in_progress":
+      return "accepted"
+    case "completed":
+      return "completed"
+    case "abandoned":
+      return "rejected"
+    default:
+      return "suggested"
+  }
 }
 
-async function findIntentionTitle(user: string, intentionId?: string): Promise<string | undefined> {
-  if (!intentionId) {
-    return undefined
-  }
-
-  const col = await getCollection<IntentionRecord>("intentions")
-  const doc = await col.findOne({ user })
-
-  if (!doc || !Array.isArray(doc.intentions)) {
-    return undefined
-  }
-
-  const match = doc.intentions.find((item) => item?.id === intentionId)
-  const title = match?.title
-
-  if (typeof title === "string" && title.trim().length > 0) {
-    return title
-  }
-
-  return undefined
-}
-
-export async function findStepById(stepId: string): Promise<StepRecord | null> {
-  if (typeof stepId !== "string" || stepId.trim().length === 0) {
+export async function findStepById(stepId: string, studentId?: string): Promise<StepRecord | null> {
+  if (typeof stepId !== "string" || stepId.trim().length === 0 || !studentId) {
     return null
   }
 
-  const col = await getCollection<StepRecord>("steps")
-  const queries: Array<Record<string, unknown>> = []
-
-  if (ObjectId.isValid(stepId)) {
-    try {
-      queries.push({ _id: new ObjectId(stepId) })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      debug.warn("Opportunities: failed to coerce step id", { stepId, message })
+  const intentions = await getStudentIntentions(studentId)
+  for (const intention of intentions) {
+    const steps = Array.isArray(intention?.steps) ? intention.steps : []
+    const step = steps.find((candidate) => candidate.id === stepId)
+    if (!step) {
+      continue
     }
-  }
 
-  queries.push({ _id: stepId })
-  queries.push({ id: stepId })
-
-  for (const query of queries) {
-    const step = await col.findOne(query)
-    if (step) {
-      return step
+    return {
+      _id: step.id,
+      id: step.id,
+      user: studentId,
+      intentionId: intention.id,
+      title: step.title,
+      text: step.description ?? step.title,
+      bucket: canonicalBucketToUi(step.bucket),
+      bucketId: canonicalBucketToUi(step.bucket),
+      status: canonicalProgressToUiStatus(step.progress_status),
     }
   }
 
@@ -148,7 +126,7 @@ const VALID_FORMS: Opportunity["form"][] = [
   "mentoring",
   "short-course",
   "coaching",
-  "independent-action"
+  "independent-action",
 ]
 const VALID_FOCUS_VALUES = ["experience", "skills", "community", "reflection"] as const
 const VALID_STATUSES: OpportunityStatus[] = ["suggested", "saved", "dismissed"]
@@ -166,7 +144,10 @@ function isValidForm(value: unknown): value is Opportunity["form"] {
 }
 
 function isValidFocus(value: unknown): value is Opportunity["focus"] {
-  return typeof value === "string" && VALID_FOCUS_VALUES.includes(value as (typeof VALID_FOCUS_VALUES)[number])
+  return (
+    typeof value === "string" &&
+    VALID_FOCUS_VALUES.includes(value as (typeof VALID_FOCUS_VALUES)[number])
+  )
 }
 
 function sanitizeStatus(value: unknown): OpportunityStatus {
@@ -178,34 +159,43 @@ function sanitizeStatus(value: unknown): OpportunityStatus {
 export async function generateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
+  studentId?: string
   persona?: StudentPersona
 }): Promise<Opportunity[]> {
-  const { stepId, origin } = params
+  const { stepId, origin, studentId } = params
 
   let canonicalStepId = stepId
 
   try {
-    const step = await findStepById(stepId)
+    const step = await findStepById(stepId, studentId)
 
     if (!step || typeof step.user !== "string" || step.user.trim().length === 0) {
       debug.warn("Opportunities: step not found in generateOpportunitiesForStep", {
         stepId,
-        origin
+        origin,
       })
       throw new StepNotFoundError(stepId)
     }
 
     canonicalStepId = resolveCanonicalStepId(step, stepId)
     const stepTitle = resolveStepTitle(step, canonicalStepId)
-    const intentionTitle = await findIntentionTitle(step.user, step.intentionId)
+    const intentionTitle =
+      typeof step.intentionId === "string"
+        ? (await getStudentIntentions(step.user)).find(
+            (intention) => intention.id === step.intentionId
+          )?.title
+        : undefined
     const bucketId = resolveBucketId(step)
 
     const shouldSkipAutoGeneration = origin !== "shuffle" && origin !== "lazy-fetch"
 
-    if (shouldSkipAutoGeneration && (await stepHasOpportunities(step.user, canonicalStepId))) {
+    if (
+      shouldSkipAutoGeneration &&
+      (await getStudentOpportunitiesByStep(step.user, canonicalStepId)).length > 0
+    ) {
       debug.debug("Opportunities: already has opportunities; skipping auto generation", {
         stepId: canonicalStepId,
-        origin
+        origin,
       })
       return []
     }
@@ -215,16 +205,20 @@ export async function generateOpportunitiesForStep(params: {
       stepBucket: bucketId,
       intentionTitle,
       existingOpportunityTitles: [],
-      persona: params.persona
+      persona: params.persona,
     })
 
     const drafts = Array.isArray(aiResult?.opportunities)
-      ? aiResult.opportunities.map((opp): PersistenceOpportunityDraft => {
+      ? aiResult.opportunities.map((opp) => {
           const title = isNonEmptyString(opp.title) ? opp.title : stepTitle
           const summary = isNonEmptyString(opp.summary) ? opp.summary : stepTitle
 
-          const source = isValidSource(opp.source) ? (opp.source as Opportunity["source"]) : "kings-edge-simulated"
-          const form = isValidForm(opp.form) ? (opp.form as Opportunity["form"]) : "independent-action"
+          const source = isValidSource(opp.source)
+            ? (opp.source as Opportunity["source"])
+            : "kings-edge-simulated"
+          const form = isValidForm(opp.form)
+            ? (opp.form as Opportunity["form"])
+            : "independent-action"
 
           const focus: Opportunity["focus"] =
             opp.focus === "experience" ||
@@ -240,7 +234,7 @@ export async function generateOpportunitiesForStep(params: {
             source,
             form,
             focus,
-            status: "suggested"
+            status: "suggested",
           }
         })
       : []
@@ -257,29 +251,40 @@ export async function generateOpportunitiesForStep(params: {
       debug.warn("Opportunities: no valid drafts to persist", {
         stepId: canonicalStepId,
         origin,
-        ...(params.persona ? { persona: params.persona.shortLabel } : {})
+        ...(params.persona ? { persona: params.persona.shortLabel } : {}),
       })
-      await deleteOpportunitiesForStep(step.user, canonicalStepId)
+      await replaceStudentOpportunitiesByStep(step.user, canonicalStepId, [])
       return []
     }
 
-    const records: PersistenceOpportunityDraft[] = filteredDrafts.map((draft) => ({
+    const records: Array<Partial<StudentCanvasOpportunity>> = filteredDrafts.map((draft) => ({
       title: draft.title.trim(),
-      summary: draft.summary.trim(),
-      source: draft.source,
-      form: draft.form,
-      focus: isValidFocus(draft.focus) ? draft.focus : "skills",
-      status: sanitizeStatus(draft.status)
+      description: draft.summary.trim(),
+      source: draft.source === "kings-edge-simulated" ? "catalogue" : "free_text",
+      decision_status: sanitizeStatus(draft.status) === "saved" ? "accepted" : "suggested",
+      catalogue_ref:
+        draft.source === "kings-edge-simulated"
+          ? {
+              system: "kings-edge-simulated",
+              id: draft.title.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 64),
+            }
+          : undefined,
     }))
 
-    await deleteOpportunitiesForStep(step.user, canonicalStepId)
-    const created = await createOpportunitiesForStep(step.user, canonicalStepId, records)
+    const createdCanonical = await replaceStudentOpportunitiesByStep(
+      step.user,
+      canonicalStepId,
+      records
+    )
+    const created = createdCanonical.map((opportunity) =>
+      canonicalOpportunityToUi(opportunity, canonicalStepId)
+    )
 
     debug.info("Opportunities: generate success", {
       stepId: canonicalStepId,
       origin,
       count: created.length,
-      ...(params.persona ? { persona: params.persona.shortLabel } : {})
+      ...(params.persona ? { persona: params.persona.shortLabel } : {}),
     })
 
     return created
@@ -287,7 +292,7 @@ export async function generateOpportunitiesForStep(params: {
     debug.error("Opportunities: generate failed", {
       stepId: canonicalStepId,
       origin,
-      error
+      error,
     })
     throw error
   }
@@ -296,6 +301,7 @@ export async function generateOpportunitiesForStep(params: {
 export async function safelyGenerateOpportunitiesForStep(params: {
   stepId: string
   origin: OpportunityGenerationOrigin
+  studentId?: string
   persona?: StudentPersona
 }): Promise<void> {
   const { stepId, origin } = params
@@ -303,7 +309,7 @@ export async function safelyGenerateOpportunitiesForStep(params: {
   debug.debug("Opportunities: safelyGenerateOpportunitiesForStep start", {
     stepId,
     origin,
-    ...(params.persona ? { persona: params.persona.shortLabel } : {})
+    ...(params.persona ? { persona: params.persona.shortLabel } : {}),
   })
 
   try {
@@ -311,7 +317,7 @@ export async function safelyGenerateOpportunitiesForStep(params: {
     debug.debug("Opportunities: safelyGenerateOpportunitiesForStep success", {
       stepId,
       origin,
-      count: opportunities.length
+      count: opportunities.length,
     })
   } catch (error) {
     debug.warn("Opportunities: safelyGenerateOpportunitiesForStep failed", {
@@ -319,7 +325,7 @@ export async function safelyGenerateOpportunitiesForStep(params: {
       origin,
       error,
       errorName: error instanceof Error ? error.name : String(error),
-      errorMessage: error instanceof Error ? error.message : String(error)
+      errorMessage: error instanceof Error ? error.message : String(error),
     })
   }
 }

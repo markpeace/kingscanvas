@@ -221,7 +221,8 @@ function CanvasContent() {
     autosavePayload,
     '/api/intentions',
     1500,
-    3
+    3,
+    status === 'authenticated' && !loadingIntentions
   )
   const debugUiEnabled =
     process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG_PANEL === 'true'
@@ -257,6 +258,8 @@ function CanvasContent() {
 
   useEffect(() => {
     if (status !== 'authenticated') {
+      setIntentions([])
+      setLoadingIntentions(false)
       return
     }
 
@@ -1701,10 +1704,6 @@ function CanvasContent() {
     return <p>Loading…</p>
   }
 
-  if (status === 'unauthenticated') {
-    return null
-  }
-
   if (loadingIntentions) {
     return <p style={{ textAlign: 'center' }}>Loading your intentions…</p>
   }
@@ -1775,7 +1774,7 @@ function CanvasContent() {
         <div aria-live="polite" className="sr-only" id="canvas-announcer">
           {announcement}
         </div>
-        <main id="main-canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
+        <main id="main-canvas" aria-label="King's Canvas" className="max-w-6xl mx-auto px-4 sm:px-8 lg:px-10 py-8 lg:py-12 text-kings-black bg-white">
           {/* HEADER GROUP */}
           <header ref={canvasIntroRef} className="mb-8">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">

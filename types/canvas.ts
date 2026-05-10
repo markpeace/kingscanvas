@@ -52,3 +52,18 @@ export interface Opportunity {
   createdAt?: string | Date
   updatedAt?: string | Date
 }
+
+export interface OpportunityApiItem {
+  id: string
+  title: string
+  description?: string
+  decision_status: "suggested" | "accepted"
+  progress_status?: "not_started" | "in_progress" | "completed" | "abandoned"
+  source: "catalogue" | "free_text"
+  catalogue_ref?: {
+    system: string
+    id: string
+  }
+  created_at?: string
+  updated_at?: string
+}

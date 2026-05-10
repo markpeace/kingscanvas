@@ -1,203 +1,94 @@
-import { ObjectId } from "mongodb";
-import type { Document, InsertManyResult, WithId } from "mongodb";
+import type { Document, InsertManyResult } from "mongodb"
 
-import { getCollection } from "./dbHelpers";
-import { debug } from "./debug";
-import type { TutorialState } from "./tutorial/state";
-import type { Opportunity } from "@/types/canvas";
+import { debug } from "./debug"
+import type { TutorialState } from "./tutorial/state"
+import {
+  createSuggestedStudentSteps,
+  getStudentIntentions,
+  getStudentOpportunitiesByStep,
+  getStudentStepById,
+  getStudentSteps,
+  getStudentTutorialState,
+  listRecentStudentStepHistory,
+  replaceStudentOpportunitiesByStep,
+  saveStudentIntentions,
+  saveStudentTutorialState,
+  updateStudentStepStatus,
+  upsertStudentStep,
+} from "./studentCanvas/repository"
+import { canonicalOpportunityToUi, canonicalStepToUi } from "./studentCanvas/mappers"
+import type { Opportunity } from "@/types/canvas"
+import type {
+  Intention as StudentCanvasIntention,
+  Opportunity as StudentCanvasOpportunity,
+} from "@/types/studentCanvasV1"
 
-type OpportunityDocument = {
-  _id: ObjectId;
-  user: string;
-  stepId: string;
-  title: string;
-  summary: string;
-  source: Opportunity["source"];
-  form: Opportunity["form"];
-  focus: Opportunity["focus"];
-  status: Opportunity["status"];
-  createdAt: Date;
-  updatedAt: Date;
-};
-
-export type OpportunityDraft = Omit<Opportunity, "id" | "_id" | "stepId" | "createdAt" | "updatedAt">;
-
-type UserIntentionsDocument = {
-  _id?: ObjectId;
-  user: string;
-  intentions?: any[];
-  tutorialState?: TutorialState;
-  createdAt?: Date;
-  updatedAt?: Date;
-};
-
-type StepDocument = Document & {
-  _id?: string | ObjectId;
-  id?: string;
-  user: string;
-};
-
-
-function toOpportunityId(value: WithId<OpportunityDocument>["_id"]): string {
-  if (typeof value === "string") {
-    return value;
-  }
-
-  if (value instanceof ObjectId) {
-    return value.toHexString();
-  }
-
-  return String(value);
-}
-
-function mapOpportunity(doc: OpportunityDocument): Opportunity {
-  const id = toOpportunityId(doc._id);
-
-  return {
-    _id: id,
-    id,
-    stepId: doc.stepId,
-    title: doc.title,
-    summary: doc.summary,
-    source: doc.source,
-    form: doc.form,
-    focus: doc.focus,
-    status: doc.status,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  };
-}
+export type OpportunityDraft = Omit<
+  Opportunity,
+  "id" | "_id" | "stepId" | "createdAt" | "updatedAt"
+>
 
 /**
  * Fetch intentions for a given user.
  */
 export async function getUserIntentions(email: string) {
-  const col = await getCollection<UserIntentionsDocument>("intentions");
-  debug.trace("MongoDB: fetching intentions", { user: email });
-  const doc = await col.findOne({ user: email });
-  debug.info("MongoDB: fetch complete", { found: !!doc });
-  return doc;
+  debug.trace("MongoDB: fetching intentions from student canvas", { user: email })
+  const intentions = await getStudentIntentions(email)
+  const tutorialState = await getStudentTutorialState(email)
+  debug.info("MongoDB: fetch complete", { found: intentions.length > 0 })
+  return { user: email, intentions, ...(tutorialState ? { tutorialState } : {}) }
 }
 
 /**
  * Save or update intentions for a given user.
  */
-export async function saveUserIntentions(email: string, data: any) {
-  const col = await getCollection<UserIntentionsDocument>("intentions");
-  debug.trace("MongoDB: upserting intentions", {
+export async function saveUserIntentions(
+  email: string,
+  data: { intentions?: StudentCanvasIntention[] }
+) {
+  debug.trace("MongoDB: upserting intentions in student canvas", {
     user: email,
     keys: Object.keys(data || {}),
-  });
-  const result = await col.updateOne(
-    { user: email },
-    { $set: { intentions: data.intentions || [], updatedAt: new Date() } },
-    { upsert: true }
-  );
-  debug.info("MongoDB: upsert result", {
-    matched: result.matchedCount,
-    modified: result.modifiedCount,
-    upserted: result.upsertedId,
-  });
+  })
+  await saveStudentIntentions(email, data.intentions || [])
+  debug.info("MongoDB: upsert result", { matched: 1, modified: 1, upserted: null })
 }
 
 export async function getUserTutorialState(email: string): Promise<TutorialState | undefined> {
-  const col = await getCollection<UserIntentionsDocument>("intentions");
-  debug.trace("MongoDB: fetching tutorial state", { user: email });
-  const doc = await col.findOne({ user: email }, { projection: { tutorialState: 1 } });
-  debug.info("MongoDB: tutorial state fetch complete", { found: !!doc?.tutorialState });
-  return doc?.tutorialState;
+  debug.trace("MongoDB: fetching tutorial state from student canvas", { user: email })
+  const tutorialState = await getStudentTutorialState(email)
+  debug.info("MongoDB: tutorial state fetch complete", { found: !!tutorialState })
+  return tutorialState
 }
 
 export async function saveUserTutorialState(email: string, tutorialState: TutorialState) {
-  const col = await getCollection<UserIntentionsDocument>("intentions");
-  debug.trace("MongoDB: updating tutorial state", { user: email });
-  const result = await col.updateOne(
-    { user: email },
-    { $set: { tutorialState, updatedAt: new Date() } },
-    { upsert: true }
-  );
-  debug.info("MongoDB: tutorial state update result", { matched: result.matchedCount });
-  return result;
+  debug.trace("MongoDB: updating tutorial state in student canvas", { user: email })
+  await saveStudentTutorialState(email, tutorialState)
+  debug.info("MongoDB: tutorial state update complete")
 }
 
 /**
  * Fetch steps for a given user.
  */
 export async function getUserSteps(email: string) {
-  const col = await getCollection<StepDocument>("steps");
-  debug.trace("MongoDB: fetching steps", { user: email });
-  const docs = await col.find({ user: email }).toArray();
-  debug.info("MongoDB: fetch complete", { count: docs.length });
-  return docs;
+  debug.trace("MongoDB: fetching steps from student canvas", { user: email })
+  const docs = await getStudentSteps(email)
+  debug.info("MongoDB: fetch complete", { count: docs.length })
+  return docs
 }
 
 /**
  * Save or update a step for a given user.
  */
-type CanonicalStepId = {
-  stringValue: string
-  mongoValue: string | ObjectId
-}
-
-function resolveCanonicalStepId(step: any): CanonicalStepId {
-  const candidates = [step?._id, step?.id]
-
-  for (const candidate of candidates) {
-    if (!candidate) {
-      continue
-    }
-
-    if (candidate instanceof ObjectId) {
-      return { stringValue: candidate.toHexString(), mongoValue: candidate }
-    }
-
-    if (typeof candidate === "string" && candidate.trim().length > 0) {
-      const trimmed = candidate.trim()
-
-      if (ObjectId.isValid(trimmed)) {
-        return { stringValue: trimmed, mongoValue: new ObjectId(trimmed) }
-      }
-
-      return { stringValue: trimmed, mongoValue: trimmed }
-    }
-  }
-
-  const generated = new ObjectId()
-  return { stringValue: generated.toHexString(), mongoValue: generated }
-}
 
 export async function saveUserStep(email: string, step: any) {
-  const col = await getCollection<StepDocument>("steps")
-  const canonicalId = resolveCanonicalStepId(step)
-  const timestamp = new Date()
-
-  const document = {
-    ...step,
-    _id: canonicalId.mongoValue,
-    id: canonicalId.stringValue,
+  debug.trace("MongoDB: upserting step in student canvas", {
     user: email,
-    updatedAt: timestamp,
-    createdAt: step?.createdAt ? new Date(step.createdAt) : timestamp,
-  }
-
-  debug.trace("MongoDB: upserting step", {
-    user: email,
-    stepId: canonicalId.stringValue,
+    stepId: step?.id ?? step?._id,
   })
-
-  const result = await col.updateOne(
-    { _id: canonicalId.mongoValue, user: email },
-    { $set: document },
-    { upsert: true }
-  )
-
-  debug.info("MongoDB: step upsert result", {
-    matched: result.matchedCount,
-    modified: result.modifiedCount,
-    upserted: result.upsertedId,
-  })
-
-  return { stepId: canonicalId.stringValue }
+  const result = await upsertStudentStep(email, step)
+  debug.info("MongoDB: step upsert result", { matched: 1, modified: 1, upserted: null })
+  return result
 }
 
 export async function createSuggestedSteps(
@@ -205,190 +96,139 @@ export async function createSuggestedSteps(
   intentionId: string,
   suggestions: any[]
 ): Promise<InsertManyResult<Document> | null> {
-  const col = await getCollection<StepDocument>("steps");
-  const docs = suggestions.map((s) => ({
-    user,
-    intentionId,
-    bucket: s.bucket,
-    text: s.text,
-    status: "suggested",
-    source: "ai",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }));
-
-  if (!docs.length) {
-    debug.warn("Mongo: createSuggestedSteps called with empty suggestions", { intentionId });
-    return null;
+  if (!suggestions.length) {
+    debug.warn("Mongo: createSuggestedSteps called with empty suggestions", { intentionId })
+    return null
   }
 
-  debug.trace("Mongo: inserting suggested steps", { user, intentionId, count: docs.length });
-  const result = await col.insertMany(docs);
-  debug.info("Mongo: inserted suggested steps", { inserted: result.insertedCount });
-  return result;
+  debug.trace("Mongo: inserting suggested steps in student canvas", {
+    user,
+    intentionId,
+    count: suggestions.length,
+  })
+  const result = await createSuggestedStudentSteps(user, intentionId, suggestions)
+  debug.info("Mongo: inserted suggested steps", { inserted: result.insertedIds.length })
+  return {
+    acknowledged: true,
+    insertedCount: result.insertedIds.length,
+    insertedIds: result.insertedIds as any,
+  } as InsertManyResult<Document>
 }
 
 export async function updateStepStatus(user: string, stepId: any, status: string) {
-  const col = await getCollection<StepDocument>("steps");
-  let lookupId = stepId;
-
-  if (typeof stepId === "string") {
-    try {
-      lookupId = new ObjectId(stepId);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      debug.error("Mongo: invalid step id for status update", { stepId, message });
-      return {
-        acknowledged: false,
-        matchedCount: 0,
-        modifiedCount: 0,
-        upsertedCount: 0,
-        upsertedId: null,
-      } as any;
-    }
-  }
-
-  debug.trace("Mongo: updating step status", { stepId: lookupId, status });
-  const result = await col.updateOne(
-    { _id: lookupId, user },
-    { $set: { status, updatedAt: new Date() } }
-  );
-  debug.info("Mongo: step status updated", { matched: result.matchedCount });
-  return result;
+  debug.trace("Mongo: updating step status in student canvas", { stepId, status })
+  const updated = await updateStudentStepStatus(user, String(stepId), status)
+  debug.info("Mongo: step status updated", { matched: updated ? 1 : 0 })
+  return {
+    acknowledged: true,
+    matchedCount: updated ? 1 : 0,
+    modifiedCount: updated ? 1 : 0,
+    upsertedCount: 0,
+    upsertedId: null,
+  } as any
 }
 
 export async function getStepForUser(user: string, stepId: string) {
-  const col = await getCollection<StepDocument>("steps");
-  debug.trace("Mongo: fetching step for user", { user, stepId });
-
-  const queries: Array<Record<string, unknown>> = [];
-
-  if (typeof stepId === "string" && ObjectId.isValid(stepId)) {
-    try {
-      queries.push({ _id: new ObjectId(stepId), user });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      debug.warn("Mongo: failed to coerce step id to ObjectId", { stepId, message });
-    }
+  debug.trace("Mongo: fetching step for user from student canvas", { user, stepId })
+  const canonical = await getStudentStepById(user, stepId)
+  if (!canonical) {
+    debug.warn("Mongo: step not found for user", { user, stepId })
+    return null
   }
 
-  if (typeof stepId === "string") {
-    queries.push({ _id: stepId, user });
-    queries.push({ id: stepId, user });
-  }
+  debug.info("Mongo: step found for user", { user, stepId })
+  return { ...canonicalStepToUi(canonical, ""), _id: canonical.id, user }
+}
 
-  for (const query of queries) {
-    const doc = await col.findOne(query);
-    if (doc) {
-      debug.info("Mongo: step found for user", { user, stepId });
-      return doc;
-    }
+function draftToCanonicalOpportunity(draft: OpportunityDraft): Partial<StudentCanvasOpportunity> {
+  return {
+    title: draft.title,
+    description: draft.summary,
+    decision_status: draft.status === "saved" ? "accepted" : "suggested",
+    source: draft.source === "kings-edge-simulated" ? "catalogue" : "free_text",
+    catalogue_ref:
+      draft.source === "kings-edge-simulated"
+        ? {
+            system: "kings-edge-simulated",
+            id: draft.title.toLowerCase().replace(/\s+/g, "-").slice(0, 64),
+          }
+        : undefined,
   }
-
-  debug.warn("Mongo: step not found for user", { user, stepId });
-  return null;
 }
 
 export async function getOpportunitiesByStep(user: string, stepId: string): Promise<Opportunity[]> {
-  const col = await getCollection<OpportunityDocument>("opportunities");
-  const normalizedStepId = String(stepId);
+  const normalizedStepId = String(stepId)
 
-  debug.trace("Mongo: fetching opportunities", { user, stepId: normalizedStepId });
-
-  const docs = await col.find({ user, stepId: normalizedStepId }).toArray();
-  const sorted = [...docs].sort((a, b) => {
-    const aTime = a.createdAt instanceof Date ? a.createdAt.getTime() : new Date(a.createdAt).getTime();
-    const bTime = b.createdAt instanceof Date ? b.createdAt.getTime() : new Date(b.createdAt).getTime();
-    return aTime - bTime;
-  });
-
-  const mapped = sorted.map(mapOpportunity);
+  debug.trace("Mongo: fetching opportunities from student canvas", {
+    user,
+    stepId: normalizedStepId,
+  })
+  const opportunities = await getStudentOpportunitiesByStep(user, normalizedStepId)
+  const mapped = opportunities.map((opportunity) =>
+    canonicalOpportunityToUi(opportunity, normalizedStepId)
+  )
 
   debug.info("Mongo: opportunities fetched", {
     user,
     stepId: normalizedStepId,
     count: mapped.length,
-  });
+  })
 
-  return mapped;
+  return mapped
 }
 
 export async function createOpportunitiesForStep(
   user: string,
   stepId: string,
-  drafts: OpportunityDraft[],
+  drafts: OpportunityDraft[]
 ): Promise<Opportunity[]> {
   if (!Array.isArray(drafts) || drafts.length === 0) {
-    debug.warn("Mongo: createOpportunitiesForStep called with no drafts", { user, stepId });
-    return [];
+    debug.warn("Mongo: createOpportunitiesForStep called with no drafts", { user, stepId })
+    return []
   }
 
-  const col = await getCollection<OpportunityDocument>("opportunities");
-  const normalizedStepId = String(stepId);
-
-  const documents: OpportunityDocument[] = drafts.map((draft) => {
-    const timestamp = new Date();
-    return {
-      _id: new ObjectId(),
-      user,
-      stepId: normalizedStepId,
-      title: draft.title,
-      summary: draft.summary,
-      source: draft.source,
-      form: draft.form,
-      focus: draft.focus,
-      status: draft.status,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-  });
-
-  debug.trace("Mongo: inserting opportunities", {
+  const normalizedStepId = String(stepId)
+  debug.trace("Mongo: replacing opportunities in student canvas", {
     user,
     stepId: normalizedStepId,
-    count: documents.length,
-  });
+    count: drafts.length,
+  })
 
-  const result = await col.insertMany(documents);
-  const insertedIds = Object.values(result.insertedIds) as ObjectId[];
-
-  const created = documents.map((doc, index) => {
-    const insertedId = insertedIds[index] ?? doc._id;
-    return mapOpportunity({ ...doc, _id: insertedId });
-  });
+  const createdCanonical = await replaceStudentOpportunitiesByStep(
+    user,
+    normalizedStepId,
+    drafts.map(draftToCanonicalOpportunity)
+  )
+  const created = createdCanonical.map((opportunity) =>
+    canonicalOpportunityToUi(opportunity, normalizedStepId)
+  )
 
   debug.info("Mongo: opportunities inserted", {
     user,
     stepId: normalizedStepId,
     count: created.length,
-  });
+  })
 
-  return created;
+  return created
 }
 
 export async function deleteOpportunitiesForStep(user: string, stepId: string): Promise<void> {
-  const col = await getCollection<OpportunityDocument>("opportunities");
-  const normalizedStepId = String(stepId);
+  const normalizedStepId = String(stepId)
 
-  debug.trace("Mongo: deleting opportunities", { user, stepId: normalizedStepId });
-  await col.deleteMany({ user, stepId: normalizedStepId });
-  debug.info("Mongo: opportunities deleted", { user, stepId: normalizedStepId });
+  debug.trace("Mongo: deleting opportunities from student canvas", {
+    user,
+    stepId: normalizedStepId,
+  })
+  await replaceStudentOpportunitiesByStep(user, normalizedStepId, [])
+  debug.info("Mongo: opportunities deleted", { user, stepId: normalizedStepId })
 }
 
 export async function listRecentHistory(user: string, intentionId: string, limit = 25) {
-  const col = await getCollection<StepDocument>("steps");
-  debug.trace("Mongo: fetching recent step history", { user, intentionId });
-  const docs = await col
-    .find(
-      { user, intentionId, status: { $in: ["accepted", "rejected"] } },
-      { projection: { text: 1, status: 1 } }
-    )
-    .sort({ updatedAt: -1 })
-    .limit(limit)
-    .toArray();
-
-  const accepted = docs.filter((d) => d.status === "accepted").map((d) => d.text);
-  const rejected = docs.filter((d) => d.status === "rejected").map((d) => d.text);
-  debug.info("Mongo: step history loaded", { accepted: accepted.length, rejected: rejected.length });
-  return { accepted, rejected };
+  debug.trace("Mongo: fetching recent step history from student canvas", { user, intentionId })
+  const history = await listRecentStudentStepHistory(user, intentionId, limit)
+  debug.info("Mongo: step history loaded", {
+    accepted: history.accepted.length,
+    rejected: history.rejected.length,
+  })
+  return history
 }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { debug } from '@/lib/debug'
 import type { StudentPersonaId } from '@/lib/context/studentPersonas'
-import type { Opportunity } from '@/types/canvas'
+import type { Opportunity, OpportunityApiItem } from '@/types/canvas'
 
 type UseOpportunitiesResult = {
   opportunities: Opportunity[]
@@ -31,6 +31,22 @@ export function useOpportunities(
   const fetchIdRef = useRef(0)
   const hasStartedRef = useRef(false)
   const hasCompletedRef = useRef(false)
+  const mapApiOpportunity = useCallback(
+    (item: OpportunityApiItem): Opportunity => ({
+      id: item.id,
+      _id: item.id,
+      stepId: stepId ?? '',
+      title: item.title,
+      summary: item.description ?? '',
+      source: item.source === 'catalogue' ? 'kings-edge-simulated' : 'independent',
+      form: 'independent-action',
+      focus: 'planning',
+      status: item.decision_status === 'accepted' ? 'saved' : 'suggested',
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    }),
+    [stepId]
+  )
 
   const fetchOpportunities = useCallback(async (): Promise<Opportunity[]> => {
     if (!stepId) {
@@ -59,7 +75,7 @@ export function useOpportunities(
       const personaQuery = personaId ? `?personaId=${encodeURIComponent(personaId)}` : ''
       const response = await fetch(`/api/steps/${encodeURIComponent(stepId)}/opportunities${personaQuery}`)
 
-      let payload: { ok?: boolean; opportunities?: Opportunity[]; error?: string } | null = null
+      let payload: { ok?: boolean; opportunities?: OpportunityApiItem[]; error?: string } | null = null
 
       try {
         payload = await response.json()
@@ -85,7 +101,9 @@ export function useOpportunities(
         throw new Error(message)
       }
 
-      const newOpportunities = Array.isArray(payload?.opportunities) ? payload?.opportunities : []
+      const newOpportunities = Array.isArray(payload?.opportunities)
+        ? payload.opportunities.map(mapApiOpportunity)
+        : []
 
       if (currentFetchId !== fetchIdRef.current) {
         return newOpportunities
@@ -117,7 +135,7 @@ export function useOpportunities(
         setIsLoading(false)
       }
     }
-  }, [onFirstAutoGenerateComplete, onFirstAutoGenerateStart, personaId, stepId])
+  }, [mapApiOpportunity, onFirstAutoGenerateComplete, onFirstAutoGenerateStart, personaId, stepId])
 
   useEffect(() => {
     fetchOpportunities().catch(() => {

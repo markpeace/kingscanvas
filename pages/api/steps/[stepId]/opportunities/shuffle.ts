@@ -6,10 +6,11 @@ import { debug } from '@/lib/debug'
 import { getStudentPersona } from '@/lib/context/studentPersonas'
 import { isStepEligibleForOpportunities } from '@/lib/opportunities/eligibility'
 import { findStepById, generateOpportunitiesForStep, StepNotFoundError } from '@/lib/opportunities/generation'
-import type { Opportunity } from '@/types/canvas'
+import { uiOpportunityToCanonical } from '@/lib/studentCanvas/mappers'
+import type { OpportunityApiItem } from '@/types/canvas'
 
 type ShuffleOpportunitiesResponse =
-  | { ok: true; stepId: string; opportunities: Opportunity[] }
+  | { ok: true; stepId: string; opportunities: OpportunityApiItem[] }
   | { ok: false; error: string }
 
 export default async function handler(
@@ -49,7 +50,7 @@ export default async function handler(
   debug.info('Opportunities API: shuffle requested', { stepId: requestedStepId, persona: persona.shortLabel })
 
   try {
-    const step = await findStepById(requestedStepId)
+    const step = await findStepById(requestedStepId, email)
 
     if (!step) {
       debug.warn('Opportunities API: shuffle step not found', { user: email, stepId: requestedStepId })
@@ -70,10 +71,10 @@ export default async function handler(
       return res.status(400).json({ ok: false, error: 'Step is not eligible for opportunities' })
     }
 
-    const opportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle', persona })
+    const uiOpportunities = await generateOpportunitiesForStep({ stepId: requestedStepId, origin: 'shuffle', studentId: email, persona })
+    const opportunities = uiOpportunities.map((opportunity) => uiOpportunityToCanonical(opportunity))
 
     const responseStepId =
-      opportunities[0]?.stepId ??
       (step._id && typeof step._id === 'object' && 'toHexString' in step._id && typeof step._id.toHexString === 'function'
         ? step._id.toHexString()
         : typeof step._id === 'string' && step._id.trim().length > 0

@@ -14,6 +14,11 @@ type UserContextType = {
   status: "loading" | "authenticated" | "unauthenticated"
 }
 
+const anonymousUserContext: UserContextType = {
+  user: null,
+  status: "unauthenticated"
+}
+
 const UserContext = createContext<UserContextType | undefined>(undefined)
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -24,8 +29,5 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 export function useUser() {
   const context = useContext(UserContext)
-  if (context === undefined) {
-    throw new Error("useUser must be used within a UserProvider")
-  }
-  return context
+  return context ?? anonymousUserContext
 }

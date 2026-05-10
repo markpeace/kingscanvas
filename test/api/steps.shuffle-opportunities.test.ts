@@ -151,7 +151,7 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
 
     await handler(req, res)
 
-    expect(findStepById).toHaveBeenCalledWith("step-123")
+    expect(findStepById).toHaveBeenCalledWith("step-123", "owner@example.com")
     expect(generateOpportunitiesForStep).toHaveBeenCalledWith(
       expect.objectContaining({
         stepId: "step-123",
@@ -163,9 +163,9 @@ describe("POST /api/steps/[stepId]/shuffle-opportunities", () => {
     const json = getJSON() as { ok: boolean; opportunities: Array<{ id: string }> }
     expect(json.ok).toBe(true)
     expect(json.opportunities).toHaveLength(4)
-    const edgeCount = json.opportunities.filter((item) => item.source === "kings-edge-simulated").length
+    const edgeCount = json.opportunities.filter((item) => item.source === "catalogue").length
     expect(edgeCount).toBe(3)
-    const independentCount = json.opportunities.filter((item) => item.source === "independent").length
+    const independentCount = json.opportunities.filter((item) => item.source === "free_text").length
     expect(independentCount).toBe(1)
   })
 

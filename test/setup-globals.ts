@@ -1,4 +1,4 @@
-import { TransformStream } from "stream/web"
+import { ReadableStream, TransformStream } from "stream/web"
 import { TextDecoder, TextEncoder } from "util"
 
 if (!globalThis.TextEncoder) {
@@ -8,6 +8,10 @@ if (!globalThis.TextEncoder) {
 if (!globalThis.TextDecoder) {
   // Node's util.TextDecoder type is compatible with the DOM TextDecoder interface
   globalThis.TextDecoder = TextDecoder as unknown as typeof globalThis.TextDecoder
+}
+
+if (!globalThis.ReadableStream) {
+  globalThis.ReadableStream = ReadableStream as unknown as typeof globalThis.ReadableStream
 }
 
 if (!globalThis.TransformStream) {
