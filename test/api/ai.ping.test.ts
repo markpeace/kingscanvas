@@ -1,9 +1,12 @@
-import { NextRequest } from "next/server"
+jest.mock("@/lib/ai/graph/ping", () => ({
+  runPing: jest.fn().mockResolvedValue("Hello from test ping")
+}))
+
 import { GET } from "@/app/api/ai/ping/route"
 
 // Helper to build a Request-like object for App Router handlers
 function makeRequest(url: string) {
-  return new NextRequest(new Request(url))
+  return new Request(url)
 }
 
 describe("/api/ai/ping GET", () => {

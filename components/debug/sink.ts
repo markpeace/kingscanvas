@@ -25,3 +25,18 @@ class DebugSink {
 }
 
 export const debugSink = new DebugSink()
+
+type EventSubscriber = (entry: any) => void
+const eventSubs = new Set<EventSubscriber>()
+
+export function emit(entry: any) {
+  debugSink.push(entry)
+  eventSubs.forEach((fn) => fn(entry))
+}
+
+export function subscribe(fn: EventSubscriber) {
+  eventSubs.add(fn)
+  return () => {
+    eventSubs.delete(fn)
+  }
+}
